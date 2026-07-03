@@ -118,13 +118,13 @@ export class ShopComponent {
     { id: 'free', name: 'Free', price: '$0', period: '',
       features: ['1 AI görsel/ay', 'El tarama · AI Stüdyo · AR: 1 kez', 'Galeri (135+): tam erişim'] },
     { id: 'monthly', name: 'Aylık Premium', price: '$7.85', period: '/ay',
-      features: ['30 AI görsel/ay (3/gün)', 'Tarama · AI Stüdyo · AR: sınırsız', 'Ek paket alabilir'] },
+      features: ['Aylık 30 görsel üretim', 'Tarama · AI Stüdyo · AR: sınırsız', 'Ek paket alabilir'] },
     { id: 'yearly', name: 'Yıllık Premium', price: '$70.65', period: '/yıl', highlight: true, badge: '%25 indirim',
-      features: ['30 AI görsel/ay (3/gün)', 'Her şey sınırsız', '~$5.89/ay', 'Ek paket alabilir'] },
+      features: ['Aylık 30 görsel üretim', 'Yıllık toplam 10.950 görsel', 'Her şey sınırsız', '~$5.89/ay', 'Ek paket alabilir'] },
     { id: 'pro', name: 'Aylık Pro', price: '$24.99', period: '/ay',
-      features: ['100 AI görsel/ay (10/gün)', 'Her şey sınırsız', 'Salon & profesyoneller için'] },
+      features: ['Aylık 100 görsel üretim', 'Her şey sınırsız', 'Salon & profesyoneller için'] },
     { id: 'pro_yearly', name: 'Yıllık Pro', price: '$224.99', period: '/yıl', badge: '%25 indirim',
-      features: ['100 AI görsel/ay (10/gün)', 'Her şey sınırsız', '~$18.75/ay', 'Büyük salon & ajanslar için'] },
+      features: ['Aylık 100 görsel üretim', 'Yıllık toplam 36.500 görsel', 'Her şey sınırsız', '~$18.75/ay', 'Büyük salon & ajanslar için'] },
   ];
 
   readonly packs: Pack[] = [
