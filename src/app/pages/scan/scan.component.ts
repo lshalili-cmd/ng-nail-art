@@ -52,6 +52,7 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
             <button class="btn-ghost" (click)="fileInput.click()">🖼️ {{ i18n.t('upload') }}</button>
           </div>
           <p class="sub">{{ i18n.t('scan_sub') }}</p>
+          <p class="tip">💡 {{ i18n.t('capture_tip') }}</p>
         }
         @case ('camera') {
           <div class="actions">
@@ -83,8 +84,16 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
             </div>
           }
 
-          <!-- Manuel tırnak şekli seçimi (otomatik tahminden daha güvenilir) -->
-          <div class="section-head"><h2 class="section-title">{{ i18n.t('choose_shape') }}</h2></div>
+          <!-- Otomatik tırnak şekli tahmini + manuel onay/düzeltme -->
+          <div class="section-head">
+            <h2 class="section-title">{{ i18n.t('choose_shape') }}</h2>
+            @if (analysis(); as a) {
+              @if (a.nailShape) {
+                <span class="conf">🤖 {{ i18n.t('shp_' + a.nailShape) }} · %{{ pct(a.shapeConfidence) }}</span>
+              }
+            }
+          </div>
+          <p class="shhint">{{ i18n.t('shape_hint') }}</p>
           <div class="shapes">
             @for (s of shapes; track s.key) {
               <button class="shape" [class.on]="shape() === s.key" (click)="shape.set(s.key)">
@@ -132,6 +141,8 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
     .actions { display: flex; gap: 12px; margin-top: 16px; }
     .actions > * { flex: 1; }
     .sub { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--muted-2); }
+    .tip { text-align: center; margin: 8px 0 0; font-size: 12px; color: var(--gold-soft);
+      background: rgba(212,175,55,0.08); border: 1px dashed rgba(212,175,55,0.35); border-radius: 12px; padding: 10px 12px; line-height: 1.5; }
     .banner { margin: 12px 0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
     .banner.err { background: rgba(178,58,58,0.14); border: 1px solid rgba(178,58,58,0.4); color: #f0b8b8; }
     .attrs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
@@ -140,6 +151,9 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
     .ai { font-size: 24px; }
     .k { margin: 0; font-size: 11px; color: var(--muted-2); }
     .v { margin: 2px 0 0; font-size: 14.5px; font-weight: 600; color: var(--gold-soft); }
+    .conf { font-size: 11px; font-weight: 700; color: var(--gold-soft);
+      background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4); padding: 3px 9px; border-radius: 999px; }
+    .shhint { margin: 0 0 10px; font-size: 12px; color: var(--muted-2); }
     .shapes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .shape { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px;
       border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); }
@@ -265,6 +279,10 @@ export class ScanComponent implements OnDestroy {
     });
   }
 
+  pct(n: number): number {
+    return Math.round(n * 100);
+  }
+
   private suggestShape(fl: FingerLength | null): string {
     switch (fl) {
       case 'long': return 'almond';
@@ -317,7 +335,8 @@ export class ScanComponent implements OnDestroy {
     disp.getContext('2d')?.drawImage(work, 0, 0);
     this.drawLandmarks(disp, result);
     this.analysis.set(result);
-    this.shape.set(this.suggestShape(result.fingerLength)); // parmak yapısına göre akıllı ön seçim
+    // Otomatik tırnak şekli: silüet analizi çıktıysa onu, yoksa parmak yapısı tahminini kullan
+    this.shape.set(result.nailShape ?? this.suggestShape(result.fingerLength));
     this.stage.set('results');
   }
 
