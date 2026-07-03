@@ -31,8 +31,10 @@ interface Pack { id: string; name: string; credits: number; price: string; }
             </ul>
             @if (plan.current() === p.id) {
               <button class="btn-ghost sel" disabled>✓ {{ i18n.t('current_plan') }}</button>
-            } @else {
+            } @else if (canUpgrade(p.id)) {
               <button class="btn-primary" (click)="choose(p.id)">{{ p.id === 'free' ? i18n.t('select') : i18n.t('upgrade') }}</button>
+            } @else {
+              <button class="btn-ghost lock" disabled>🔒 {{ i18n.t('plan_locked') }}</button>
             }
           </div>
         }
@@ -50,6 +52,7 @@ interface Pack { id: string; name: string; credits: number; price: string; }
         }
       </div>
 
+      <p class="note rules">📋 {{ i18n.t('upgrade_rules') }}</p>
       <p class="note">ℹ️ {{ i18n.t('payment_soon') }}</p>
     </div>
   `,
@@ -68,6 +71,7 @@ interface Pack { id: string; name: string; credits: number; price: string; }
     .feats { list-style: none; margin: 0 0 14px; padding: 0; }
     .feats li { font-size: 13px; color: #efe7d4; padding: 5px 0; }
     .sel { width: 100%; color: var(--gold-soft); }
+    .lock { width: 100%; opacity: 0.55; cursor: not-allowed; }
     .plan .btn-primary { width: 100%; }
     .packs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     .pack { padding: 14px 8px; text-align: center; }
@@ -77,6 +81,7 @@ interface Pack { id: string; name: string; credits: number; price: string; }
     .pack .btn-ghost { width: 100%; padding: 8px; font-size: 12px; }
     .note { margin: 18px 0 0; font-size: 12px; color: var(--muted-2); text-align: center;
       background: var(--surface-2); border: 1px dashed var(--line); border-radius: 12px; padding: 12px; }
+    .note.rules { text-align: start; line-height: 1.5; }
   `],
 })
 export class ShopComponent {
@@ -102,6 +107,26 @@ export class ShopComponent {
     { id: 'pack_25', name: 'Standart', credits: 25, price: '$13.00' },
     { id: 'pack_50', name: 'Mega', credits: 50, price: '$25.00' },
   ];
+
+  /**
+   * Yükseltme kuralları: aktif paket süresi bitmeden aynısı tekrar alınamaz, yalnızca yükseltme yapılabilir.
+   * free → hepsi · Aylık Premium → Yıllık Premium / Aylık Pro / Yıllık Pro
+   * Yıllık Premium → Yıllık Pro · Aylık Pro → Yıllık Pro · Yıllık Pro → en üst (yükseltme yok)
+   * Ek paketler bu kurala tabi değildir, her zaman alınabilir.
+   */
+  private readonly allowedUpgrades: Record<string, string[]> = {
+    free: ['monthly', 'yearly', 'pro', 'pro_yearly'],
+    monthly: ['yearly', 'pro', 'pro_yearly'],
+    yearly: ['pro_yearly'],
+    pro: ['pro_yearly'],
+    pro_yearly: [],
+  };
+
+  /** Hedef plan, mevcut plandan yükseltilebilir mi? */
+  canUpgrade(targetId: string): boolean {
+    const cur = this.plan.current();
+    return (this.allowedUpgrades[cur] ?? []).includes(targetId);
+  }
 
   choose(id: string): void {
     this.plan.select(id);
