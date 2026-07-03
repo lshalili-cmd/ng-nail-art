@@ -45,7 +45,7 @@ import { I18nService } from '../core/i18n.service';
   `],
 })
 export class DesignCardComponent {
-  private readonly i18n = inject(I18nService);
+  readonly i18n = inject(I18nService);
   @Input({ required: true }) design!: Design;
   @Input() width = 150;
   @Input() score?: number;
