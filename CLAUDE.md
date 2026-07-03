@@ -30,9 +30,22 @@ kullanıcıya kısa bir özet olarak raporlanır. Bu, kullanıcının her komutu
    tarafından otomatik yapılır (her ~90 sn'de değişiklik varsa commit+push).
 5. **Check-in özeti** — ne değişti, doğrulama/lint/tarayıcı/git sonuçları tek blokta raporlanır.
 
+## Otomatik güncelleme (elle iş YOK)
+
+- Geliştirme **tek komutla** başlar: `dev.bat` (çift tık) / `dev.ps1` / `npm run dev`.
+  Bu, `ng serve`'i `--poll 1500 --live-reload --open` ile açar ve `auto-git.ps1`'i başlatır.
+- **`--poll` kritik:** dosyalar Claude köprüsüyle DIŞARIDAN yazıldığında Windows dosya-olayları
+  tetiklenmeyebilir; poll olmadan Angular değişimi kaçırır, ekran ESKİ kalır. Poll bunu çözer:
+  otomatik derleme + tarayıcı otomatik yenileme.
+- Bu yüzden kullanıcıya artık **"hard refresh yap / sunucuyu yeniden başlat / cache temizle"
+  DENMEZ.** Sistem kendi halleder. Detay: `.claude/skills/otomatik-guncelleme/SKILL.md`.
+- "Ekranda hâlâ eski" denince: önce dosyanın diske doğru yazıldığını doğrula (kod doğruysa sorun
+  derleme/önbellek); gerekirse `dev.ps1 -Clean` ile `.angular` temizlenip yeniden başlatılır.
+
 ## Notlar
 
-- Dev sunucusu (`npm start`) açık tutulur; dosyalar diske yazıldığında otomatik yeniden derlenir.
+- Dev sunucusu `dev.bat` (veya `npm run dev`) ile açık tutulur; dosya değişince otomatik derlenir
+  ve tarayıcı otomatik yenilenir (`--poll` + `--live-reload`).
 - Yeni bir bağımlılık eklendiğinde kullanıcı `npm install` çalıştırmalıdır (belirtilir).
 - Kamera/AI gibi dış kaynaklı özellikler için hatalar konsola `[Scan]`, `[MediaPipe]`, `[AI]`
   önekleriyle loglanır.
