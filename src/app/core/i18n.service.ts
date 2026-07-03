@@ -183,6 +183,12 @@ Object.assign(AR, {
   no_hand: 'لم يتم اكتشاف اليد — أظهري كفّك بوضوح في الإطار',
 });
 
+// ── Alt menü: AI Studio sekmesi ──
+Object.assign(EN, { nav_studio: 'Studio' });
+Object.assign(TR, { nav_studio: 'Stüdyo' });
+Object.assign(RU, { nav_studio: 'Студия' });
+Object.assign(AR, { nav_studio: 'استوديو' });
+
 // ── Rozet etiketleri + eşleşme ──
 Object.assign(EN, { badge_trending: 'Trending', badge_new: 'New', badge_premium: 'Premium', match: 'match', for_you: 'Matched for you' });
 Object.assign(TR, { badge_trending: 'Trend', badge_new: 'Yeni', badge_premium: 'Premium', match: 'uyum', for_you: 'Size özel eşleşti' });

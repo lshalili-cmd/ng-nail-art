@@ -23,7 +23,7 @@ import { I18nService } from '../core/i18n.service';
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 100%; max-width: var(--max-w);
       height: var(--nav-h);
-      display: grid; grid-template-columns: repeat(5, 1fr);
+      display: grid; grid-template-columns: repeat(6, 1fr);
       background: linear-gradient(180deg, rgba(20,16,25,0.86), rgba(12,10,8,0.98));
       backdrop-filter: blur(14px);
       border-top: 1px solid var(--line);
@@ -32,10 +32,10 @@ import { I18nService } from '../core/i18n.service';
     }
     .item {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 3px; color: var(--muted-2); font-size: 10.5px; font-weight: 600;
+      gap: 3px; color: var(--muted-2); font-size: 9.5px; font-weight: 600;
       transition: color 0.15s ease;
     }
-    .ic { font-size: 20px; filter: grayscale(0.4) opacity(0.7); transition: filter 0.15s ease, transform 0.15s ease; }
+    .ic { font-size: 19px; filter: grayscale(0.4) opacity(0.7); transition: filter 0.15s ease, transform 0.15s ease; }
     .item.active { color: var(--gold-soft); }
     .item.active .ic { filter: none; transform: translateY(-1px); }
   `],
@@ -46,6 +46,7 @@ export class BottomNavComponent {
     { path: '/', icon: '🏠', key: 'nav_home' },
     { path: '/explore', icon: '🔍', key: 'nav_explore' },
     { path: '/scan', icon: '🤚', key: 'nav_scan' },
+    { path: '/studio', icon: '🎨', key: 'nav_studio' },
     { path: '/shop', icon: '🛍️', key: 'nav_shop' },
     { path: '/profile', icon: '👤', key: 'nav_profile' },
   ];
