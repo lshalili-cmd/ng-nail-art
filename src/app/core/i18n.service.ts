@@ -31,6 +31,7 @@ const EN: Dict = {
   profile: 'Profile', favorites: 'Favorites', designs: 'Designs', tryons: 'Try-Ons',
   my_fav: 'My Favorites', tryon_hist: 'Try-On History', style_pref: 'Style Preferences',
   subscription: 'Subscription', settings: 'Settings', language: 'Language', help: 'Help & Support', logout: 'Log Out',
+  manage_plan: 'Manage plan',
 };
 
 const TR: Dict = {
@@ -53,6 +54,7 @@ const TR: Dict = {
   profile: 'Profil', favorites: 'Favoriler', designs: 'Tasarımlar', tryons: 'Denemeler',
   my_fav: 'Favorilerim', tryon_hist: 'Deneme Geçmişi', style_pref: 'Stil Tercihleri',
   subscription: 'Abonelik', settings: 'Ayarlar', language: 'Dil', help: 'Yardım ve Destek', logout: 'Çıkış Yap',
+  manage_plan: 'Planı Yönet',
 };
 
 const RU: Dict = {
