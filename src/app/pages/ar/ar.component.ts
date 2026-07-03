@@ -25,8 +25,11 @@ interface Swatch { name: string; hex: string; }
           <video #video class="media" playsinline muted></video>
           <canvas #overlay class="media overlay"></canvas>
         </div>
-        @if (!running() && !photo()) {
+        @if (!running() && !photo() && !starting()) {
           <div class="hint"><span class="ic">💅</span><p>{{ i18n.t('ar_hint') }}</p></div>
+        }
+        @if (starting()) {
+          <div class="hint"><span class="ic spin">⏳</span><p>{{ i18n.t('ar_starting') }}</p></div>
         }
         @if (photo(); as p) { <img class="shot" [src]="p" alt="AR" /> }
       </div>
@@ -43,7 +46,7 @@ interface Swatch { name: string; hex: string; }
       <!-- Kontroller -->
       <div class="actions">
         @if (!running()) {
-          <button class="btn-primary" (click)="start()">📸 {{ i18n.t('ar_title') }}</button>
+          <button class="btn-primary" (click)="start()" [disabled]="starting()">📸 {{ i18n.t('ar_title') }}</button>
         } @else {
           <button class="btn-primary" (click)="capture()">📷 {{ i18n.t('ar_capture') }}</button>
           <button class="btn-ghost" (click)="stop()">✕ {{ i18n.t('ar_close') }}</button>
@@ -62,6 +65,8 @@ interface Swatch { name: string; hex: string; }
     .hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
       justify-content: center; gap: 12px; color: var(--muted); }
     .hint .ic { font-size: 60px; opacity: 0.85; }
+    .spin { animation: arspin 1.1s linear infinite; display: inline-block; }
+    @keyframes arspin { to { transform: rotate(360deg); } }
     .shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
     .banner { margin: 12px 0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
     .banner.err { background: rgba(178,58,58,0.14); border: 1px solid rgba(178,58,58,0.4); color: #f0b8b8; }
@@ -82,6 +87,7 @@ export class ArComponent implements OnDestroy {
   private readonly overlay = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
 
   readonly running = signal(false);
+  readonly starting = signal(false);
   readonly error = signal<string | null>(null);
   readonly photo = signal<string | null>(null);
   readonly color = signal<string>('#d4af37');
@@ -114,6 +120,7 @@ export class ArComponent implements OnDestroy {
       this.error.set(this.i18n.t('err_camera'));
       return;
     }
+    this.starting.set(true);
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } }, audio: false,
@@ -124,6 +131,7 @@ export class ArComponent implements OnDestroy {
     } catch (e) {
       console.error('[AR] Kamera hatası:', e);
       this.error.set(this.i18n.t('err_camera'));
+      this.starting.set(false);
       return;
     }
     try {
@@ -131,9 +139,11 @@ export class ArComponent implements OnDestroy {
     } catch (e) {
       console.error('[AR] MediaPipe yüklenemedi:', e);
       this.error.set(this.i18n.t('err_model'));
+      this.starting.set(false);
       this.stopStream();
       return;
     }
+    this.starting.set(false);
     this.running.set(true);
     this.loop();
   }

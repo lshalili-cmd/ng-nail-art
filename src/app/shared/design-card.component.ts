@@ -30,7 +30,9 @@ import { FavoritesService } from '../core/favorites.service';
     </article>
   `,
   styles: [`
-    .dc { border-radius: 16px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); cursor: pointer; display: block; }
+    .dc { border-radius: 16px; overflow: hidden; background: var(--surface); border: 1px solid var(--line);
+      cursor: pointer; display: block; transition: transform 0.14s ease; }
+    .dc:active { transform: scale(0.97); }
     .thumb { position: relative; aspect-ratio: 3 / 4; }
     .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .badge { position: absolute; top: 8px; inset-inline-start: 8px; }

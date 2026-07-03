@@ -190,10 +190,10 @@ Object.assign(RU, { back: 'Назад', not_found: 'Дизайн не найде
 Object.assign(AR, { back: 'رجوع', not_found: 'التصميم غير موجود' });
 
 // ── AR Deneme ──
-Object.assign(EN, { ar_title: 'AR Try-On', ar_capture: 'Capture', ar_color: 'Polish color', ar_close: 'Close', ar_hint: 'Show your hand to the camera' });
-Object.assign(TR, { ar_title: 'AR Deneme', ar_capture: 'Fotoğraf', ar_color: 'Oje rengi', ar_close: 'Kapat', ar_hint: 'Elinizi kameraya gösterin' });
-Object.assign(RU, { ar_title: 'AR примерка', ar_capture: 'Снимок', ar_color: 'Цвет лака', ar_close: 'Закрыть', ar_hint: 'Покажите руку камере' });
-Object.assign(AR, { ar_title: 'تجربة AR', ar_capture: 'التقاط', ar_color: 'لون الطلاء', ar_close: 'إغلاق', ar_hint: 'أظهري يدك للكاميرا' });
+Object.assign(EN, { ar_title: 'AR Try-On', ar_capture: 'Capture', ar_color: 'Polish color', ar_close: 'Close', ar_hint: 'Show your hand to the camera', ar_starting: 'Starting camera...' });
+Object.assign(TR, { ar_title: 'AR Deneme', ar_capture: 'Fotoğraf', ar_color: 'Oje rengi', ar_close: 'Kapat', ar_hint: 'Elinizi kameraya gösterin', ar_starting: 'Kamera başlatılıyor...' });
+Object.assign(RU, { ar_title: 'AR примерка', ar_capture: 'Снимок', ar_color: 'Цвет лака', ar_close: 'Закрыть', ar_hint: 'Покажите руку камере', ar_starting: 'Запуск камеры...' });
+Object.assign(AR, { ar_title: 'تجربة AR', ar_capture: 'التقاط', ar_color: 'لون الطلاء', ar_close: 'إغلاق', ar_hint: 'أظهري يدك للكاميرا', ar_starting: 'جارٍ تشغيل الكاميرا...' });
 
 // ── Veritabanı: kayıtlı tasarımlar ──
 Object.assign(EN, { saved_designs: 'Saved Designs', saved: 'Saved' });
