@@ -83,19 +83,24 @@ export class ShopComponent {
   readonly i18n = inject(I18nService);
   readonly plan = inject(PlanService);
 
+  // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
   readonly plans: Plan[] = [
-    { id: 'free', name: 'Ücretsiz', price: '₺0', period: '',
-      features: ['1 tarama denemesi', 'Günün Tasarımı', 'Tüm galeriyi görüntüleme', 'Temel AR deneme'] },
-    { id: 'monthly', name: 'Aylık', price: '₺149,99', period: '/ay',
-      features: ['Sınırsız AI tasarım', 'Gerçek AI görsel üretimi', 'Sınırsız AR deneme', 'Reklamsız', 'Sınırsız favori'] },
-    { id: 'yearly', name: 'Yıllık', price: '₺999,99', period: '/yıl', highlight: true, badge: '%44 tasarruf',
-      features: ["Aylık'ın tüm özellikleri", 'En avantajlı fiyat', 'Öncelikli AI üretimi', 'Yeni özelliklere erken erişim'] },
+    { id: 'free', name: 'Free', price: '$0', period: '',
+      features: ['1 AI görsel/ay', 'El tarama · AI Stüdyo · AR: 1 kez', 'Galeri (135+): tam erişim'] },
+    { id: 'monthly', name: 'Aylık Premium', price: '$7.85', period: '/ay',
+      features: ['30 AI görsel/ay (3/gün)', 'Tarama · AI Stüdyo · AR: sınırsız', 'Ek paket alabilir'] },
+    { id: 'yearly', name: 'Yıllık Premium', price: '$70.65', period: '/yıl', highlight: true, badge: '%25 indirim',
+      features: ['30 AI görsel/ay (3/gün)', 'Her şey sınırsız', '~$5.89/ay', 'Ek paket alabilir'] },
+    { id: 'pro', name: 'Aylık Pro', price: '$24.99', period: '/ay',
+      features: ['100 AI görsel/ay (10/gün)', 'Her şey sınırsız', 'Salon & profesyoneller için'] },
+    { id: 'pro_yearly', name: 'Yıllık Pro', price: '$224.99', period: '/yıl', badge: '%25 indirim',
+      features: ['100 AI görsel/ay (10/gün)', 'Her şey sınırsız', '~$18.75/ay', 'Büyük salon & ajanslar için'] },
   ];
 
   readonly packs: Pack[] = [
-    { id: 'mini', name: 'Mini', credits: 10, price: '₺29,99' },
-    { id: 'standart', name: 'Standart', credits: 25, price: '₺59,99' },
-    { id: 'mega', name: 'Mega', credits: 50, price: '₺99,99' },
+    { id: 'pack_10', name: 'Mini', credits: 10, price: '$6.00' },
+    { id: 'pack_25', name: 'Standart', credits: 25, price: '$13.00' },
+    { id: 'pack_50', name: 'Mega', credits: 50, price: '$25.00' },
   ];
 
   choose(id: string): void {
