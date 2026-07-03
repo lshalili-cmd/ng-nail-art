@@ -4,6 +4,7 @@ import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { AiService } from '../../core/ai.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
+import { renderNailThumb } from '../../core/nail-art';
 
 @Component({
   selector: 'app-studio',
@@ -232,63 +233,23 @@ export class StudioComponent implements OnInit {
     }
   }
 
-  /** Tasarımdan istemci tarafında 5 tırnaklı bir önizleme çizer (data URL). */
+  /** Tasarımdan istemci tarafında zengin bir tırnak önizlemesi üretir (data URL). */
   private proceduralImage(d: DesignSpec): GeneratedImage {
-    const c = document.createElement('canvas');
-    c.width = 640; c.height = 400;
-    const ctx = c.getContext('2d');
-    if (!ctx) {
-      return { imageUrl: '', filename: 'demo.png', prompt: d.designPrompt, style: d.style, shape: d.shape, colors: d.colors, finish: d.finish, size: 0, provider: 'demo' };
-    }
-    // Arka plan
-    const bg = ctx.createLinearGradient(0, 0, 0, c.height);
-    bg.addColorStop(0, '#1b1522'); bg.addColorStop(1, '#0c0a08');
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, c.width, c.height);
-
-    const a = this.colorHex(d.colors[0] ?? 'gold');
-    const b = this.colorHex(d.colors[1] ?? d.colors[0] ?? 'nude');
-    const heights = [190, 230, 250, 230, 190];
-    const nailW = 78, gap = 26;
-    const total = 5 * nailW + 4 * gap;
-    let x = (c.width - total) / 2;
-    for (let i = 0; i < 5; i++) {
-      const h = heights[i];
-      this.drawNail(ctx, x, c.height - h - 30, nailW, h, a, b, d.finish);
-      x += nailW + gap;
-    }
+    const url = renderNailThumb(d.colors, this.patternFromSpec(d), 640, 400);
     return {
-      imageUrl: c.toDataURL('image/png'), filename: 'demo.png', prompt: d.designPrompt,
+      imageUrl: url, filename: 'demo.png', prompt: d.designPrompt,
       style: d.style, shape: d.shape, colors: d.colors, finish: d.finish, size: 0, provider: 'demo',
     };
   }
 
-  private drawNail(
-    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-    a: string, b: string, finish: string,
-  ): void {
-    const r = w / 2;
-    const grad = ctx.createLinearGradient(x, y, x, y + h);
-    grad.addColorStop(0, a); grad.addColorStop(1, b);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(x, y + h);
-    ctx.lineTo(x, y + r);
-    ctx.arc(x + r, y + r, r, Math.PI, 0);
-    ctx.lineTo(x + w, y + h);
-    ctx.quadraticCurveTo(x + w / 2, y + h + 14, x, y + h);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.shadowColor = 'rgba(0,0,0,0.45)';
-    ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
-    ctx.fill();
-    ctx.restore();
-    // Parlaklık (finiş)
-    if (finish !== 'matte') {
-      ctx.fillStyle = `rgba(255,255,255,${finish === 'chrome' ? 0.55 : 0.28})`;
-      ctx.beginPath();
-      ctx.ellipse(x + w * 0.36, y + h * 0.4, w * 0.13, h * 0.28, 0, 0, Math.PI * 2);
-      ctx.fill();
+  /** Tasarım stili/desenlerinden çizim desenini belirler. */
+  private patternFromSpec(d: DesignSpec): string {
+    const tokens = [d.style, ...(d.patterns ?? [])].map((x) => (x ?? '').toLowerCase());
+    for (const p of ['french', 'marble', 'galaxy', 'chrome', 'ombre', 'line']) {
+      if (tokens.includes(p)) return p;
     }
+    if (d.finish === 'chrome') return 'chrome';
+    return 'glossy';
   }
 
   tryAr(): void {

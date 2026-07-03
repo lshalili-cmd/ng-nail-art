@@ -8,6 +8,7 @@ export interface Design {
   badge?: 'trending' | 'new' | 'premium';
   grad: string;          // CSS gradient (görsel yüklenemezse yedek)
   img?: string;          // istemci tarafı çizilen tırnak önizlemesi (data URL)
+  pattern?: string;      // çizim deseni: french | ombre | marble | galaxy | chrome | line | glossy
   category: string;
   // Öneri motoru etiketleri
   shapes: string[];      // uygun tırnak şekilleri
@@ -70,9 +71,15 @@ export class DataService {
   ];
 
   constructor() {
+    // id → çizim deseni
+    const patterns: Record<number, string> = {
+      1: 'chrome', 2: 'ombre', 3: 'galaxy', 4: 'french', 5: 'marble',
+      6: 'line', 7: 'glossy', 8: 'chrome', 9: 'chrome',
+    };
     // Her tasarım için istemci tarafında bir tırnak önizlemesi üret (harici görsel yok)
     for (const d of this.all) {
-      d.img = renderNailThumb(d.colors);
+      d.pattern = patterns[d.id] ?? 'glossy';
+      d.img = renderNailThumb(d.colors, d.pattern);
     }
   }
 
