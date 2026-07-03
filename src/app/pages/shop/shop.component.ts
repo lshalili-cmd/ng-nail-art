@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { PlanService } from '../../core/plan.service';
@@ -29,10 +29,15 @@ interface Pack { id: string; name: string; credits: number; price: string; }
             <ul class="feats">
               @for (f of p.features; track f) { <li>✓ {{ f }}</li> }
             </ul>
-            @if (plan.current() === p.id) {
+            @if (plan.current() === p.id && (plan.active() || p.id === 'free')) {
               <button class="btn-ghost sel" disabled>✓ {{ i18n.t('current_plan') }}</button>
-            } @else if (canUpgrade(p.id)) {
-              <button class="btn-primary" (click)="choose(p.id)">{{ p.id === 'free' ? i18n.t('select') : i18n.t('upgrade') }}</button>
+              @if (plan.active() && daysLeft() !== null) {
+                <p class="left">⏳ {{ daysLeft() }} {{ i18n.t('days_left') }}</p>
+              }
+            } @else if (canSelect(p.id)) {
+              <button class="btn-primary" (click)="choose(p.id)">
+                {{ p.id === plan.current() ? i18n.t('renew') : (p.id === 'free' ? i18n.t('select') : i18n.t('upgrade')) }}
+              </button>
             } @else {
               <button class="btn-ghost lock" disabled>🔒 {{ i18n.t('plan_locked') }}</button>
             }
@@ -72,6 +77,7 @@ interface Pack { id: string; name: string; credits: number; price: string; }
     .feats li { font-size: 13px; color: #efe7d4; padding: 5px 0; }
     .sel { width: 100%; color: var(--gold-soft); }
     .lock { width: 100%; opacity: 0.55; cursor: not-allowed; }
+    .left { margin: 8px 0 0; font-size: 11px; color: var(--muted-2); text-align: center; }
     .plan .btn-primary { width: 100%; }
     .packs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     .pack { padding: 14px 8px; text-align: center; }
@@ -122,11 +128,24 @@ export class ShopComponent {
     pro_yearly: [],
   };
 
-  /** Hedef plan, mevcut plandan yükseltilebilir mi? */
-  canUpgrade(targetId: string): boolean {
+  /**
+   * Hedef plan seçilebilir mi?
+   * - Aktif abonelik yoksa (ücretsiz veya süresi dolmuş) → her plan açık (düşürme dahil).
+   * - Aktif aboneyse → aynı planı tekrar alamaz, yalnızca izinli üst plana geçebilir.
+   */
+  canSelect(targetId: string): boolean {
+    if (!this.plan.active()) return true;
     const cur = this.plan.current();
+    if (targetId === cur) return false;
     return (this.allowedUpgrades[cur] ?? []).includes(targetId);
   }
+
+  /** Aktif abonelikte bitişe kalan gün sayısı. */
+  daysLeft = computed<number | null>(() => {
+    const exp = this.plan.expiresAt();
+    if (exp === null) return null;
+    return Math.max(0, Math.ceil((exp - Date.now()) / (24 * 60 * 60 * 1000)));
+  });
 
   choose(id: string): void {
     this.plan.select(id);
