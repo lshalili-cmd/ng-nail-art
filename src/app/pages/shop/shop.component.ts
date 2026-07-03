@@ -120,11 +120,11 @@ export class ShopComponent {
     { id: 'monthly', name: 'Aylık Premium', price: '$7.85', period: '/ay',
       features: ['Aylık 30 görsel üretim', 'Tarama · AI Stüdyo · AR: sınırsız', 'Ek paket alabilir'] },
     { id: 'yearly', name: 'Yıllık Premium', price: '$70.65', period: '/yıl', highlight: true, badge: '%25 indirim',
-      features: ['Aylık 30 görsel üretim', 'Yıllık toplam 10.950 görsel', 'Her şey sınırsız', '~$5.89/ay', 'Ek paket alabilir'] },
+      features: ['Aylık 30 görsel üretim', 'Yıllık toplam 360 görsel', 'Her şey sınırsız', '~$5.89/ay', 'Ek paket alabilir'] },
     { id: 'pro', name: 'Aylık Pro', price: '$24.99', period: '/ay',
       features: ['Aylık 100 görsel üretim', 'Her şey sınırsız', 'Salon & profesyoneller için'] },
     { id: 'pro_yearly', name: 'Yıllık Pro', price: '$224.99', period: '/yıl', badge: '%25 indirim',
-      features: ['Aylık 100 görsel üretim', 'Yıllık toplam 36.500 görsel', 'Her şey sınırsız', '~$18.75/ay', 'Büyük salon & ajanslar için'] },
+      features: ['Aylık 100 görsel üretim', 'Yıllık toplam 1.200 görsel', 'Her şey sınırsız', '~$18.75/ay', 'Büyük salon & ajanslar için'] },
   ];
 
   readonly packs: Pack[] = [
