@@ -16,6 +16,11 @@ function hex(c: string): string {
   return COLOR[c?.toLowerCase()] ?? '#cbb489';
 }
 
+/** Renk etiketini (ör. "gold") #hex'e çevirir. */
+export function colorToHex(tag: string): string {
+  return hex(tag);
+}
+
 function pickFinish(colors: string[], pattern: string): 'chrome' | 'matte' | 'glossy' {
   if (pattern === 'chrome' || colors.some((c) => ['chrome', 'metallic', 'silver', 'mirror'].includes(c))) return 'chrome';
   if (colors.includes('matte')) return 'matte';

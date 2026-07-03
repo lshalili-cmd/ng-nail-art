@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { DataService, Design } from '../../core/data.service';
 import { FavoritesService } from '../../core/favorites.service';
+import { colorToHex } from '../../core/nail-art';
 
 @Component({
   selector: 'app-design-detail',
@@ -38,7 +39,7 @@ import { FavoritesService } from '../../core/favorites.service';
             </div>
 
             <div class="actions">
-              <button class="btn-primary" routerLink="/ar">📱 {{ i18n.t('try_on') }}</button>
+              <button class="btn-primary" (click)="tryAr(d)">📱 {{ i18n.t('try_on') }}</button>
               <button class="btn-ghost" (click)="toggleFav()">
                 {{ fav.has(d.id) ? ('❤️ ' + i18n.t('my_fav')) : ('🤍 ' + i18n.t('my_fav')) }}
               </button>
@@ -77,6 +78,7 @@ import { FavoritesService } from '../../core/favorites.service';
 })
 export class DesignDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly data = inject(DataService);
   readonly fav = inject(FavoritesService);
   readonly i18n = inject(I18nService);
@@ -92,5 +94,12 @@ export class DesignDetailComponent {
   toggleFav(): void {
     const d = this.design();
     if (d) this.fav.toggle(d);
+  }
+
+  /** Tasarımın rengini/desenini AR'a taşıyarak dene. */
+  tryAr(d: Design): void {
+    void this.router.navigate(['/ar'], {
+      queryParams: { color: colorToHex(d.colors[0] ?? 'gold'), pattern: d.pattern ?? 'glossy' },
+    });
   }
 }

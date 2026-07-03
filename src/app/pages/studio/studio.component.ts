@@ -4,7 +4,7 @@ import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { AiService } from '../../core/ai.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
-import { renderNailThumb } from '../../core/nail-art';
+import { renderNailThumb, colorToHex } from '../../core/nail-art';
 import { FavoritesService } from '../../core/favorites.service';
 import { Design } from '../../core/data.service';
 
@@ -278,7 +278,9 @@ export class StudioComponent implements OnInit {
   }
 
   tryAr(): void {
-    void this.router.navigate(['/ar']);
+    const d = this.design();
+    const params = d ? { color: colorToHex(d.colors[0] ?? 'gold'), pattern: this.patternFromSpec(d) } : {};
+    void this.router.navigate(['/ar'], { queryParams: params });
   }
 
   /** Üretilen tasarımı bir Design nesnesine çevirir (favori için). */

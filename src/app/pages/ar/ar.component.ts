@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy, Component, ElementRef, inject, signal, viewChild, OnDestroy,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
@@ -75,6 +76,7 @@ interface Swatch { name: string; hex: string; }
 export class ArComponent implements OnDestroy {
   readonly i18n = inject(I18nService);
   private readonly hands = inject(HandAnalysisService);
+  private readonly route = inject(ActivatedRoute);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly overlay = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
@@ -83,6 +85,16 @@ export class ArComponent implements OnDestroy {
   readonly error = signal<string | null>(null);
   readonly photo = signal<string | null>(null);
   readonly color = signal<string>('#d4af37');
+  readonly pattern = signal<string>('glossy');
+
+  constructor() {
+    // "Dene" ile bir tasarımdan gelindiyse rengini/desenini uygula
+    const qp = this.route.snapshot.queryParamMap;
+    const c = qp.get('color');
+    if (c) this.color.set(c);
+    const p = qp.get('pattern');
+    if (p) this.pattern.set(p);
+  }
 
   readonly swatches: Swatch[] = [
     { name: 'Gold', hex: '#d4af37' }, { name: 'Red', hex: '#d24b4b' }, { name: 'Pink', hex: '#e6a4c4' },
@@ -134,15 +146,17 @@ export class ArComponent implements OnDestroy {
       if (ctx) {
         ctx.clearRect(0, 0, c.width, c.height);
         const hands = this.hands.detectVideo(v, performance.now());
-        this.drawNails(ctx, hands, c.width, c.height, this.color());
+        this.drawNails(ctx, hands, c.width, c.height, this.color(), this.pattern());
       }
     }
     this.raf = requestAnimationFrame(this.loop);
   };
 
-  private drawNails(ctx: CanvasRenderingContext2D, hands: { x: number; y: number }[][], w: number, h: number, color: string): void {
+  private drawNails(ctx: CanvasRenderingContext2D, hands: { x: number; y: number }[][], w: number, h: number, color: string, pattern: string): void {
     const tips = [4, 8, 12, 16, 20];
     const lows = [3, 7, 11, 15, 19];
+    const matte = pattern === 'matte';
+    const glitter = pattern === 'glitter' || pattern === 'galaxy';
     for (const lm of hands) {
       if (!lm || lm.length < 21) continue;
       for (let i = 0; i < 5; i++) {
@@ -157,16 +171,51 @@ export class ArComponent implements OnDestroy {
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(ang);
-        ctx.fillStyle = color;
+
+        // Taban renk
         ctx.globalAlpha = 0.9;
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 0.4;
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+
+        // Desen aksanları — tırnak şekline kırpılmış
         ctx.beginPath();
-        ctx.ellipse(nl * 0.12, -nw * 0.14, nl * 0.18, nw * 0.16, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
+        ctx.clip();
+
+        if (pattern === 'french') {
+          ctx.globalAlpha = 0.95;
+          ctx.fillStyle = '#f5efe2';
+          ctx.beginPath();
+          ctx.ellipse(nl * 0.42, 0, nl * 0.22, nw * 0.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (glitter) {
+          ctx.globalAlpha = 0.8;
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          for (let g = 0; g < 10; g++) {
+            const gx = (-0.4 + 0.08 * g) * nl;
+            const gy = (((g * 37) % 10) / 10 - 0.5) * nw;
+            ctx.beginPath();
+            ctx.arc(gx, gy, Math.max(0.6, nw * 0.04), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        if (!matte) {
+          ctx.globalAlpha = pattern === 'chrome' ? 0.55 : 0.4;
+          ctx.fillStyle = 'rgba(255,255,255,0.95)';
+          ctx.beginPath();
+          ctx.ellipse(nl * 0.12, -nw * 0.16, nl * 0.18, nw * 0.16, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (pattern === 'chrome') {
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.ellipse(-nl * 0.2, nw * 0.1, nl * 0.12, nw * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.restore();
       }
     }
