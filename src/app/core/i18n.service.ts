@@ -183,6 +183,12 @@ Object.assign(AR, {
   no_hand: 'لم يتم اكتشاف اليد — أظهري كفّك بوضوح في الإطار',
 });
 
+// ── Veritabanı: kayıtlı tasarımlar ──
+Object.assign(EN, { saved_designs: 'Saved Designs', saved: 'Saved' });
+Object.assign(TR, { saved_designs: 'Kayıtlı Tasarımlar', saved: 'Kaydedildi' });
+Object.assign(RU, { saved_designs: 'Сохранённые', saved: 'Сохранено' });
+Object.assign(AR, { saved_designs: 'التصاميم المحفوظة', saved: 'تم الحفظ' });
+
 // ── Alt menü: AI Studio sekmesi ──
 Object.assign(EN, { nav_studio: 'Studio' });
 Object.assign(TR, { nav_studio: 'Stüdyo' });

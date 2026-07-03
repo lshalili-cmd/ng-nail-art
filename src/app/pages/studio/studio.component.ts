@@ -5,6 +5,7 @@ import { I18nService } from '../../core/i18n.service';
 import { AiService } from '../../core/ai.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
 import { renderNailThumb } from '../../core/nail-art';
+import { BackendService } from '../../core/api.service';
 
 @Component({
   selector: 'app-studio',
@@ -92,6 +93,9 @@ import { renderNailThumb } from '../../core/nail-art';
 
             <div class="actions">
               <button class="btn-primary" (click)="genImage()" [disabled]="imgLoading()">🖼️ {{ i18n.t('studio_gen_image') }}</button>
+              <button class="btn-ghost" (click)="save()" [disabled]="saveState() === 'saving'">
+                {{ saveState() === 'done' ? ('✓ ' + i18n.t('saved')) : saveState() === 'fail' ? ('⚠️ ' + i18n.t('studio_error')) : ('💾 ' + i18n.t('studio_save')) }}
+              </button>
               <button class="btn-ghost" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
               <button class="btn-ghost" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
             </div>
@@ -147,6 +151,8 @@ export class StudioComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private readonly ai = inject(AiService);
   private readonly router = inject(Router);
+  private readonly backend = inject(BackendService);
+  readonly saveState = signal<'idle' | 'saving' | 'done' | 'fail'>('idle');
 
   readonly prompt = signal<string>('');
   readonly loading = signal<boolean>(false);
@@ -195,6 +201,7 @@ export class StudioComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.image.set(null);
+    this.saveState.set('idle');
     try {
       const s = this.status();
       if (s && s.status === 'ready') {
@@ -269,6 +276,19 @@ export class StudioComponent implements OnInit {
 
   tryAr(): void {
     void this.router.navigate(['/scan']);
+  }
+
+  /** Üretilen tasarımı veritabanına kaydeder. */
+  async save(): Promise<void> {
+    const d = this.design();
+    if (!d) return;
+    this.saveState.set('saving');
+    const img = this.image()?.imageUrl ?? this.proceduralImage(d).imageUrl;
+    const res = await this.backend.saveDesign({
+      name: d.title, artist: 'AI Studio', pattern: this.patternFromSpec(d), category: 'ai',
+      colors: d.colors, shapes: [d.shape], seasons: ['all'], img, prompt: d.designPrompt, source: 'ai_studio',
+    });
+    this.saveState.set(res ? 'done' : 'fail');
   }
 
   pct(n: number): number {
