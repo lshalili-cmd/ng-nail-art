@@ -10,6 +10,10 @@ const PLAN_MONTHLY: Record<string, number> = {
   pro_yearly: 100,
 };
 
+/** Ek paketin geçerlilik süresi (gün) — bu süre içinde aynı paket tekrar alınamaz. */
+const PACK_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 interface QuotaState {
   /** Dönem anahtarı: plan + bitiş tarihi. Değişince kullanım sıfırlanır. */
   key: string;
@@ -17,6 +21,10 @@ interface QuotaState {
   used: number;
   /** Ek paketlerden gelen, dönemden bağımsız görsel bakiyesi. */
   extra: number;
+  /** Aktif ek paketin kimliği (yoksa null). */
+  packId: string | null;
+  /** Aktif ek paketin satın alma anı — ms. */
+  packSince: number;
 }
 
 /**
@@ -40,7 +48,28 @@ export class ImageQuotaService {
   /** Dönem değiştiyse kullanım sıfırlanmış hâlde okur. */
   private readonly synced = computed<QuotaState>(() => {
     const s = this.state();
-    return s.key === this.periodKey() ? s : { key: this.periodKey(), used: 0, extra: s.extra };
+    return s.key === this.periodKey()
+      ? s
+      : { key: this.periodKey(), used: 0, extra: s.extra, packId: s.packId, packSince: s.packSince };
+  });
+
+  /** Aktif ek paketin bitiş anı (ms). Paket yoksa null. */
+  readonly packExpiresAt = computed<number | null>(() => {
+    const s = this.synced();
+    return s.packId ? s.packSince + PACK_DAYS * DAY_MS : null;
+  });
+
+  /** Süresi geçmemiş aktif ek paketin kimliği (yoksa null). */
+  readonly activePackId = computed<string | null>(() => {
+    const exp = this.packExpiresAt();
+    return exp !== null && Date.now() < exp ? this.synced().packId : null;
+  });
+
+  /** Aktif ek paket bitişine kalan gün. */
+  readonly packDaysLeft = computed<number | null>(() => {
+    const exp = this.packExpiresAt();
+    if (exp === null || this.activePackId() === null) return null;
+    return Math.max(0, Math.ceil((exp - Date.now()) / DAY_MS));
   });
 
   /** Plandan kalan görsel hakkı. */
@@ -54,20 +83,20 @@ export class ImageQuotaService {
   consume(): boolean {
     const s = this.synced();
     if (this.planQuota() - s.used > 0) {
-      this.save({ key: this.periodKey(), used: s.used + 1, extra: s.extra });
+      this.save({ ...s, key: this.periodKey(), used: s.used + 1 });
       return true;
     }
     if (s.extra > 0) {
-      this.save({ key: this.periodKey(), used: s.used, extra: s.extra - 1 });
+      this.save({ ...s, key: this.periodKey(), extra: s.extra - 1 });
       return true;
     }
     return false;
   }
 
-  /** Ek paket satın alındığında bakiyeye görsel ekler. */
-  addPack(images: number): void {
+  /** Ek paket satın alındığında bakiyeye görsel ekler ve aktif paketi günceller. */
+  buyPack(id: string, images: number): void {
     const s = this.synced();
-    this.save({ ...s, key: this.periodKey(), extra: s.extra + images });
+    this.save({ key: this.periodKey(), used: s.used, extra: s.extra + images, packId: id, packSince: Date.now() });
   }
 
   private save(s: QuotaState): void {
@@ -84,9 +113,11 @@ export class ImageQuotaService {
           key: typeof p.key === 'string' ? p.key : '',
           used: typeof p.used === 'number' ? p.used : 0,
           extra: typeof p.extra === 'number' ? p.extra : 0,
+          packId: typeof p.packId === 'string' ? p.packId : null,
+          packSince: typeof p.packSince === 'number' ? p.packSince : 0,
         };
       }
     } catch { /* bozuksa varsayılan */ }
-    return { key: '', used: 0, extra: 0 };
+    return { key: '', used: 0, extra: 0, packId: null, packSince: 0 };
   }
 }

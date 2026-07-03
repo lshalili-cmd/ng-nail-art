@@ -52,11 +52,17 @@ interface Pack { id: string; name: string; credits: number; price: string; }
       </div>
       <div class="packs">
         @for (k of packs; track k.id) {
-          <div class="pack card">
+          <div class="pack card" [class.on]="quota.activePackId() === k.id">
             <p class="kname">{{ k.name }}</p>
             <p class="credits">{{ k.credits }} {{ i18n.t('credits') }}</p>
             <p class="kprice">{{ k.price }}</p>
-            <button class="btn-ghost" (click)="buyPack(k)">{{ i18n.t('select') }}</button>
+            @if (quota.activePackId() === k.id) {
+              <button class="btn-ghost sel" disabled>✓ {{ quota.packDaysLeft() }} {{ i18n.t('days_left') }}</button>
+            } @else if (canBuyPack(k)) {
+              <button class="btn-ghost" (click)="buyPack(k)">{{ quota.activePackId() ? i18n.t('upgrade') : i18n.t('select') }}</button>
+            } @else {
+              <button class="btn-ghost lock" disabled>🔒</button>
+            }
           </div>
         }
       </div>
@@ -86,7 +92,8 @@ interface Pack { id: string; name: string; credits: number; price: string; }
     .left { margin: 8px 0 0; font-size: 11px; color: var(--muted-2); text-align: center; }
     .plan .btn-primary { width: 100%; }
     .packs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .pack { padding: 14px 8px; text-align: center; }
+    .pack { padding: 14px 8px; text-align: center; position: relative; }
+    .pack.on { outline: 2px solid var(--gold); }
     .kname { margin: 0; font-size: 14px; font-weight: 700; }
     .credits { margin: 4px 0; font-size: 11px; color: var(--muted-2); }
     .kprice { margin: 4px 0 10px; font-size: 15px; font-weight: 700; color: var(--gold); }
@@ -163,9 +170,23 @@ export class ShopComponent {
     this.plan.select(id);
   }
 
+  /**
+   * Ek paket satın alınabilir mi?
+   * - Aktif paket yoksa → hepsi açık.
+   * - Aktif paket varsa → aynısı alınamaz, yalnızca daha büyük paket (upgrade).
+   */
+  canBuyPack(k: Pack): boolean {
+    const activeId = this.quota.activePackId();
+    if (!activeId) return true;
+    if (k.id === activeId) return false;
+    const active = this.packs.find((p) => p.id === activeId);
+    return !!active && k.credits > active.credits;
+  }
+
   /** Ek görsel paketi satın al — bakiyeye ekler (plan değişmez). */
   buyPack(k: Pack): void {
-    this.quota.addPack(k.credits);
+    if (!this.canBuyPack(k)) return;
+    this.quota.buyPack(k.id, k.credits);
     this.added.set(k.credits);
   }
 }
