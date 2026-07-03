@@ -183,6 +183,12 @@ Object.assign(AR, {
   no_hand: 'لم يتم اكتشاف اليد — أظهري كفّك بوضوح في الإطار',
 });
 
+// ── Üyelik / Mağaza ──
+Object.assign(EN, { membership: 'Membership', membership_sub: 'Upgrade for unlimited AI designs, real image generation and more', current_plan: 'Your plan', upgrade: 'Upgrade', select: 'Select', credit_packs: 'Credit Packs', credits: 'credits', payment_soon: 'Payment integration coming soon — selection is saved locally for now.' });
+Object.assign(TR, { membership: 'Üyelik', membership_sub: 'Sınırsız AI tasarım, gerçek görsel üretimi ve daha fazlası için yükseltin', current_plan: 'Planınız', upgrade: 'Yükselt', select: 'Seç', credit_packs: 'Kredi Paketleri', credits: 'kredi', payment_soon: 'Ödeme entegrasyonu yakında — şimdilik seçim cihazda saklanıyor.' });
+Object.assign(RU, { membership: 'Подписка', membership_sub: 'Безлимитные AI-дизайны и генерация изображений', current_plan: 'Ваш план', upgrade: 'Улучшить', select: 'Выбрать', credit_packs: 'Пакеты кредитов', credits: 'кредитов', payment_soon: 'Оплата скоро — выбор пока сохраняется локально.' });
+Object.assign(AR, { membership: 'العضوية', membership_sub: 'ترقية لتصاميم ذكاء غير محدودة وإنشاء صور حقيقية', current_plan: 'خطتك', upgrade: 'ترقية', select: 'اختيار', credit_packs: 'حزم الأرصدة', credits: 'رصيد', payment_soon: 'الدفع قريباً — يُحفظ الاختيار محلياً الآن.' });
+
 // ── Detay sayfası + paylaşım ──
 Object.assign(EN, { back: 'Back', not_found: 'Design not found', download: 'Download', share: 'Share' });
 Object.assign(TR, { back: 'Geri', not_found: 'Tasarım bulunamadı', download: 'İndir', share: 'Paylaş' });
