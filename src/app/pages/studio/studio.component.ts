@@ -6,6 +6,7 @@ import { AiService } from '../../core/ai.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
 import { renderNailThumb, colorToHex } from '../../core/nail-art';
 import { FavoritesService } from '../../core/favorites.service';
+import { ImageQuotaService } from '../../core/image-quota.service';
 import { Design } from '../../core/data.service';
 
 @Component({
@@ -36,8 +37,19 @@ import { Design } from '../../core/data.service';
         <button class="btn-primary wide" (click)="generate()" [disabled]="loading() || !prompt().trim()">
           {{ loading() ? ('✨ ' + i18n.t('studio_generating')) : ('✨ ' + i18n.t('studio_generate')) }}
         </button>
-        <p class="hint">{{ i18n.t('studio_hint') }}</p>
+        <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · {{ i18n.t('studio_hint') }}</p>
       </div>
+
+      <!-- Quota bitti uyarısı -->
+      @if (quotaBlocked()) {
+        <div class="banner quota">
+          ⚠️ {{ i18n.t('quota_empty') }}
+          <div class="qacts">
+            <button class="btn-primary" (click)="goShop()">⬆️ {{ i18n.t('quota_upgrade') }}</button>
+            <button class="btn-ghost" (click)="goShop()">➕ {{ i18n.t('quota_buy_pack') }}</button>
+          </div>
+        </div>
+      }
 
       <!-- Error banner -->
       @if (error(); as e) {
@@ -120,6 +132,9 @@ import { Design } from '../../core/data.service';
     .hint { margin: 10px 0 0; font-size: 12px; color: var(--muted-2); text-align: center; }
     .banner { margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
     .banner.err { background: rgba(178,58,58,0.14); border: 1px solid rgba(178,58,58,0.4); color: #f0b8b8; }
+    .banner.quota { background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.45); color: var(--gold-soft); }
+    .qacts { display: flex; gap: 8px; margin-top: 10px; }
+    .qacts > * { flex: 1; }
     .result { overflow: hidden; margin-top: 4px; }
     .visual { position: relative; aspect-ratio: 16 / 10; display: flex; align-items: center; justify-content: center; }
     .visual img { width: 100%; height: 100%; object-fit: cover; }
@@ -155,7 +170,9 @@ export class StudioComponent implements OnInit {
   private readonly ai = inject(AiService);
   private readonly router = inject(Router);
   readonly fav = inject(FavoritesService);
+  readonly quota = inject(ImageQuotaService);
   readonly favId = signal<number>(0);
+  readonly quotaBlocked = signal<boolean>(false);
 
   readonly prompt = signal<string>('');
   readonly loading = signal<boolean>(false);
@@ -201,6 +218,12 @@ export class StudioComponent implements OnInit {
   async generate(): Promise<void> {
     const p = this.prompt().trim();
     if (!p) return;
+    // Görsel hakkı kontrolü — bittiyse üretme, yükselt/ek paket uyarısı göster
+    if (!this.quota.consume()) {
+      this.quotaBlocked.set(true);
+      return;
+    }
+    this.quotaBlocked.set(false);
     this.loading.set(true);
     this.error.set(null);
     this.image.set(null);
@@ -281,6 +304,11 @@ export class StudioComponent implements OnInit {
     const d = this.design();
     const params = d ? { color: colorToHex(d.colors[0] ?? 'gold'), pattern: this.patternFromSpec(d) } : {};
     void this.router.navigate(['/ar'], { queryParams: params });
+  }
+
+  /** Görsel hakkı bitince Mağaza'ya yönlendirir. */
+  goShop(): void {
+    void this.router.navigate(['/shop']);
   }
 
   /** Üretilen tasarımı bir Design nesnesine çevirir (favori için). */

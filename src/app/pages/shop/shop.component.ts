@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { PlanService } from '../../core/plan.service';
+import { ImageQuotaService } from '../../core/image-quota.service';
 
 interface Plan {
   id: string; name: string; price: string; period: string;
@@ -45,17 +46,22 @@ interface Pack { id: string; name: string; credits: number; price: string; }
         }
       </div>
 
-      <div class="section-head"><h2 class="section-title">🎟️ {{ i18n.t('credit_packs') }}</h2></div>
+      <div class="section-head">
+        <h2 class="section-title">🎟️ {{ i18n.t('credit_packs') }}</h2>
+        <span class="bal">🖼️ {{ quota.remaining() }} {{ i18n.t('credits') }}</span>
+      </div>
       <div class="packs">
         @for (k of packs; track k.id) {
           <div class="pack card">
             <p class="kname">{{ k.name }}</p>
             <p class="credits">{{ k.credits }} {{ i18n.t('credits') }}</p>
             <p class="kprice">{{ k.price }}</p>
-            <button class="btn-ghost" (click)="choose('pack-' + k.id)">{{ i18n.t('select') }}</button>
+            <button class="btn-ghost" (click)="buyPack(k)">{{ i18n.t('select') }}</button>
           </div>
         }
       </div>
+
+      @if (added()) { <p class="added">✓ {{ added() }} {{ i18n.t('credits') }} {{ i18n.t('pack_added') }}</p> }
 
       <p class="note rules">📋 {{ i18n.t('upgrade_rules') }}</p>
       <p class="note">ℹ️ {{ i18n.t('payment_soon') }}</p>
@@ -88,11 +94,17 @@ interface Pack { id: string; name: string; credits: number; price: string; }
     .note { margin: 18px 0 0; font-size: 12px; color: var(--muted-2); text-align: center;
       background: var(--surface-2); border: 1px dashed var(--line); border-radius: 12px; padding: 12px; }
     .note.rules { text-align: start; line-height: 1.5; }
+    .bal { font-size: 12px; font-weight: 700; color: var(--gold-soft);
+      background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.4); padding: 3px 10px; border-radius: 999px; }
+    .added { margin: 12px 0 0; font-size: 13px; text-align: center; color: var(--gold-soft);
+      background: rgba(62,207,142,0.1); border: 1px solid rgba(62,207,142,0.35); border-radius: 12px; padding: 10px; }
   `],
 })
 export class ShopComponent {
   readonly i18n = inject(I18nService);
   readonly plan = inject(PlanService);
+  readonly quota = inject(ImageQuotaService);
+  readonly added = signal<number | null>(null);
 
   // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
   readonly plans: Plan[] = [
@@ -149,5 +161,11 @@ export class ShopComponent {
 
   choose(id: string): void {
     this.plan.select(id);
+  }
+
+  /** Ek görsel paketi satın al — bakiyeye ekler (plan değişmez). */
+  buyPack(k: Pack): void {
+    this.quota.addPack(k.credits);
+    this.added.set(k.credits);
   }
 }
