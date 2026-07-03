@@ -45,7 +45,7 @@ export class HandAnalysisService {
     const opts = (delegate: 'GPU' | 'CPU') => ({
       baseOptions: { modelAssetPath: MODEL_URL, delegate },
       runningMode: 'VIDEO' as const,
-      numHands: 2, // sol veya sağ — hangi el gösterilirse (ya da ikisi) üzerine çizer
+      numHands: 1, // tek el — sol ya da sağ, hangisi gösterilirse (stabilite için)
       minHandDetectionConfidence: 0.5,
       minHandPresenceConfidence: 0.5,
       minTrackingConfidence: 0.5,

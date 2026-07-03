@@ -104,6 +104,8 @@ export class ArComponent implements OnDestroy {
 
   private stream: MediaStream | null = null;
   private raf = 0;
+  private smooth: { x: number; y: number }[] | null = null; // yumuşatılmış son el
+  private miss = 0; // el bulunamayan ardışık kare sayısı
 
   async start(): Promise<void> {
     this.error.set(null);
@@ -146,11 +148,34 @@ export class ArComponent implements OnDestroy {
       if (ctx) {
         ctx.clearRect(0, 0, c.width, c.height);
         const hands = this.hands.detectVideo(v, performance.now());
-        this.drawNails(ctx, hands, c.width, c.height, this.color(), this.pattern());
+        const draw = this.stabilize(hands);
+        if (draw) this.drawNails(ctx, [draw], c.width, c.height, this.color(), this.pattern());
       }
     }
     this.raf = requestAnimationFrame(this.loop);
   };
+
+  /** Kareler arası yumuşatma (EMA) + kısa süreli koruma → titremeyi azaltır. */
+  private stabilize(hands: { x: number; y: number }[][]): { x: number; y: number }[] | null {
+    const raw = hands.length && hands[0].length >= 21 ? hands[0] : null;
+    if (raw) {
+      const a = 0.45; // düşük = daha sabit, yüksek = daha hızlı tepki
+      if (this.smooth && this.smooth.length === raw.length) {
+        const prev = this.smooth;
+        this.smooth = raw.map((p, i) => ({ x: a * p.x + (1 - a) * prev[i].x, y: a * p.y + (1 - a) * prev[i].y }));
+      } else {
+        this.smooth = raw.map((p) => ({ x: p.x, y: p.y }));
+      }
+      this.miss = 0;
+      return this.smooth;
+    }
+    if (this.smooth && this.miss < 8) {
+      this.miss++;
+      return this.smooth;
+    }
+    this.smooth = null;
+    return null;
+  }
 
   private drawNails(ctx: CanvasRenderingContext2D, hands: { x: number; y: number }[][], w: number, h: number, color: string, pattern: string): void {
     const tips = [4, 8, 12, 16, 20];
@@ -240,6 +265,8 @@ export class ArComponent implements OnDestroy {
     this.running.set(false);
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
+    this.smooth = null;
+    this.miss = 0;
     this.stopStream();
   }
 
