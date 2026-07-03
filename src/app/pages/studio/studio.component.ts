@@ -198,9 +198,13 @@ export class StudioComponent implements OnInit {
     try {
       const d = await this.ai.chat(p, this.i18n.locale());
       this.design.set(d);
+      // Gerçek AI: görseli hemen otomatik üret (maliyetli olsa da kullanıcı görseli bekliyor)
+      await this.genImage();
     } catch {
-      // Backend yok/hatalı → sessizce demo tasarıma düş (kart "demo" notunu gösterir)
-      this.design.set(this.ai.mockDesign(p));
+      // Backend yok/hatalı → demo tasarım + prosedürel görseli HEMEN çiz
+      const demo = this.ai.mockDesign(p);
+      this.design.set(demo);
+      this.image.set(this.proceduralImage(demo));
     } finally {
       this.loading.set(false);
     }
