@@ -278,7 +278,7 @@ export class StudioComponent implements OnInit {
   }
 
   tryAr(): void {
-    void this.router.navigate(['/scan']);
+    void this.router.navigate(['/ar']);
   }
 
   /** Üretilen tasarımı bir Design nesnesine çevirir (favori için). */

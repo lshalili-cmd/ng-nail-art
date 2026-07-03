@@ -31,5 +31,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/studio/studio.component').then((m) => m.StudioComponent),
     title: 'AI Stüdyo — Miracle Nail Art AI',
   },
+  {
+    path: 'ar',
+    loadComponent: () => import('./pages/ar/ar.component').then((m) => m.ArComponent),
+    title: 'AR Deneme — Miracle Nail Art AI',
+  },
   { path: '**', redirectTo: '' },
 ];

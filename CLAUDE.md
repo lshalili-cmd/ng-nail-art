@@ -8,6 +8,8 @@
 - Onay gelince yapılır, sonra check-in özeti verilir.
 - **Yapılacakların sıralı adım listesi (öneriler) her zaman kullanıcıya sunulur;** kullanıcı
   her öneriyi/adımı onaylar veya reddeder. Sıralamayı ve seçenekleri hep kullanıcı belirler.
+- **Kullanıcı bir seçim yapınca/onaylayınca DOĞRUDAN yapılır** — ek alt sorular sorulmaz,
+  konu dallandırılmaz, gereksiz açıklama/detay verilmez. Seçim = uygula.
 
 
 Bu projede **her değişiklikten sonra**, iş bitince aşağıdaki **check-in** adımları tamamlanır ve

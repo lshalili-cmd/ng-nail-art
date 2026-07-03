@@ -29,6 +29,45 @@ export interface HandAnalysis {
 export class HandAnalysisService {
   private landmarker: HandLandmarker | null = null;
   private initPromise: Promise<void> | null = null;
+  private videoLandmarker: HandLandmarker | null = null;
+  private videoInitPromise: Promise<void> | null = null;
+
+  /** Canlı AR için VIDEO modunda el takipçisini yükler. */
+  initVideo(): Promise<void> {
+    if (!this.videoInitPromise) {
+      this.videoInitPromise = this.loadVideo().catch((e) => { this.videoInitPromise = null; throw e; });
+    }
+    return this.videoInitPromise;
+  }
+
+  private async loadVideo(): Promise<void> {
+    const vision = await FilesetResolver.forVisionTasks(WASM_URL);
+    const opts = (delegate: 'GPU' | 'CPU') => ({
+      baseOptions: { modelAssetPath: MODEL_URL, delegate },
+      runningMode: 'VIDEO' as const,
+      numHands: 1,
+      minHandDetectionConfidence: 0.5,
+      minHandPresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+    try {
+      this.videoLandmarker = await HandLandmarker.createFromOptions(vision, opts('GPU'));
+    } catch (e) {
+      console.warn('[MediaPipe] AR GPU başarısız, CPU deneniyor:', e);
+      this.videoLandmarker = await HandLandmarker.createFromOptions(vision, opts('CPU'));
+    }
+  }
+
+  /** Canlı video karesinden el noktalarını döndürür (VIDEO modu). */
+  detectVideo(video: HTMLVideoElement, timestampMs: number): NormalizedLandmark[][] {
+    if (!this.videoLandmarker) return [];
+    try {
+      const res = this.videoLandmarker.detectForVideo(video, timestampMs);
+      return res.landmarks ?? [];
+    } catch {
+      return [];
+    }
+  }
 
   /** MediaPipe modelini bir kez yükler (idempotent). CDN erişimi gerekir. */
   init(): Promise<void> {
