@@ -114,6 +114,7 @@ export class ShopComponent {
   readonly added = signal<number | null>(null);
 
   // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
+  // (kart metinleri: aylık üretim + yıllık toplam notları — 2026-07-03)
   readonly plans: Plan[] = [
     { id: 'free', name: 'Free', price: '$0', period: '',
       features: ['1 AI görsel/ay', 'El tarama · AI Stüdyo · AR: 1 kez', 'Galeri (135+): tam erişim'] },
