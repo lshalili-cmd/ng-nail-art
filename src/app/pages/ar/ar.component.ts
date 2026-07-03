@@ -54,7 +54,7 @@ interface Swatch { name: string; hex: string; }
   styles: [`
     .stage { position: relative; border-radius: 22px; overflow: hidden; background: #000;
       border: 1px solid var(--line); margin-top: 6px; min-height: 300px; }
-    .mirror { transform: scaleX(-1); }
+    .mirror { position: relative; }
     .media { width: 100%; display: block; }
     video.media { max-height: 64vh; object-fit: contain; background: #000; }
     canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -180,13 +180,9 @@ export class ArComponent implements OnDestroy {
     out.height = v.videoHeight || 960;
     const ctx = out.getContext('2d');
     if (!ctx) return;
-    // Aynalı görüntü olarak birleştir
-    ctx.save();
-    ctx.translate(out.width, 0);
-    ctx.scale(-1, 1);
+    // Gerçek yön (ayna yok)
     ctx.drawImage(v, 0, 0, out.width, out.height);
     ctx.drawImage(c, 0, 0, out.width, out.height);
-    ctx.restore();
     this.photo.set(out.toDataURL('image/png'));
     this.stop();
   }
