@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { I18nService, LOCALES } from '../../core/i18n.service';
-import { DataService, Design } from '../../core/data.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
 
@@ -91,14 +90,9 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 export class ProfileComponent {
   readonly i18n = inject(I18nService);
   readonly fav = inject(FavoritesService);
-  private readonly data = inject(DataService);
   readonly locales = LOCALES;
 
-  readonly favDesigns = computed<Design[]>(() =>
-    this.fav.ids()
-      .map((id) => this.data.explore.find((d) => d.id === id))
-      .filter((d): d is Design => !!d),
-  );
+  readonly favDesigns = this.fav.items;
   readonly menu = [
     { icon: '❤️', key: 'my_fav' },
     { icon: '📱', key: 'tryon_hist' },

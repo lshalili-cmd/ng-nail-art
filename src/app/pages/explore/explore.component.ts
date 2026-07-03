@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HeaderComponent } from '../../shared/header.component';
 import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
-import { DataService, Design } from '../../core/data.service';
-import { BackendService } from '../../core/api.service';
+import { DataService } from '../../core/data.service';
 
 @Component({
   selector: 'app-explore',
@@ -14,15 +13,6 @@ import { BackendService } from '../../core/api.service';
     <app-header />
     <div class="page">
       <div class="section-head"><h2 class="section-title">{{ i18n.t('explore_title') }}</h2></div>
-
-      @if (saved().length) {
-        <div class="section-head"><h2 class="section-title">💾 {{ i18n.t('saved_designs') }}</h2></div>
-        <div class="rail">
-          @for (d of saved(); track d.id) {
-            <app-design-card [design]="d" [width]="150" />
-          }
-        </div>
-      }
 
       <div class="search">
         <span>🔍</span>
@@ -66,16 +56,9 @@ import { BackendService } from '../../core/api.service';
     .empty { grid-column: 1 / -1; text-align: center; color: var(--muted-2); padding: 30px 0; }
   `],
 })
-export class ExploreComponent implements OnInit {
+export class ExploreComponent {
   readonly i18n = inject(I18nService);
   readonly data = inject(DataService);
-  private readonly backend = inject(BackendService);
-  readonly saved = signal<Design[]>([]);
-
-  ngOnInit(): void {
-    // Veritabanındaki kayıtlı tasarımları yükle (backend kapalıysa boş kalır)
-    void this.backend.getDesigns().then((d) => this.saved.set(d));
-  }
 
   readonly cats = [
     { key: 'all', label: 'cat_all' },

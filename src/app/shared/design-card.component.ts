@@ -54,7 +54,7 @@ export class DesignCardComponent {
 
   toggleFav(e: Event): void {
     e.stopPropagation();
-    this.fav.toggle(this.design.id);
+    this.fav.toggle(this.design);
   }
 
   get label(): string {
