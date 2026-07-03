@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
+import { downloadImage, shareImage } from '../../core/share';
 
 interface Swatch { name: string; hex: string; }
 
@@ -45,13 +46,16 @@ interface Swatch { name: string; hex: string; }
 
       <!-- Kontroller -->
       <div class="actions">
-        @if (!running()) {
+        @if (photo(); as p) {
+          <button class="btn-primary" (click)="download(p)">💾 {{ i18n.t('download') }}</button>
+          <button class="btn-ghost" (click)="share(p)">📤 {{ i18n.t('share') }}</button>
+          <button class="btn-ghost" (click)="photo.set(null)">🔄 {{ i18n.t('rescan') }}</button>
+        } @else if (!running()) {
           <button class="btn-primary" (click)="start()" [disabled]="starting()">📸 {{ i18n.t('ar_title') }}</button>
         } @else {
           <button class="btn-primary" (click)="capture()">📷 {{ i18n.t('ar_capture') }}</button>
           <button class="btn-ghost" (click)="stop()">✕ {{ i18n.t('ar_close') }}</button>
         }
-        @if (photo()) { <button class="btn-ghost" (click)="photo.set(null)">🔄 {{ i18n.t('rescan') }}</button> }
       </div>
     </div>
   `,
@@ -269,6 +273,15 @@ export class ArComponent implements OnDestroy {
     ctx.drawImage(c, 0, 0, out.width, out.height);
     this.photo.set(out.toDataURL('image/png'));
     this.stop();
+  }
+
+  download(url: string): void {
+    downloadImage(url, 'nailart-ar.png');
+  }
+
+  async share(url: string): Promise<void> {
+    const ok = await shareImage(url, 'nailart-ar.png', 'Miracle Nail Art');
+    if (!ok) downloadImage(url, 'nailart-ar.png');
   }
 
   stop(): void {

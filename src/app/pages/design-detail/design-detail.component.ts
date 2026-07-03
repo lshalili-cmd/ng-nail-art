@@ -5,6 +5,7 @@ import { I18nService } from '../../core/i18n.service';
 import { DataService, Design } from '../../core/data.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { colorToHex } from '../../core/nail-art';
+import { downloadImage, shareImage } from '../../core/share';
 
 @Component({
   selector: 'app-design-detail',
@@ -44,6 +45,12 @@ import { colorToHex } from '../../core/nail-art';
                 {{ fav.has(d.id) ? ('❤️ ' + i18n.t('my_fav')) : ('🤍 ' + i18n.t('my_fav')) }}
               </button>
             </div>
+            @if (d.img) {
+              <div class="actions">
+                <button class="btn-ghost" (click)="download(d)">💾 {{ i18n.t('download') }}</button>
+                <button class="btn-ghost" (click)="share(d)">📤 {{ i18n.t('share') }}</button>
+              </div>
+            }
           </div>
         </div>
       } @else {
@@ -101,5 +108,16 @@ export class DesignDetailComponent {
     void this.router.navigate(['/ar'], {
       queryParams: { color: colorToHex(d.colors[0] ?? 'gold'), pattern: d.pattern ?? 'glossy' },
     });
+  }
+
+  download(d: Design): void {
+    if (d.img) downloadImage(d.img, (d.name || 'design') + '.png');
+  }
+
+  async share(d: Design): Promise<void> {
+    if (!d.img) return;
+    const name = (d.name || 'design') + '.png';
+    const ok = await shareImage(d.img, name, d.name);
+    if (!ok) downloadImage(d.img, name);
   }
 }
