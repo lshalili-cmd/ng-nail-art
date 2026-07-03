@@ -1,5 +1,13 @@
 # ngNailArt — Çalışma Kuralları (kalıcı)
 
+## Çalışma tarzı: ADIM ADIM ONAY (en önemli kural)
+
+- Her adımdan/değişiklikten **önce** ne yapılacağı kullanıcıya kısaca anlatılır ve **onay beklenir**.
+- Kullanıcının **açıkça istemediği** hiçbir özellik, buton, bölüm veya ekran eklenmez.
+- Emin olunmayan yerde tahminle ilerlenmez; sorulur.
+- Onay gelince yapılır, sonra check-in özeti verilir.
+
+
 Bu projede **her değişiklikten sonra**, iş bitince aşağıdaki **check-in** adımları tamamlanır ve
 kullanıcıya kısa bir özet olarak raporlanır. Bu, kullanıcının her komutunda geçerlidir.
 
