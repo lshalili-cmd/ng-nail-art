@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Design } from '../core/data.service';
 import { I18nService } from '../core/i18n.service';
 import { FavoritesService } from '../core/favorites.service';
@@ -6,9 +7,10 @@ import { FavoritesService } from '../core/favorites.service';
 @Component({
   selector: 'app-design-card',
   standalone: true,
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="dc" [style.width.px]="width">
+    <article class="dc" [style.width.px]="width" [routerLink]="['/design', design.id]">
       <div class="thumb" [style.background]="design.grad">
         @if (design.img) { <img class="art" [src]="design.img" alt="" loading="lazy" /> }
         @if (design.badge) {
@@ -28,7 +30,7 @@ import { FavoritesService } from '../core/favorites.service';
     </article>
   `,
   styles: [`
-    .dc { border-radius: 16px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
+    .dc { border-radius: 16px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); cursor: pointer; display: block; }
     .thumb { position: relative; aspect-ratio: 3 / 4; }
     .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .badge { position: absolute; top: 8px; inset-inline-start: 8px; }

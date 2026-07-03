@@ -183,6 +183,12 @@ Object.assign(AR, {
   no_hand: 'لم يتم اكتشاف اليد — أظهري كفّك بوضوح في الإطار',
 });
 
+// ── Detay sayfası ──
+Object.assign(EN, { back: 'Back', not_found: 'Design not found' });
+Object.assign(TR, { back: 'Geri', not_found: 'Tasarım bulunamadı' });
+Object.assign(RU, { back: 'Назад', not_found: 'Дизайн не найден' });
+Object.assign(AR, { back: 'رجوع', not_found: 'التصميم غير موجود' });
+
 // ── AR Deneme ──
 Object.assign(EN, { ar_title: 'AR Try-On', ar_capture: 'Capture', ar_color: 'Polish color', ar_close: 'Close', ar_hint: 'Show your hand to the camera' });
 Object.assign(TR, { ar_title: 'AR Deneme', ar_capture: 'Fotoğraf', ar_color: 'Oje rengi', ar_close: 'Kapat', ar_hint: 'Elinizi kameraya gösterin' });
