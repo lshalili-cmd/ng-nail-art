@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { I18nService, LOCALES } from '../../core/i18n.service';
+import { DataService, Design } from '../../core/data.service';
+import { FavoritesService } from '../../core/favorites.service';
+import { DesignCardComponent } from '../../shared/design-card.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
+  imports: [DesignCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
@@ -15,9 +19,21 @@ import { I18nService, LOCALES } from '../../core/i18n.service';
 
       <div class="stats">
         <div class="stat card"><span class="n">12</span><span class="l">{{ i18n.t('designs') }}</span></div>
-        <div class="stat card"><span class="n">28</span><span class="l">{{ i18n.t('favorites') }}</span></div>
+        <div class="stat card"><span class="n">{{ fav.count() }}</span><span class="l">{{ i18n.t('favorites') }}</span></div>
         <div class="stat card"><span class="n">7</span><span class="l">{{ i18n.t('tryons') }}</span></div>
       </div>
+
+      <!-- Favoriler -->
+      <h2 class="fav-title">❤️ {{ i18n.t('my_fav') }}</h2>
+      @if (favDesigns().length) {
+        <div class="fav-grid">
+          @for (d of favDesigns(); track d.id) {
+            <app-design-card [design]="d" [width]="0" />
+          }
+        </div>
+      } @else {
+        <p class="fav-empty">{{ i18n.t('no_favorites') }}</p>
+      }
 
       <div class="lang-block card">
         <p class="lbl">🌐 {{ i18n.t('language') }}</p>
@@ -51,6 +67,12 @@ import { I18nService, LOCALES } from '../../core/i18n.service';
     .stat { padding: 16px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
     .stat .n { font-size: 22px; font-weight: 700; color: var(--gold); font-family: var(--font-head); }
     .stat .l { font-size: 11px; color: var(--muted-2); }
+    .fav-title { font-family: var(--font-head); font-size: 17px; margin: 6px 0 12px; }
+    .fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .fav-grid ::ng-deep .dc { width: 100% !important; }
+    .fav-empty { color: var(--muted-2); font-size: 13px; text-align: center;
+      padding: 20px; margin: 0 0 18px; background: var(--surface-2);
+      border: 1px dashed var(--line); border-radius: 14px; }
     .lang-block { padding: 16px; margin-bottom: 16px; }
     .lbl { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--muted); }
     .langs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -68,7 +90,15 @@ import { I18nService, LOCALES } from '../../core/i18n.service';
 })
 export class ProfileComponent {
   readonly i18n = inject(I18nService);
+  readonly fav = inject(FavoritesService);
+  private readonly data = inject(DataService);
   readonly locales = LOCALES;
+
+  readonly favDesigns = computed<Design[]>(() =>
+    this.fav.ids()
+      .map((id) => this.data.explore.find((d) => d.id === id))
+      .filter((d): d is Design => !!d),
+  );
   readonly menu = [
     { icon: '❤️', key: 'my_fav' },
     { icon: '📱', key: 'tryon_hist' },

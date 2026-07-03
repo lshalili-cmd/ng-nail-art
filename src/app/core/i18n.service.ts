@@ -190,10 +190,10 @@ Object.assign(RU, { nav_studio: 'Студия' });
 Object.assign(AR, { nav_studio: 'استوديو' });
 
 // ── Rozet etiketleri + eşleşme ──
-Object.assign(EN, { badge_trending: 'Trending', badge_new: 'New', badge_premium: 'Premium', match: 'match', for_you: 'Matched for you' });
-Object.assign(TR, { badge_trending: 'Trend', badge_new: 'Yeni', badge_premium: 'Premium', match: 'uyum', for_you: 'Size özel eşleşti' });
-Object.assign(RU, { badge_trending: 'Тренд', badge_new: 'Новое', badge_premium: 'Премиум', match: 'совпадение', for_you: 'Подобрано для вас' });
-Object.assign(AR, { badge_trending: 'رائج', badge_new: 'جديد', badge_premium: 'مميز', match: 'تطابق', for_you: 'مطابق لكِ' });
+Object.assign(EN, { badge_trending: 'Trending', badge_new: 'New', badge_premium: 'Premium', match: 'match', for_you: 'Matched for you', no_favorites: 'No favorites yet — tap the heart on a design to save it.' });
+Object.assign(TR, { badge_trending: 'Trend', badge_new: 'Yeni', badge_premium: 'Premium', match: 'uyum', for_you: 'Size özel eşleşti', no_favorites: 'Henüz favori yok — bir tasarımdaki kalbe dokunarak kaydedin.' });
+Object.assign(RU, { badge_trending: 'Тренд', badge_new: 'Новое', badge_premium: 'Премиум', match: 'совпадение', for_you: 'Подобрано для вас', no_favorites: 'Пока нет избранного — нажмите сердечко на дизайне.' });
+Object.assign(AR, { badge_trending: 'رائج', badge_new: 'جديد', badge_premium: 'مميز', match: 'تطابق', for_you: 'مطابق لكِ', no_favorites: 'لا مفضلات بعد — اضغطي القلب على أي تصميم.' });
 
 const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 

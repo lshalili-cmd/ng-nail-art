@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { Design } from '../core/data.service';
 import { I18nService } from '../core/i18n.service';
+import { FavoritesService } from '../core/favorites.service';
 
 @Component({
   selector: 'app-design-card',
@@ -15,7 +16,7 @@ import { I18nService } from '../core/i18n.service';
             {{ label }}
           </span>
         }
-        <button class="heart" (click)="liked = !liked" [attr.aria-pressed]="liked">{{ liked ? '❤️' : '🤍' }}</button>
+        <button class="heart" (click)="toggleFav($event)" [attr.aria-pressed]="fav.has(design.id)">{{ fav.has(design.id) ? '❤️' : '🤍' }}</button>
       </div>
       <div class="meta">
         <p class="nm">{{ design.name }}</p>
@@ -46,10 +47,15 @@ import { I18nService } from '../core/i18n.service';
 })
 export class DesignCardComponent {
   readonly i18n = inject(I18nService);
+  readonly fav = inject(FavoritesService);
   @Input({ required: true }) design!: Design;
   @Input() width = 150;
   @Input() score?: number;
-  liked = false;
+
+  toggleFav(e: Event): void {
+    e.stopPropagation();
+    this.fav.toggle(this.design.id);
+  }
 
   get label(): string {
     switch (this.design.badge) {
