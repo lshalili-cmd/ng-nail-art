@@ -37,6 +37,30 @@ Bu hâliyle backend **anahtarsız da çalışır**: `/api/ai/status` "not_config
 - `POST /api/ai/chat`            `{ prompt, language }`  → tasarım JSON'u
 - `POST /api/ai/generate-image`  `{ prompt, style, shape, colors, finish, tier }` → görsel
 
-## Sonraki adım
+## Veritabanı (Prisma + SQLite)
 
-Prisma + veritabanı (tasarım/favori/analiz kalıcılığı) bir sonraki artımda eklenecek.
+Harici veritabanı sunucusu gerekmez; SQLite dosyası (`prisma/dev.db`) kullanılır.
+
+İlk kurulum (`server` klasöründe):
+
+```bash
+copy .env.example .env      # Windows (veya: cp .env.example .env)
+npm install                 # @prisma/client + prisma CLI dahil
+npm run db:setup            # prisma generate + migrate + seed (örnek tasarımlar)
+npm start
+```
+
+`npm run db:setup` şunları yapar: Prisma client üretir, `prisma/dev.db` veritabanını oluşturur,
+birkaç örnek tasarım ekler. **Veritabanı kurulmadan da sunucu çalışır** — DB uçları o zaman
+`503 DB_NOT_READY` döner (AI uçları etkilenmez).
+
+### DB uçları
+
+- `GET  /api/designs`  ·  `POST /api/designs`
+- `GET  /api/favorites`  ·  `POST /api/favorites`  ·  `DELETE /api/favorites/:designId`  (query: `userId`, varsayılan `guest`)
+- `POST /api/analysis`  ·  `GET /api/analysis/latest`
+
+### Sonraki adım
+
+Frontend'i bu uçlara bağlamak: AI Studio üretimlerini `POST /api/designs` ile kaydetmek,
+favorileri `localStorage` yerine `/api/favorites`'e taşımak, taramaları `/api/analysis`'e yazmak.

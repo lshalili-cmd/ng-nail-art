@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const ai = require('./ai');
+const db = require('./db');
 
 ai.initProviders();
 
@@ -57,6 +58,99 @@ app.post('/api/ai/generate-image', async (req, res) => {
   } catch (e) {
     handleAiError(res, e);
   }
+});
+
+// ===== Veritabanı uçları (Prisma) =====
+function dbNotReady(res) {
+  return res.status(503).json({ success: false, error: 'Veritabanı kurulmadı. server klasöründe: npm run db:setup', code: 'DB_NOT_READY' });
+}
+function dbError(res, e) {
+  console.error('❌ DB hatası:', e.message);
+  res.status(500).json({ success: false, error: e.message, code: 'DB_ERROR' });
+}
+
+// --- Tasarımlar ---
+app.get('/api/designs', async (_req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  try {
+    const items = await db.prisma.design.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, designs: items.map(db.designOut), count: items.length });
+  } catch (e) { dbError(res, e); }
+});
+
+app.post('/api/designs', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const b = req.body || {};
+  if (!b.name) return res.status(400).json({ success: false, error: 'name gerekli', code: 'BAD_REQUEST' });
+  try {
+    const d = await db.prisma.design.create({
+      data: {
+        name: b.name, artist: b.artist || 'AI Studio', pattern: b.pattern || 'glossy', category: b.category || 'ai',
+        colors: db.stringifyArr(b.colors), shapes: db.stringifyArr(b.shapes), tones: db.stringifyArr(b.tones),
+        undertones: db.stringifyArr(b.undertones), seasons: db.stringifyArr(b.seasons && b.seasons.length ? b.seasons : ['all']),
+        img: b.img || '', prompt: b.prompt || '', source: b.source || 'ai_studio',
+      },
+    });
+    res.json({ success: true, design: db.designOut(d) });
+  } catch (e) { dbError(res, e); }
+});
+
+// --- Favoriler (userId ile; varsayılan "guest") ---
+app.get('/api/favorites', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const userId = req.query.userId || 'guest';
+  try {
+    const favs = await db.prisma.favorite.findMany({ where: { userId }, include: { design: true }, orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, designs: favs.map((f) => db.designOut(f.design)) });
+  } catch (e) { dbError(res, e); }
+});
+
+app.post('/api/favorites', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const { userId = 'guest', designId } = req.body || {};
+  if (!designId) return res.status(400).json({ success: false, error: 'designId gerekli', code: 'BAD_REQUEST' });
+  try {
+    const favorite = await db.prisma.favorite.upsert({
+      where: { userId_designId: { userId, designId } },
+      update: {},
+      create: { userId, designId },
+    });
+    res.json({ success: true, favorite });
+  } catch (e) { dbError(res, e); }
+});
+
+app.delete('/api/favorites/:designId', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const userId = req.query.userId || 'guest';
+  const designId = parseInt(req.params.designId, 10);
+  try {
+    await db.prisma.favorite.deleteMany({ where: { userId, designId } });
+    res.json({ success: true });
+  } catch (e) { dbError(res, e); }
+});
+
+// --- Tarama analizleri ---
+app.post('/api/analysis', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const b = req.body || {};
+  try {
+    const analysis = await db.prisma.scanAnalysis.create({
+      data: {
+        userId: b.userId || 'guest', toneKey: b.toneKey || null, undertone: b.undertone || null,
+        fingerLength: b.fingerLength || null, nailShape: b.nailShape || null, hex: b.hex || null,
+      },
+    });
+    res.json({ success: true, analysis });
+  } catch (e) { dbError(res, e); }
+});
+
+app.get('/api/analysis/latest', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const userId = req.query.userId || 'guest';
+  try {
+    const analysis = await db.prisma.scanAnalysis.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
+    res.json({ success: true, analysis });
+  } catch (e) { dbError(res, e); }
 });
 
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' }));

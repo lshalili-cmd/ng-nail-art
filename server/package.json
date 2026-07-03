@@ -2,14 +2,22 @@
   "name": "ngnailart-server",
   "version": "0.1.0",
   "private": true,
-  "description": "ngNailArt backend — Express + çok sağlayıcılı AI",
+  "description": "ngNailArt backend — Express + çok sağlayıcılı AI + Prisma",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "seed": "node prisma/seed.js",
+    "db:setup": "prisma generate && prisma migrate dev --name init && node prisma/seed.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.0.0"
   }
 }
