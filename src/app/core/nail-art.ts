@@ -167,8 +167,11 @@ export function renderNailThumb(colors: string[], pattern = 'glossy', w = 300, h
       drawNail(ctx, x, h - nh - h * 0.09, nailW, nh, a, b, finish, pattern, glitter);
       x += nailW + gap;
     }
-    return c.toDataURL('image/png');
-  } catch {
+    const url = c.toDataURL('image/png');
+    console.log(`[NailArt] önizleme çizildi: desen=${pattern}, uzunluk=${url.length}`);
+    return url;
+  } catch (e) {
+    console.warn('[NailArt] çizim hatası:', e);
     return '';
   }
 }
