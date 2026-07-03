@@ -159,7 +159,7 @@ export class ArComponent implements OnDestroy {
   private stabilize(hands: { x: number; y: number }[][]): { x: number; y: number }[] | null {
     const raw = hands.length && hands[0].length >= 21 ? hands[0] : null;
     if (raw) {
-      const a = 0.45; // düşük = daha sabit, yüksek = daha hızlı tepki
+      const a = 0.28; // düşük = daha sabit, yüksek = daha hızlı tepki
       if (this.smooth && this.smooth.length === raw.length) {
         const prev = this.smooth;
         this.smooth = raw.map((p, i) => ({ x: a * p.x + (1 - a) * prev[i].x, y: a * p.y + (1 - a) * prev[i].y }));
