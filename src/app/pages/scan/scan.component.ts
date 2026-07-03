@@ -9,8 +9,10 @@ import { DataService, Design } from '../../core/data.service';
 import { HandAnalysisService, HandAnalysis, FingerLength } from '../../core/hand-analysis.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { recommend, ScoredDesign } from '../../core/recommendation';
+import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
 
 type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
+type CaptureMode = 'full' | 'closeup';
 
 @Component({
   selector: 'app-scan',
@@ -48,16 +50,17 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
       @switch (stage()) {
         @case ('idle') {
           <div class="actions">
-            <button class="btn-primary" (click)="startCamera()">📸 {{ i18n.t('cam_start') }}</button>
-            <button class="btn-ghost" (click)="fileInput.click()">🖼️ {{ i18n.t('upload') }}</button>
+            <button class="btn-primary" (click)="startFull()">📸 {{ i18n.t('cam_start') }}</button>
+            <button class="btn-ghost" (click)="mode.set('full'); fileInput.click()">🖼️ {{ i18n.t('upload') }}</button>
           </div>
           <p class="sub">{{ i18n.t('scan_sub') }}</p>
           <p class="tip">💡 {{ i18n.t('capture_tip') }}</p>
         }
         @case ('camera') {
+          @if (mode() === 'closeup') { <p class="tip">🔍 {{ i18n.t('closeup_guide') }}</p> }
           <div class="actions">
             <button class="btn-primary" (click)="capture()">✨ {{ i18n.t('cam_capture') }}</button>
-            <button class="btn-ghost" (click)="stopCamera(); stage.set('idle')">✕ {{ i18n.t('cam_cancel') }}</button>
+            <button class="btn-ghost" (click)="cancelCamera()">✕ {{ i18n.t('cam_cancel') }}</button>
           </div>
         }
         @case ('results') {
@@ -84,12 +87,16 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
             </div>
           }
 
-          <!-- Otomatik tırnak şekli tahmini + manuel onay/düzeltme -->
+          <!-- Tırnak şekli: manuel seçim asıl kaynak; otomatik yalnızca yaklaşık öneri -->
           <div class="section-head">
             <h2 class="section-title">{{ i18n.t('choose_shape') }}</h2>
-            @if (analysis(); as a) {
+            @if (closeup(); as c) {
+              @if (c.shape) {
+                <span class="conf on">📸 {{ i18n.t('shp_' + c.shape) }} · %{{ pct(c.confidence) }}</span>
+              }
+            } @else if (analysis(); as a) {
               @if (a.nailShape) {
-                <span class="conf">🤖 {{ i18n.t('shp_' + a.nailShape) }} · %{{ pct(a.shapeConfidence) }}</span>
+                <span class="conf">🤖 {{ i18n.t('shp_' + a.nailShape) }} · %{{ pct(a.shapeConfidence) }} · {{ i18n.t('approx') }}</span>
               }
             }
           </div>
@@ -101,6 +108,10 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
                 <span class="sl">{{ i18n.t('shp_' + s.key) }}</span>
               </button>
             }
+          </div>
+          <div class="actions">
+            <button class="btn-ghost" (click)="startCloseup()">🔍 {{ i18n.t('closeup_detect') }}</button>
+            <button class="btn-ghost" (click)="pickCloseupFile()">🖼️ {{ i18n.t('closeup_upload') }}</button>
           </div>
 
           <div class="section-head"><h2 class="section-title">💎 {{ i18n.t('perfect_match') }}</h2></div>
@@ -117,6 +128,7 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
     </div>
 
     <input #fileInput type="file" accept="image/*" hidden (change)="onFile($event)" />
+    <input #closeupInput type="file" accept="image/*" hidden (change)="onCloseupFile($event)" />
   `,
   styles: [`
     .stage { position: relative; border-radius: 22px; overflow: hidden; background: var(--surface);
@@ -151,8 +163,9 @@ type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
     .ai { font-size: 24px; }
     .k { margin: 0; font-size: 11px; color: var(--muted-2); }
     .v { margin: 2px 0 0; font-size: 14.5px; font-weight: 600; color: var(--gold-soft); }
-    .conf { font-size: 11px; font-weight: 700; color: var(--gold-soft);
-      background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4); padding: 3px 9px; border-radius: 999px; }
+    .conf { font-size: 11px; font-weight: 700; color: var(--muted-2);
+      background: var(--surface-2); border: 1px solid var(--line); padding: 3px 9px; border-radius: 999px; }
+    .conf.on { color: var(--gold-soft); background: rgba(212,175,55,0.14); border-color: rgba(212,175,55,0.4); }
     .shhint { margin: 0 0 10px; font-size: 12px; color: var(--muted-2); }
     .shapes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .shape { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px;
@@ -171,10 +184,13 @@ export class ScanComponent implements OnDestroy {
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly frame = viewChild.required<ElementRef<HTMLCanvasElement>>('frame');
+  private readonly closeupInput = viewChild.required<ElementRef<HTMLInputElement>>('closeupInput');
 
   readonly stage = signal<Stage>('idle');
+  readonly mode = signal<CaptureMode>('full');
   readonly error = signal<string | null>(null);
   readonly analysis = signal<HandAnalysis | null>(null);
+  readonly closeup = signal<CloseupResult | null>(null);
   readonly shape = signal<string>('almond');
 
   private stream: MediaStream | null = null;
@@ -215,6 +231,31 @@ export class ScanComponent implements OnDestroy {
         });
       }
     }, { allowSignalWrites: true });
+  }
+
+  /** Tam el taraması için kamerayı aç. */
+  startFull(): void {
+    this.mode.set('full');
+    void this.startCamera();
+  }
+
+  /** Tek tırnak yakın çekimi için kamerayı aç. */
+  startCloseup(): void {
+    this.mode.set('closeup');
+    void this.startCamera();
+  }
+
+  /** Yakın çekim için dosya seç. */
+  pickCloseupFile(): void {
+    this.mode.set('closeup');
+    this.closeupInput().nativeElement.click();
+  }
+
+  /** Kamerayı iptal et — yakın çekimdeysek sonuçlara, değilsek boşa dön. */
+  cancelCamera(): void {
+    this.stopCamera();
+    this.stage.set(this.mode() === 'closeup' && this.analysis() ? 'results' : 'idle');
+    this.mode.set('full');
   }
 
   async startCamera(): Promise<void> {
@@ -261,7 +302,47 @@ export class ScanComponent implements OnDestroy {
     work.height = v.videoHeight;
     work.getContext('2d')?.drawImage(v, 0, 0, work.width, work.height);
     this.stopCamera();
-    await this.runAnalysis(work);
+    if (this.mode() === 'closeup') {
+      this.runCloseup(work);
+    } else {
+      await this.runAnalysis(work);
+    }
+  }
+
+  /** Yakın çekim karesinden tırnak şeklini çıkarır ve seçili şekli günceller. */
+  private runCloseup(work: HTMLCanvasElement): void {
+    const res = detectNailShapeCloseup(work);
+    this.mode.set('full');
+    if (!res.shape) {
+      this.error.set(this.i18n.t('closeup_fail'));
+      this.stage.set(this.analysis() ? 'results' : 'idle');
+      return;
+    }
+    this.error.set(null);
+    this.closeup.set(res);
+    this.shape.set(res.shape);
+    this.stage.set('results');
+    console.log(`[Scan] yakın çekim tırnak şekli: ${res.shape} (%${Math.round(res.confidence * 100)})`);
+  }
+
+  onCloseupFile(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0];
+    input.value = '';
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const work = document.createElement('canvas');
+      const maxW = 1024;
+      const scale = Math.min(1, maxW / img.naturalWidth);
+      work.width = Math.round(img.naturalWidth * scale);
+      work.height = Math.round(img.naturalHeight * scale);
+      work.getContext('2d')?.drawImage(img, 0, 0, work.width, work.height);
+      this.runCloseup(work);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => this.error.set(this.i18n.t('err_camera'));
+    img.src = URL.createObjectURL(f);
   }
 
   /** Video gerçek görüntü üretene kadar (en fazla ~2.5sn) bekler. */
@@ -313,6 +394,7 @@ export class ScanComponent implements OnDestroy {
 
   private async runAnalysis(work: HTMLCanvasElement): Promise<void> {
     this.error.set(null);
+    this.closeup.set(null); // yeni tam tarama → önceki yakın çekim sonucunu temizle
     this.stage.set('analyzing');
     try {
       await this.hands.init();
@@ -369,6 +451,8 @@ export class ScanComponent implements OnDestroy {
 
   reset(): void {
     this.analysis.set(null);
+    this.closeup.set(null);
+    this.mode.set('full');
     this.error.set(null);
     this.stage.set('idle');
   }
