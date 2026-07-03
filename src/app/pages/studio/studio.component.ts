@@ -196,18 +196,29 @@ export class StudioComponent implements OnInit {
     this.error.set(null);
     this.image.set(null);
     try {
-      const d = await this.ai.chat(p, this.i18n.locale());
-      this.design.set(d);
-      // Gerçek AI: görseli hemen otomatik üret (maliyetli olsa da kullanıcı görseli bekliyor)
-      await this.genImage();
+      const s = this.status();
+      if (s && s.status === 'ready') {
+        // AI hazır → gerçek tasarım + görsel
+        const d = await this.ai.chat(p, this.i18n.locale());
+        this.design.set(d);
+        await this.genImage();
+      } else {
+        // AI yapılandırılmamış → gereksiz backend çağrısı yapma, doğrudan demo + prosedürel görsel
+        this.demoDesign(p);
+      }
     } catch {
-      // Backend yok/hatalı → demo tasarım + prosedürel görseli HEMEN çiz
-      const demo = this.ai.mockDesign(p);
-      this.design.set(demo);
-      this.image.set(this.proceduralImage(demo));
+      // Beklenmedik hata → demo'ya düş
+      this.demoDesign(p);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Demo tasarım + istemci tarafı prosedürel görseli hemen ayarlar. */
+  private demoDesign(prompt: string): void {
+    const demo = this.ai.mockDesign(prompt);
+    this.design.set(demo);
+    this.image.set(this.proceduralImage(demo));
   }
 
   async genImage(): Promise<void> {
