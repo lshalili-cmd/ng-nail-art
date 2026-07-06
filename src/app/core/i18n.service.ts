@@ -215,6 +215,56 @@ Object.assign(TR, { membership: 'Üyelik', membership_sub: 'Sınırsız AI tasar
 Object.assign(RU, { membership: 'Подписка', membership_sub: 'Безлимитные AI-дизайны и генерация изображений', current_plan: 'Ваш план', upgrade: 'Улучшить', select: 'Выбрать', credit_packs: 'Пакеты изображений', credits: 'изображений', payment_soon: 'Оплата скоро — выбор пока сохраняется локально.', plan_locked: 'Недоступно', renew: 'Продлить', days_left: 'дн. осталось', upgrade_rules: 'Нельзя повторно купить активный план до окончания — только улучшение. После окончания можно выбрать любой план (в т.ч. ниже). То же для доп. пакетов: нельзя купить тот же пакет до окончания — только переход на больший.', quota_remaining: 'Осталось изображений', quota_empty: 'Изображения закончились. Улучшите план или купите доп. пакет.', quota_upgrade: 'Улучшить план', quota_buy_pack: 'Купить пакет', pack_added: 'добавлено' });
 Object.assign(AR, { membership: 'العضوية', membership_sub: 'ترقية لتصاميم ذكاء غير محدودة وإنشاء صور حقيقية', current_plan: 'خطتك', upgrade: 'ترقية', select: 'اختيار', credit_packs: 'حزم الصور', credits: 'صورة', payment_soon: 'الدفع قريباً — يُحفظ الاختيار محلياً الآن.', plan_locked: 'غير متاح', renew: 'تجديد', days_left: 'يوم متبقٍ', upgrade_rules: 'لا يمكنك إعادة شراء خطتك النشطة قبل انتهائها — الترقية فقط. بعد انتهائها يمكنك اختيار أي خطة (بما في ذلك الأدنى). ونفس القاعدة للحزم الإضافية: لا يمكنك شراء نفس الحزمة قبل انتهائها — الترقية لحزمة أكبر فقط.', quota_remaining: 'الصور المتبقية', quota_empty: 'انتهت أرصدة الصور. رقِّ خطتك أو اشترِ حزمة إضافية.', quota_upgrade: 'ترقية الخطة', quota_buy_pack: 'شراء حزمة', pack_added: 'أُضيفت' });
 
+// ── Mağaza plan/paket içerikleri + Studio öneri çipleri (dile bağlı) ──
+Object.assign(EN, {
+  pn_free: 'Free', pn_monthly: 'Monthly Premium', pn_yearly: 'Yearly Premium', pn_pro: 'Monthly Pro', pn_pro_yearly: 'Yearly Pro',
+  badge_25: '25% off',
+  f_free_img: '1 AI image/month', f_free_tools: 'Hand scan · AI Studio · AR: once', f_gallery: 'Gallery (135+): full access',
+  f_m30: '30 AI images/month', f_tools_unlim: 'Scan · AI Studio · AR: unlimited', f_extra: 'Can buy extra packs',
+  f_y360: '360 images/year total', f_all_unlim: 'Everything unlimited', f_589: '~$5.89/mo',
+  f_p100: '100 AI images/month', f_salon: 'For salons & pros', f_py1200: '1,200 images/year total', f_1875: '~$18.75/mo',
+  f_bigsalon: 'For large salons & agencies',
+  pk_mini: 'Mini', pk_standart: 'Standard', pk_mega: 'Mega',
+  sug1: 'Gold chrome almond French', sug2: 'Pastel pink minimal', sug3: 'Galaxy deep blue',
+  sug4: 'Pearl white for brides', sug5: 'Red matte coffin',
+});
+Object.assign(TR, {
+  pn_free: 'Free', pn_monthly: 'Aylık Premium', pn_yearly: 'Yıllık Premium', pn_pro: 'Aylık Pro', pn_pro_yearly: 'Yıllık Pro',
+  badge_25: '%25 indirim',
+  f_free_img: '1 AI görsel/ay', f_free_tools: 'El tarama · AI Stüdyo · AR: 1 kez', f_gallery: 'Galeri (135+): tam erişim',
+  f_m30: 'Aylık 30 görsel üretim', f_tools_unlim: 'Tarama · AI Stüdyo · AR: sınırsız', f_extra: 'Ek paket alabilir',
+  f_y360: 'Yıllık toplam 360 görsel', f_all_unlim: 'Her şey sınırsız', f_589: '~$5.89/ay',
+  f_p100: 'Aylık 100 görsel üretim', f_salon: 'Salon & profesyoneller için', f_py1200: 'Yıllık toplam 1.200 görsel', f_1875: '~$18.75/ay',
+  f_bigsalon: 'Büyük salon & ajanslar için',
+  pk_mini: 'Mini', pk_standart: 'Standart', pk_mega: 'Mega',
+  sug1: 'Altın kromlu badem French', sug2: 'Pastel pembe minimal', sug3: 'Galaksi temalı koyu mavi',
+  sug4: 'Gelin için inci beyazı', sug5: 'Kırmızı mat coffin',
+});
+Object.assign(RU, {
+  pn_free: 'Free', pn_monthly: 'Премиум Месяц', pn_yearly: 'Премиум Год', pn_pro: 'Pro Месяц', pn_pro_yearly: 'Pro Год',
+  badge_25: '−25%',
+  f_free_img: '1 AI-изображение/мес', f_free_tools: 'Скан · AI Студия · AR: 1 раз', f_gallery: 'Галерея (135+): полный доступ',
+  f_m30: '30 AI-изображений/мес', f_tools_unlim: 'Скан · AI Студия · AR: без лимита', f_extra: 'Доп. пакеты доступны',
+  f_y360: '360 изображений в год', f_all_unlim: 'Всё без лимита', f_589: '~$5.89/мес',
+  f_p100: '100 AI-изображений/мес', f_salon: 'Для салонов и профи', f_py1200: '1 200 изображений в год', f_1875: '~$18.75/мес',
+  f_bigsalon: 'Для больших салонов и агентств',
+  pk_mini: 'Mini', pk_standart: 'Стандарт', pk_mega: 'Mega',
+  sug1: 'Золотой хром миндаль френч', sug2: 'Пастельный розовый минимал', sug3: 'Галактика тёмно-синий',
+  sug4: 'Жемчужно-белый для невест', sug5: 'Красный матовый coffin',
+});
+Object.assign(AR, {
+  pn_free: 'Free', pn_monthly: 'بريميوم شهري', pn_yearly: 'بريميوم سنوي', pn_pro: 'برو شهري', pn_pro_yearly: 'برو سنوي',
+  badge_25: 'خصم ٢٥٪',
+  f_free_img: 'صورة ذكاء واحدة/شهر', f_free_tools: 'مسح · استوديو · AR: مرة', f_gallery: 'المعرض (135+): وصول كامل',
+  f_m30: '٣٠ صورة ذكاء/شهر', f_tools_unlim: 'مسح · استوديو · AR: غير محدود', f_extra: 'يمكن شراء حزم إضافية',
+  f_y360: '٣٦٠ صورة سنوياً', f_all_unlim: 'كل شيء غير محدود', f_589: '~$5.89/شهر',
+  f_p100: '١٠٠ صورة ذكاء/شهر', f_salon: 'للصالونات والمحترفين', f_py1200: '١٢٠٠ صورة سنوياً', f_1875: '~$18.75/شهر',
+  f_bigsalon: 'للصالونات والوكالات الكبيرة',
+  pk_mini: 'Mini', pk_standart: 'ستاندرد', pk_mega: 'Mega',
+  sug1: 'كروم ذهبي لوز فرنش', sug2: 'وردي باستيل بسيط', sug3: 'مجرة أزرق غامق',
+  sug4: 'أبيض لؤلؤي للعرائس', sug5: 'أحمر مطفي coffin',
+});
+
 // ── Detay sayfası + paylaşım ──
 Object.assign(EN, { back: 'Back', not_found: 'Design not found', download: 'Download', share: 'Share' });
 Object.assign(TR, { back: 'Geri', not_found: 'Tasarım bulunamadı', download: 'İndir', share: 'Paylaş' });
@@ -244,6 +294,65 @@ Object.assign(EN, { badge_trending: 'Trending', badge_new: 'New', badge_premium:
 Object.assign(TR, { badge_trending: 'Trend', badge_new: 'Yeni', badge_premium: 'Premium', match: 'uyum', for_you: 'Size özel eşleşti', no_favorites: 'Henüz favori yok — bir tasarımdaki kalbe dokunarak kaydedin.' });
 Object.assign(RU, { badge_trending: 'Тренд', badge_new: 'Новое', badge_premium: 'Премиум', match: 'совпадение', for_you: 'Подобрано для вас', no_favorites: 'Пока нет избранного — нажмите сердечко на дизайне.' });
 Object.assign(AR, { badge_trending: 'رائج', badge_new: 'جديد', badge_premium: 'مميز', match: 'تطابق', for_you: 'مطابق لكِ', no_favorites: 'لا مفضلات بعد — اضغطي القلب على أي تصميم.' });
+
+// ── RU/AR eksik blok tamamlamaları (tarama sonuçları, ödeme, onboarding, plan) ──
+Object.assign(RU, {
+  cam_start: 'Открыть камеру', cam_capture: 'Анализ', cam_cancel: 'Отмена',
+  cam_hint: 'Поместите руку в рамку', err_camera: 'Нет доступа к камере', err_model: 'Не удалось загрузить AI-модель (проверьте связь)',
+  choose_shape: 'Форма ногтя', result_undertone: 'Подтон', result_hand: 'Рука',
+  shape_hint: 'Выберите форму ниже — используется она. Авто-оценка приблизительна; макросъёмка одного ногтя точнее.',
+  approx: 'прибл.', closeup_detect: 'Определить (макро)', closeup_upload: 'Загрузить макро',
+  closeup_guide: 'Заполните кадр одним ногтем — резкость и хороший свет.',
+  closeup_fail: 'Не удалось распознать ноготь — ближе, устойчивее, контрастнее.',
+  capture_tip: 'Для точности: раздвиньте пальцы, хороший свет, простой фон, ногти к камере.',
+  ut_warm: 'Тёплый', ut_cool: 'Холодный', ut_neutral: 'Нейтральный',
+  fl_short: 'Короткие', fl_medium: 'Средние', fl_long: 'Длинные',
+  hand_Left: 'Левая', hand_Right: 'Правая',
+  tone_very_fair: 'Очень светлый', tone_fair: 'Светлый', tone_light_wheat: 'Светлая пшеница', tone_wheat: 'Пшеничный',
+  tone_tan: 'Загар', tone_dark_tan: 'Тёмный загар', tone_dark_brown: 'Тёмно-коричневый', tone_very_dark: 'Очень тёмный',
+  shp_oval: 'Овал', shp_almond: 'Миндаль', shp_square: 'Квадрат', shp_squoval: 'Сквовал',
+  shp_coffin: 'Coffin', shp_stiletto: 'Стилет', shp_round: 'Круглый',
+  pay_title: 'Оплата', pay_provider: 'Способ оплаты', pay_go: 'Перейти к оплате', pay_test: 'Оплатить (тест)',
+  pay_processing: 'Обработка…', pay_cancel: 'Отмена', pay_secure: 'Безопасная оплата — вы перейдёте к провайдеру.',
+  pay_demo_note: 'Демо — без реальной оплаты. Добавьте ключи для запуска.', pay_success: 'Оплата успешна', pay_close: 'Готово',
+  manage_plan: 'Управление планом',
+  ob_skip: 'Пропустить', ob_next: 'Далее', ob_start: 'Начать',
+  ob1_t: 'Сканируйте руку', ob1_d: 'ИИ анализирует тон кожи, подтон и форму ногтей за секунды.',
+  ob2_t: 'Личные подборки', ob2_d: 'Дизайны, подобранные вам — ИИ выбирает лучшее.',
+  ob3_t: 'Примерка в AR', ob3_d: 'Смотрите любой дизайн на своих пальцах в реальном времени.',
+  ob4_t: 'Безлимит с Премиум', ob4_d: 'Безлимитные AI-дизайны и генерация — улучшайте в любой момент.',
+});
+Object.assign(AR, {
+  cam_start: 'افتحي الكاميرا', cam_capture: 'تحليل', cam_cancel: 'إلغاء',
+  cam_hint: 'ضعي يدك داخل الإطار', err_camera: 'تعذّر الوصول للكاميرا', err_model: 'تعذّر تحميل نموذج الذكاء (تحققي من الاتصال)',
+  choose_shape: 'شكل الظفر', result_undertone: 'درجة اللون', result_hand: 'اليد',
+  shape_hint: 'اختاري الشكل بالأسفل — هو المستخدم. التقدير التلقائي تقريبي؛ لقطة مقرّبة لظفر واحد أدق.',
+  approx: 'تقريبي', closeup_detect: 'كشف مقرّب', closeup_upload: 'رفع لقطة مقرّبة',
+  closeup_guide: 'املئي الإطار بظفر واحد — تركيز حاد وإضاءة جيدة.',
+  closeup_fail: 'تعذّرت قراءة الظفر — اقتربي، ثبات وتباين أكثر.',
+  capture_tip: 'للدقة: باعدي أصابعك، إضاءة جيدة، خلفية بسيطة، الأظافر نحو الكاميرا.',
+  ut_warm: 'دافئ', ut_cool: 'بارد', ut_neutral: 'محايد',
+  fl_short: 'قصيرة', fl_medium: 'متوسطة', fl_long: 'طويلة',
+  hand_Left: 'يسار', hand_Right: 'يمين',
+  tone_very_fair: 'فاتح جداً', tone_fair: 'فاتح', tone_light_wheat: 'قمحي فاتح', tone_wheat: 'قمحي',
+  tone_tan: 'برونزي', tone_dark_tan: 'برونزي غامق', tone_dark_brown: 'بني غامق', tone_very_dark: 'غامق جداً',
+  shp_oval: 'بيضاوي', shp_almond: 'لوز', shp_square: 'مربع', shp_squoval: 'مربع-بيضاوي',
+  shp_coffin: 'Coffin', shp_stiletto: 'ستيلتو', shp_round: 'دائري',
+  pay_title: 'الدفع', pay_provider: 'طريقة الدفع', pay_go: 'المتابعة للدفع', pay_test: 'ادفعي (تجريبي)',
+  pay_processing: 'جارٍ المعالجة…', pay_cancel: 'إلغاء', pay_secure: 'دفع آمن — سيتم تحويلك للمزوّد.',
+  pay_demo_note: 'وضع تجريبي — بلا رسوم. أضيفي المفاتيح للتفعيل.', pay_success: 'تم الدفع بنجاح', pay_close: 'تم',
+  manage_plan: 'إدارة الخطة',
+  ob_skip: 'تخطي', ob_next: 'التالي', ob_start: 'ابدئي الآن',
+  ob1_t: 'امسحي يدك', ob1_d: 'يحلل الذكاء لون بشرتك ودرجتها وشكل أظافرك في ثوانٍ.',
+  ob2_t: 'اختيارات لكِ', ob2_d: 'تصاميم مطابقة لكِ — يختار الذكاء الأنسب.',
+  ob3_t: 'جرّبي بالAR', ob3_d: 'شاهدي أي تصميم على أصابعك مباشرةً.',
+  ob4_t: 'غير محدود مع بريميوم', ob4_d: 'تصاميم ذكاء وإنشاء صور بلا حدود — رقّي وقتما تشائين.',
+});
+
+Object.assign(EN, { per_mo: '/mo', per_yr: '/yr' });
+Object.assign(TR, { per_mo: '/ay', per_yr: '/yıl' });
+Object.assign(RU, { per_mo: '/мес', per_yr: '/год' });
+Object.assign(AR, { per_mo: '/شهر', per_yr: '/سنة' });
 
 const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 

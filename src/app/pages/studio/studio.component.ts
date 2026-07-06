@@ -32,7 +32,7 @@ import { Design } from '../../core/data.service';
           rows="3"></textarea>
         <div class="chips-row">
           @for (s of suggestions; track s) {
-            <button class="chip" (click)="prompt.set(s)">{{ s }}</button>
+            <button class="chip" (click)="prompt.set(i18n.t(s))">{{ i18n.t(s) }}</button>
           }
         </div>
         <button class="btn-primary wide" (click)="generate()" [disabled]="loading() || !prompt().trim()">
@@ -184,13 +184,7 @@ export class StudioComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly status = signal<AiStatus | null>(null);
 
-  readonly suggestions = [
-    'Altın kromlu badem French',
-    'Pastel pembe minimal',
-    'Galaksi temalı koyu mavi',
-    'Gelin için inci beyazı',
-    'Kırmızı mat coffin',
-  ];
+  readonly suggestions = ['sug1', 'sug2', 'sug3', 'sug4', 'sug5'];
 
   readonly statusLabel = computed(() => {
     const s = this.status();

@@ -129,16 +129,12 @@ export class ProfileComponent {
   readonly quota = inject(ImageQuotaService);
   readonly locales = LOCALES;
 
-  private readonly PLAN_NAMES: Record<string, string> = {
-    free: 'Free',
-    monthly: 'Aylık Premium',
-    yearly: 'Yıllık Premium',
-    pro: 'Aylık Pro',
-    pro_yearly: 'Yıllık Pro',
+  private readonly PLAN_KEYS: Record<string, string> = {
+    free: 'pn_free', monthly: 'pn_monthly', yearly: 'pn_yearly', pro: 'pn_pro', pro_yearly: 'pn_pro_yearly',
   };
 
-  /** Seçili planın gösterim adı. */
-  readonly planName = computed(() => this.PLAN_NAMES[this.plan.current()] ?? 'Free');
+  /** Seçili planın gösterim adı (dile bağlı). */
+  readonly planName = computed(() => this.i18n.t(this.PLAN_KEYS[this.plan.current()] ?? 'pn_free'));
 
   /** Aktif abonelikte bitişe kalan gün (yoksa null). */
   readonly daysLeft = computed<number | null>(() => {
