@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { I18nService, LOCALES } from '../../core/i18n.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { PlanService } from '../../core/plan.service';
@@ -128,7 +128,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 
       <div class="menu card">
         @for (m of menu; track m.key) {
-          <button class="row">
+          <button class="row" (click)="go(m.key)">
             <span class="mi">{{ m.icon }}</span>
             <span class="mt">{{ i18n.t(m.key) }}</span>
             <span class="ch">›</span>
@@ -209,7 +209,21 @@ export class ProfileComponent implements OnInit {
   readonly quota = inject(ImageQuotaService);
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly locales = LOCALES;
+
+  /** Menü satırına tıklanınca ilgili yere gider (butonların adı/sırası değişmedi). */
+  go(key: string): void {
+    switch (key) {
+      case 'subscription': void this.router.navigate(['/shop']); break;
+      case 'tryon_hist': void this.router.navigate(['/ar']); break;
+      case 'style_pref': void this.router.navigate(['/scan']); break;
+      case 'my_fav': document.querySelector('.fav-title')?.scrollIntoView({ behavior: 'smooth' }); break;
+      case 'settings': document.querySelector('.lang-block')?.scrollIntoView({ behavior: 'smooth' }); break;
+      case 'help': window.location.href = 'mailto:l.shalili@logper.com'; break;
+      case 'logout': if (this.auth.loggedIn()) this.auth.logout(); else this.openAuth('login'); break;
+    }
+  }
 
   // Giriş/kayıt penceresi durumu
   readonly authOpen = signal<boolean>(false);
