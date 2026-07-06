@@ -57,3 +57,20 @@ model ScanAnalysis {
 
   @@index([userId])
 }
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  userId     String   @default("guest")
+  kind       String                      // "plan" | "pack"
+  itemId     String                      // plan id (monthly, pro...) veya pack id (pack_10...)
+  itemName   String   @default("")
+  amount     Float    @default(0)        // tutar
+  currency   String   @default("USD")
+  provider   String   @default("demo")   // iyzico | stripe | paytr | demo
+  status     String   @default("pending")// pending | paid | failed
+  ref        String   @default("")       // sağlayıcı işlem/oturum kimliği
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+}

@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
+import { PaymentService } from '../../core/payment.service';
 
 interface Plan {
   id: string; name: string; price: string; period: string;
   highlight?: boolean; badge?: string; features: string[];
 }
 interface Pack { id: string; name: string; credits: number; price: string; }
+interface CartItem { kind: 'plan' | 'pack'; id: string; name: string; amount: number; priceLabel: string; credits?: number; }
+const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe', paytr: 'PayTR' };
 
 @Component({
   selector: 'app-shop',
@@ -70,8 +74,39 @@ interface Pack { id: string; name: string; credits: number; price: string; }
       @if (added()) { <p class="added">✓ {{ added() }} {{ i18n.t('credits') }} {{ i18n.t('pack_added') }}</p> }
 
       <p class="note rules">📋 {{ i18n.t('upgrade_rules') }}</p>
-      <p class="note">ℹ️ {{ i18n.t('payment_soon') }}</p>
     </div>
+
+    <!-- Ödeme akışı (iyzico / Stripe / PayTR — anahtar yoksa demo) -->
+    @if (cart(); as it) {
+      <div class="co-back" (click)="closePay()"></div>
+      <div class="co card">
+        @if (payDone()) {
+          <div class="co-done">
+            <div class="co-ic">✓</div>
+            <h3 class="co-t">{{ i18n.t('pay_success') }}</h3>
+            <p class="co-item2">{{ it.name }}</p>
+            <button class="btn-primary co-pay" (click)="closePay()">{{ i18n.t('pay_close') }}</button>
+          </div>
+        } @else {
+          <h3 class="co-t">{{ i18n.t('pay_title') }}</h3>
+          <div class="co-item"><span>{{ it.name }}</span><span class="co-amt">{{ it.priceLabel }}</span></div>
+          <p class="co-lbl">{{ i18n.t('pay_provider') }}</p>
+          <div class="co-provs">
+            @for (pr of payment.status().providers; track pr.id) {
+              <button class="co-prov" [class.on]="payProvider() === pr.id" (click)="payProvider.set(pr.id)">
+                {{ provLabel(pr.id) }}@if (!pr.ready) { <span class="co-demo">demo</span> }
+              </button>
+            }
+          </div>
+          @if (payError()) { <p class="co-err">⚠️ {{ payError() }}</p> }
+          <button class="btn-primary co-pay" (click)="confirmPay()" [disabled]="paying()">
+            {{ paying() ? i18n.t('pay_processing') : (payMode() === 'live' ? i18n.t('pay_go') : i18n.t('pay_test')) }}
+          </button>
+          <button class="btn-ghost co-cancel" (click)="closePay()">{{ i18n.t('pay_cancel') }}</button>
+          <p class="co-secure">🔒 {{ payMode() === 'live' ? i18n.t('pay_secure') : i18n.t('pay_demo_note') }}</p>
+        }
+      </div>
+    }
   `,
   styles: [`
     .intro { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
@@ -105,13 +140,67 @@ interface Pack { id: string; name: string; credits: number; price: string; }
       background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.4); padding: 3px 10px; border-radius: 999px; }
     .added { margin: 12px 0 0; font-size: 13px; text-align: center; color: var(--gold-soft);
       background: rgba(62,207,142,0.1); border: 1px solid rgba(62,207,142,0.35); border-radius: 12px; padding: 10px; }
+    .co-back { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+    .co { position: fixed; z-index: 1101; inset-inline: 16px; bottom: 0; margin: 0 auto; max-width: 440px;
+      border-radius: 22px 22px 0 0; padding: 22px 18px 26px; animation: coup .25s ease; }
+    @keyframes coup { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .co-t { margin: 0 0 14px; font-size: 19px; text-align: center; }
+    .co-item { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    .co-item2 { text-align: center; color: var(--muted); margin: 2px 0 16px; font-size: 13px; }
+    .co-amt { font-weight: 700; color: var(--gold); font-family: var(--font-head); font-size: 17px; }
+    .co-lbl { margin: 16px 0 8px; font-size: 12px; color: var(--muted-2); }
+    .co-provs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .co-prov { position: relative; padding: 12px 6px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); }
+    .co-prov.on { background: rgba(212,175,55,0.16); border-color: rgba(212,175,55,0.5); color: var(--gold-soft); }
+    .co-demo { display: block; font-size: 9px; font-weight: 700; color: var(--muted-2); margin-top: 2px; text-transform: uppercase; }
+    .co-pay { width: 100%; margin-top: 18px; }
+    .co-cancel { width: 100%; margin-top: 8px; }
+    .co-err { margin: 12px 0 0; font-size: 12px; color: #f0b8b8; text-align: center; }
+    .co-secure { margin: 12px 0 0; font-size: 11px; color: var(--muted-2); text-align: center; }
+    .co-done { text-align: center; padding: 8px 0; }
+    .co-ic { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 14px; font-size: 32px; color: #1a1206;
+      display: flex; align-items: center; justify-content: center; background: var(--gold-grad); }
   `],
 })
-export class ShopComponent {
+export class ShopComponent implements OnInit {
   readonly i18n = inject(I18nService);
   readonly plan = inject(PlanService);
   readonly quota = inject(ImageQuotaService);
+  readonly payment = inject(PaymentService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly added = signal<number | null>(null);
+
+  // Ödeme akışı durumu
+  private readonly PENDING = 'ngnail-pending-pay';
+  readonly cart = signal<CartItem | null>(null);
+  readonly payProvider = signal<string>('iyzico');
+  readonly paying = signal<boolean>(false);
+  readonly payDone = signal<boolean>(false);
+  readonly payError = signal<string | null>(null);
+
+  /** Seçili sağlayıcı hazırsa gerçek ödeme, değilse demo. */
+  readonly payMode = computed<'live' | 'demo'>(() => {
+    const pr = this.payment.status().providers.find((p) => p.id === this.payProvider());
+    return pr?.ready ? 'live' : 'demo';
+  });
+
+  provLabel(id: string): string { return PROV_LABEL[id] ?? id; }
+
+  ngOnInit(): void {
+    void this.payment.loadStatus();
+    // Gerçek sağlayıcıdan geri dönüş: ?paid=1&ref=... → bekleyen alımı uygula
+    const q = this.route.snapshot.queryParamMap;
+    if (q.get('paid') === '1') {
+      const ref = q.get('ref') || '';
+      const pend = this.loadPending();
+      if (pend) { void this.payment.confirm(ref); this.applyPurchase(pend); this.added.set(pend.credits ?? null); }
+      this.clearPending();
+      void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
+  }
 
   // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
   // (kart metinleri: aylık üretim + yıllık toplam notları — 2026-07-03)
@@ -168,7 +257,10 @@ export class ShopComponent {
   });
 
   choose(id: string): void {
-    this.plan.select(id);
+    if (id === 'free') { this.plan.select('free'); return; } // ücretsiz → ödeme yok
+    const p = this.plans.find((x) => x.id === id);
+    if (!p) return;
+    this.startCheckout({ kind: 'plan', id, name: p.name, amount: this.priceNum(p.price), priceLabel: p.price + p.period });
   }
 
   /**
@@ -184,10 +276,73 @@ export class ShopComponent {
     return !!active && k.credits > active.credits;
   }
 
-  /** Ek görsel paketi satın al — bakiyeye ekler (plan değişmez). */
+  /** Ek görsel paketi satın al — önce ödeme akışı açılır. */
   buyPack(k: Pack): void {
     if (!this.canBuyPack(k)) return;
-    this.quota.buyPack(k.id, k.credits);
-    this.added.set(k.credits);
+    this.startCheckout({
+      kind: 'pack', id: k.id, name: `${k.name} · ${k.credits} ${this.i18n.t('credits')}`,
+      amount: this.priceNum(k.price), priceLabel: k.price, credits: k.credits,
+    });
+  }
+
+  // --- Ödeme akışı ---
+  private startCheckout(item: CartItem): void {
+    this.payDone.set(false);
+    this.payError.set(null);
+    const firstReady = this.payment.status().providers.find((p) => p.ready);
+    this.payProvider.set(firstReady?.id ?? 'iyzico');
+    this.cart.set(item);
+  }
+
+  closePay(): void {
+    this.cart.set(null);
+    this.paying.set(false);
+    this.payDone.set(false);
+  }
+
+  async confirmPay(): Promise<void> {
+    const it = this.cart();
+    if (!it) return;
+    this.paying.set(true);
+    this.payError.set(null);
+    const res = await this.payment.checkout({
+      kind: it.kind, itemId: it.id, itemName: it.name, amount: it.amount,
+      currency: 'USD', provider: this.payProvider(),
+    });
+    if (res.mode === 'live' && res.url) {
+      // Gerçek sağlayıcı: bekleyen alımı sakla ve ödeme sayfasına yönlendir
+      this.savePending(it);
+      window.location.href = res.url;
+      return;
+    }
+    // Demo: onayla + uygula
+    await this.payment.confirm(res.ref);
+    this.applyPurchase(it);
+    this.paying.set(false);
+    this.payDone.set(true);
+  }
+
+  /** Ödeme başarılı → planı/paketi aktifleştir. */
+  private applyPurchase(it: CartItem): void {
+    if (it.kind === 'plan') {
+      this.plan.select(it.id);
+    } else if (it.credits) {
+      this.quota.buyPack(it.id, it.credits);
+      this.added.set(it.credits);
+    }
+  }
+
+  private priceNum(price: string): number {
+    return Number(price.replace(/[^0-9.]/g, '')) || 0;
+  }
+
+  private savePending(it: CartItem): void {
+    try { localStorage.setItem(this.PENDING, JSON.stringify(it)); } catch { /* geç */ }
+  }
+  private loadPending(): CartItem | null {
+    try { const r = localStorage.getItem(this.PENDING); return r ? JSON.parse(r) as CartItem : null; } catch { return null; }
+  }
+  private clearPending(): void {
+    try { localStorage.removeItem(this.PENDING); } catch { /* geç */ }
   }
 }

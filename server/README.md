@@ -59,8 +59,42 @@ birkaç örnek tasarım ekler. **Veritabanı kurulmadan da sunucu çalışır** 
 - `GET  /api/designs`  ·  `POST /api/designs`
 - `GET  /api/favorites`  ·  `POST /api/favorites`  ·  `DELETE /api/favorites/:designId`  (query: `userId`, varsayılan `guest`)
 - `POST /api/analysis`  ·  `GET /api/analysis/latest`
+- `GET  /api/payments/status`  ·  `POST /api/payments/checkout`  ·  `POST /api/payments/confirm`
 
-### Sonraki adım
+## Ödeme (iyzico / Stripe / PayTR)
 
-Frontend'i bu uçlara bağlamak: AI Studio üretimlerini `POST /api/designs` ile kaydetmek,
-favorileri `localStorage` yerine `/api/favorites`'e taşımak, taramaları `/api/analysis`'e yazmak.
+Ödeme katmanı çok sağlayıcılıdır ve **anahtar yoksa DEMO modunda** çalışır (gerçek tahsilat yok;
+satın alma akışı yine tamamlanır). `Order` tablosu eklendiğinden, yeni bir migrate gerekir:
+
+```bash
+cd server
+npm run db:setup        # veya: npx prisma migrate dev --name orders
+```
+
+Gerçek ödemeye geçmek için `.env`'e ilgili sağlayıcının anahtarlarını girin ve SDK'sını kurun
+(yalnızca kullanacağınızı):
+
+```bash
+npm i stripe            # Stripe
+npm i iyzipay           # iyzico
+# PayTR ek paket gerektirmez (HTTPS + HMAC ile çalışır)
+```
+
+`.env` değişkenleri:
+
+```
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+# iyzico (sandbox varsayılan)
+IYZICO_API_KEY=...
+IYZICO_SECRET=...
+IYZICO_URI=https://sandbox-api.iyzipay.com
+# PayTR
+PAYTR_MERCHANT_ID=...
+PAYTR_MERCHANT_KEY=...
+PAYTR_MERCHANT_SALT=...
+```
+
+Anahtar girilen sağlayıcı otomatik "live" olur; frontend'deki Mağaza ödeme ekranında o sağlayıcı
+seçilince kullanıcı gerçek ödeme sayfasına yönlendirilir. Not: iyzico/PayTR geri-bildirim (callback)
+ve PayTR bildirim (notification) uçlarını canlıya almadan önce üretim ayarlarına göre gözden geçirin.

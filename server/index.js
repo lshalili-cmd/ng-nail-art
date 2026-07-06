@@ -7,8 +7,10 @@ const path = require('path');
 const fs = require('fs');
 const ai = require('./ai');
 const db = require('./db');
+const payments = require('./payments');
 
 ai.initProviders();
+payments.initProviders();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -151,6 +153,50 @@ app.get('/api/analysis/latest', async (req, res) => {
     const analysis = await db.prisma.scanAnalysis.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
     res.json({ success: true, analysis });
   } catch (e) { dbError(res, e); }
+});
+
+// --- Ödeme (iyzico / Stripe / PayTR — anahtar yoksa demo) ---
+app.get('/api/payments/status', (_req, res) => {
+  res.json({ success: true, data: payments.status() });
+});
+
+app.post('/api/payments/checkout', async (req, res) => {
+  const b = req.body || {};
+  if (!b.itemId || b.amount == null) {
+    return res.status(400).json({ success: false, error: 'itemId ve amount gerekli', code: 'BAD_REQUEST' });
+  }
+  const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
+  try {
+    const result = await payments.createCheckout({
+      provider: b.provider, kind: b.kind || 'plan', itemId: b.itemId,
+      itemName: b.itemName || b.itemId, amount: Number(b.amount),
+      currency: b.currency || 'USD', userId: b.userId || 'guest', baseUrl,
+    });
+    // Siparişi kaydet (DB varsa; yoksa sessiz geç)
+    if (db.ready()) {
+      try {
+        await db.prisma.order.create({ data: {
+          userId: b.userId || 'guest', kind: b.kind || 'plan', itemId: String(b.itemId),
+          itemName: b.itemName || String(b.itemId), amount: Number(b.amount), currency: b.currency || 'USD',
+          provider: result.provider || 'demo', status: 'pending', ref: result.ref || '',
+        } });
+      } catch { /* migrate edilmemişse geç */ }
+    }
+    res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message, code: 'CHECKOUT_ERROR' });
+  }
+});
+
+// Demo/başarı onayı — gerçek sağlayıcıda bunu webhook/callback yapar
+app.post('/api/payments/confirm', async (req, res) => {
+  const { ref, userId = 'guest' } = req.body || {};
+  if (db.ready() && ref) {
+    try {
+      await db.prisma.order.updateMany({ where: { ref: String(ref), userId }, data: { status: 'paid' } });
+    } catch { /* geç */ }
+  }
+  res.json({ success: true, data: { status: 'paid', ref: ref || null } });
 });
 
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' }));
