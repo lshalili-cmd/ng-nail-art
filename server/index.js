@@ -125,6 +125,8 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Şifre tam 1 harf ve geri kalanı rakam olmalı (en az 6 karakter)', code: 'BAD_PASSWORD' });
   }
   try {
+    const blocked = await db.prisma.blockedSignup.findFirst({ where: { until: { gt: Date.now() }, OR: [{ email }, { phone }] } });
+    if (blocked) return res.status(403).json({ success: false, error: 'Bu e-posta veya telefon ile 40 gün boyunca yeni hesap açılamaz', code: 'SIGNUP_BLOCKED' });
     if (await db.prisma.user.findUnique({ where: { email } })) return res.status(409).json({ success: false, error: 'Bu e-posta zaten kayıtlı', code: 'EMAIL_TAKEN' });
     if (await db.prisma.user.findUnique({ where: { phone } })) return res.status(409).json({ success: false, error: 'Bu telefon zaten kayıtlı', code: 'PHONE_TAKEN' });
     const code = auth.genOtp();
@@ -216,6 +218,43 @@ app.post('/api/auth/reset', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Bağlantı geçersiz veya süresi dolmuş', code: 'BAD_RESET' });
     }
     await db.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await auth.hash(password), resetToken: null, resetExpires: 0 } });
+    res.json({ success: true });
+  } catch (e) { dbError(res, e); }
+});
+
+// Şifre değiştir (giriş yapmış kullanıcı)
+app.post('/api/auth/change-password', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const uid = auth.userIdFrom(req);
+  if (uid === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
+  const password = String((req.body || {}).password || '');
+  if (!auth.validPassword(password)) {
+    return res.status(400).json({ success: false, error: 'Şifre tam 1 harf ve geri kalanı rakam olmalı (en az 6 karakter)', code: 'BAD_PASSWORD' });
+  }
+  try {
+    await db.prisma.user.update({ where: { id: Number(uid) }, data: { passwordHash: await auth.hash(password) } });
+    res.json({ success: true });
+  } catch (e) { dbError(res, e); }
+});
+
+// Hesabı sil (e-posta + telefon + şifre doğrulanır) → 40 gün aynı e-posta/telefonla kayıt engeli
+app.post('/api/auth/delete-account', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  if (!auth.ready()) return authNotReady(res);
+  const email = String((req.body || {}).email || '').toLowerCase().trim();
+  const phone = auth.normPhone((req.body || {}).phone);
+  const password = String((req.body || {}).password || '');
+  try {
+    const user = await db.prisma.user.findUnique({ where: { email } });
+    if (!user || user.phone !== phone || !(await auth.compare(password, user.passwordHash))) {
+      return res.status(401).json({ success: false, error: 'E-posta, telefon veya şifre hatalı', code: 'BAD_CREDENTIALS' });
+    }
+    const uid = String(user.id);
+    await db.prisma.blockedSignup.create({ data: { email, phone, until: Date.now() + 40 * 24 * 60 * 60 * 1000 } });
+    await db.prisma.favorite.deleteMany({ where: { userId: uid } }).catch(() => {});
+    await db.prisma.scanAnalysis.deleteMany({ where: { userId: uid } }).catch(() => {});
+    await db.prisma.order.deleteMany({ where: { userId: uid } }).catch(() => {});
+    await db.prisma.user.delete({ where: { id: user.id } });
     res.json({ success: true });
   } catch (e) { dbError(res, e); }
 });

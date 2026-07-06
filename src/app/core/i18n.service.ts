@@ -426,6 +426,32 @@ Object.assign(AR, {
   auth_demo_otp: 'رمز تجريبي', auth_demo_link: 'رابط تجريبي',
 });
 
+// ── Ayarlar: şifre değiştir / hesabı sil ──
+Object.assign(EN, {
+  set_changepw: 'Change password', set_delete: 'Delete account', set_newpw: 'New password', set_newpw2: 'Repeat new password',
+  set_change_btn: 'Change password', set_del_btn: 'Delete account',
+  set_del_blocked: 'You cannot open a new account with the same number and email for 40 days.',
+  set_pw_mismatch: 'Passwords do not match', set_pw_changed: 'Password changed.',
+});
+Object.assign(TR, {
+  set_changepw: 'Şifre değiştir', set_delete: 'Hesabı sil', set_newpw: 'Yeni şifre', set_newpw2: 'Tekrar yeni şifre',
+  set_change_btn: 'Şifreyi Değiştir', set_del_btn: 'Hesabı Sil',
+  set_del_blocked: '40 gün boyunca aynı numara ve mail ile tekrar yeni hesap açamazsınız.',
+  set_pw_mismatch: 'Şifreler eşleşmiyor', set_pw_changed: 'Şifre değiştirildi.',
+});
+Object.assign(RU, {
+  set_changepw: 'Сменить пароль', set_delete: 'Удалить аккаунт', set_newpw: 'Новый пароль', set_newpw2: 'Повторите пароль',
+  set_change_btn: 'Сменить пароль', set_del_btn: 'Удалить аккаунт',
+  set_del_blocked: 'В течение 40 дней нельзя создать новый аккаунт с тем же номером и почтой.',
+  set_pw_mismatch: 'Пароли не совпадают', set_pw_changed: 'Пароль изменён.',
+});
+Object.assign(AR, {
+  set_changepw: 'تغيير كلمة المرور', set_delete: 'حذف الحساب', set_newpw: 'كلمة مرور جديدة', set_newpw2: 'أعيدي كلمة المرور',
+  set_change_btn: 'تغيير', set_del_btn: 'حذف الحساب',
+  set_del_blocked: 'لا يمكنك إنشاء حساب جديد بنفس الرقم والبريد لمدة ٤٠ يوماً.',
+  set_pw_mismatch: 'كلمتا المرور غير متطابقتين', set_pw_changed: 'تم تغيير كلمة المرور.',
+});
+
 const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 
 @Injectable({ providedIn: 'root' })

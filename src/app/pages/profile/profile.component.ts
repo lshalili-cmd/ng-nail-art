@@ -132,6 +132,42 @@ import { DesignCardComponent } from '../../shared/design-card.component';
           }
         </div>
       }
+
+      <!-- Ayarlar penceresi -->
+      @if (settingsOpen()) {
+        <div class="au-back" (click)="settingsOpen.set(false)"></div>
+        <div class="au card">
+          <h3 class="au-t">{{ i18n.t('settings') }}</h3>
+
+          @switch (settingsStep()) {
+            @case ('changepw') {
+              <input class="au-in" type="password" [value]="newPw()" (input)="newPw.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw')" />
+              <input class="au-in" type="password" [value]="newPw2()" (input)="newPw2.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw2')" />
+              <p class="au-hint" [class.ok]="newPwOk()">{{ newPwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
+              <button class="btn-primary au-go" (click)="changePw()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_change_btn') }}</button>
+              <button class="au-switch" (click)="forgotFromSettings()">{{ i18n.t('auth_forgot') }}</button>
+            }
+            @case ('delete') {
+              <input class="au-in" type="email" [value]="delEmail()" (input)="delEmail.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" />
+              <input class="au-in" type="tel" [value]="delPhone()" (input)="delPhone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" />
+              <input class="au-in" type="password" [value]="delPw()" (input)="delPw.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" />
+              <button class="btn-primary au-go set-danger" (click)="deleteAcc()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_del_btn') }}</button>
+            }
+            @case ('deleted') {
+              <p class="au-note">🗑️ {{ i18n.t('set_del_blocked') }}</p>
+              <button class="btn-primary au-go" (click)="settingsOpen.set(false)">{{ i18n.t('pay_close') }}</button>
+            }
+            @default {
+              <button class="set-opt" (click)="setStep('changepw')">🔑 {{ i18n.t('set_changepw') }} <span class="ch">›</span></button>
+              <button class="set-opt" (click)="setStep('delete')">🗑️ {{ i18n.t('set_delete') }} <span class="ch">›</span></button>
+            }
+          }
+
+          @if (setInfo()) { <p class="au-demo">{{ setInfo() }}</p> }
+          @if (setErr()) { <p class="au-err">⚠️ {{ setErr() }}</p> }
+          @if (settingsStep() !== 'menu' && settingsStep() !== 'deleted') { <button class="au-switch" (click)="setStep('menu')">← {{ i18n.t('back') }}</button> }
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -152,6 +188,11 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .au-err { margin: 4px 0 8px; font-size: 12px; color: #f0b8b8; text-align: center; }
     .au-go { width: 100%; margin-top: 6px; }
     .au-switch { width: 100%; margin-top: 12px; background: transparent; color: var(--gold-soft); font-size: 13px; padding: 6px; }
+    .set-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 15px 14px; margin-bottom: 8px;
+      border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+      font-size: 14px; text-align: start; }
+    .set-opt .ch { margin-inline-start: auto; color: var(--muted-2); font-size: 20px; }
+    .set-danger { background: linear-gradient(135deg, #b23a3a, #7a1f1f); color: #fff; }
     .au-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .au-row2 .au-in { margin-bottom: 10px; }
     .au-hint { margin: 2px 0 6px; font-size: 11.5px; color: var(--muted-2); }
@@ -222,13 +263,64 @@ export class ProfileComponent implements OnInit {
       case 'subscription': void this.router.navigate(['/shop']); break;
       case 'tryon_hist': void this.router.navigate(['/ar']); break;
       case 'my_fav': this.favOpen.set(true); break;
-      case 'settings': break;
+      case 'settings': this.openSettings(); break;
       case 'help': window.location.href = 'mailto:l.shalili@logper.com'; break;
       case 'logout': if (this.auth.loggedIn()) this.auth.logout(); else this.openAuth('login'); break;
     }
   }
 
   readonly favOpen = signal<boolean>(false);
+
+  // Ayarlar penceresi durumu
+  readonly settingsOpen = signal<boolean>(false);
+  readonly settingsStep = signal<'menu' | 'changepw' | 'delete' | 'deleted'>('menu');
+  readonly newPw = signal<string>('');
+  readonly newPw2 = signal<string>('');
+  readonly delEmail = signal<string>('');
+  readonly delPhone = signal<string>('');
+  readonly delPw = signal<string>('');
+  readonly setErr = signal<string | null>(null);
+  readonly setInfo = signal<string | null>(null);
+  readonly setBusy = signal<boolean>(false);
+  readonly newPwOk = computed(() => validPassword(this.newPw()));
+
+  private openSettings(): void {
+    this.settingsStep.set('menu');
+    this.setErr.set(null); this.setInfo.set(null);
+    this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delPw.set('');
+    this.settingsOpen.set(true);
+  }
+  setStep(s: 'menu' | 'changepw' | 'delete'): void {
+    this.settingsStep.set(s); this.setErr.set(null); this.setInfo.set(null);
+  }
+
+  async changePw(): Promise<void> {
+    this.setErr.set(null); this.setInfo.set(null);
+    if (!this.newPwOk()) { this.setErr.set(this.i18n.t('auth_pw_rule')); return; }
+    if (this.newPw() !== this.newPw2()) { this.setErr.set(this.i18n.t('set_pw_mismatch')); return; }
+    this.setBusy.set(true);
+    const res = await this.auth.changePassword(this.newPw());
+    this.setBusy.set(false);
+    if (res.ok) { this.setInfo.set(this.i18n.t('set_pw_changed')); this.newPw.set(''); this.newPw2.set(''); }
+    else this.setErr.set(res.error ?? 'Hata');
+  }
+
+  async forgotFromSettings(): Promise<void> {
+    const email = this.auth.user()?.email;
+    if (!email) { this.setErr.set(this.i18n.t('auth_fill')); return; }
+    const res = await this.auth.forgot(email);
+    this.setInfo.set(res.demoLink ? `${this.i18n.t('auth_demo_link')}: ${res.demoLink}` : this.i18n.t('auth_link_sent'));
+  }
+
+  async deleteAcc(): Promise<void> {
+    this.setErr.set(null);
+    if (!this.delEmail().trim() || !this.delPhone().trim() || !this.delPw()) { this.setErr.set(this.i18n.t('auth_fill_all')); return; }
+    this.setBusy.set(true);
+    const res = await this.auth.deleteAccount(this.delEmail().trim().toLowerCase(), this.delPhone().trim(), this.delPw());
+    this.setBusy.set(false);
+    if (res.ok) { this.settingsStep.set('deleted'); this.setErr.set(null); this.setInfo.set(null); }
+    else this.setErr.set(res.error ?? 'Hata');
+  }
 
   // Giriş/kayıt penceresi durumu
   readonly authOpen = signal<boolean>(false);

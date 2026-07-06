@@ -75,6 +75,17 @@ model Order {
   @@index([status])
 }
 
+model BlockedSignup {
+  id        Int      @id @default(autoincrement())
+  email     String
+  phone     String
+  until     Float                        // ms — bu tarihe kadar aynı e-posta/telefon ile kayıt engelli
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([phone])
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique

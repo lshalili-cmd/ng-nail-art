@@ -96,6 +96,23 @@ export class AuthService {
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
+  /** Giriş yapmış kullanıcının şifresini değiştirir. */
+  async changePassword(password: string): Promise<AuthResult> {
+    try {
+      const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/change-password', { password }).pipe(timeout(9000)));
+      return res?.success ? { ok: true } : { ok: false, error: 'Hata' };
+    } catch (e) { return { ok: false, error: this.errMsg(e) }; }
+  }
+
+  /** Hesabı siler (e-posta + telefon + şifre doğrulamasıyla). */
+  async deleteAccount(email: string, phone: string, password: string): Promise<AuthResult> {
+    try {
+      const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/delete-account', { email, phone, password }).pipe(timeout(9000)));
+      if (res?.success) { this.logout(); return { ok: true }; }
+      return { ok: false, error: 'Hata' };
+    } catch (e) { return { ok: false, error: this.errMsg(e) }; }
+  }
+
   async loadMe(): Promise<void> {
     if (!this.token()) return;
     try {
