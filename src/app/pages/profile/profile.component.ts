@@ -271,7 +271,7 @@ export class ProfileComponent implements OnInit {
 
   readonly favOpen = signal<boolean>(false);
 
-  // Ayarlar penceresi durumu
+  // Ayarlar penceresi durumu (şifre değiştir + hesabı sil)
   readonly settingsOpen = signal<boolean>(false);
   readonly settingsStep = signal<'menu' | 'changepw' | 'delete' | 'deleted'>('menu');
   readonly newPw = signal<string>('');
