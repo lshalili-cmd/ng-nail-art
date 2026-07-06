@@ -8,9 +8,11 @@ const fs = require('fs');
 const ai = require('./ai');
 const db = require('./db');
 const payments = require('./payments');
+const auth = require('./auth');
 
 ai.initProviders();
 payments.initProviders();
+if (!auth.ready()) console.warn('ℹ️  Auth paketleri yok (npm i bcryptjs jsonwebtoken) — giriş uçları 503, guest modu çalışır.');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -97,10 +99,72 @@ app.post('/api/designs', async (req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
-// --- Favoriler (userId ile; varsayılan "guest") ---
+// --- Kimlik doğrulama (JWT) ---
+function authNotReady(res) {
+  return res.status(503).json({ success: false, error: 'Giriş yapılandırılmamış (npm i bcryptjs jsonwebtoken)', code: 'AUTH_NOT_READY' });
+}
+app.post('/api/auth/register', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  if (!auth.ready()) return authNotReady(res);
+  const { email, password } = req.body || {};
+  if (!email || !password || String(password).length < 6) {
+    return res.status(400).json({ success: false, error: 'Geçerli e-posta ve en az 6 karakterli şifre gerekli', code: 'BAD_REQUEST' });
+  }
+  try {
+    const exists = await db.prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
+    if (exists) return res.status(409).json({ success: false, error: 'Bu e-posta zaten kayıtlı', code: 'EMAIL_TAKEN' });
+    const user = await db.prisma.user.create({ data: { email: String(email).toLowerCase(), passwordHash: await auth.hash(String(password)) } });
+    res.json({ success: true, token: auth.sign(user), user: auth.pub(user) });
+  } catch (e) { dbError(res, e); }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  if (!auth.ready()) return authNotReady(res);
+  const { email, password } = req.body || {};
+  try {
+    const user = await db.prisma.user.findUnique({ where: { email: String(email || '').toLowerCase() } });
+    if (!user || !(await auth.compare(String(password || ''), user.passwordHash))) {
+      return res.status(401).json({ success: false, error: 'E-posta veya şifre hatalı', code: 'BAD_CREDENTIALS' });
+    }
+    res.json({ success: true, token: auth.sign(user), user: auth.pub(user) });
+  } catch (e) { dbError(res, e); }
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const uid = auth.userIdFrom(req);
+  if (uid === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
+  try {
+    const user = await db.prisma.user.findUnique({ where: { id: Number(uid) } });
+    if (!user) return res.status(404).json({ success: false, code: 'NOT_FOUND' });
+    res.json({ success: true, user: auth.pub(user) });
+  } catch (e) { dbError(res, e); }
+});
+
+// Plan/kota durumunu kullanıcıya kaydet (cihazlar arası senkron)
+app.put('/api/auth/state', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const uid = auth.userIdFrom(req);
+  if (uid === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
+  const b = req.body || {};
+  try {
+    const user = await db.prisma.user.update({
+      where: { id: Number(uid) },
+      data: {
+        plan: b.plan, planSince: Number(b.planSince) || 0,
+        imagesUsed: Number(b.imagesUsed) || 0, imagesExtra: Number(b.imagesExtra) || 0,
+        packId: b.packId || null, packSince: Number(b.packSince) || 0,
+      },
+    });
+    res.json({ success: true, user: auth.pub(user) });
+  } catch (e) { dbError(res, e); }
+});
+
+// --- Favoriler (giriş yapılmışsa kullanıcıya, değilse guest) ---
 app.get('/api/favorites', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
-  const userId = req.query.userId || 'guest';
+  const userId = auth.userIdFrom(req);
   try {
     const favs = await db.prisma.favorite.findMany({ where: { userId }, include: { design: true }, orderBy: { createdAt: 'desc' } });
     res.json({ success: true, designs: favs.map((f) => db.designOut(f.design)) });
@@ -109,7 +173,8 @@ app.get('/api/favorites', async (req, res) => {
 
 app.post('/api/favorites', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
-  const { userId = 'guest', designId } = req.body || {};
+  const userId = auth.userIdFrom(req);
+  const { designId } = req.body || {};
   if (!designId) return res.status(400).json({ success: false, error: 'designId gerekli', code: 'BAD_REQUEST' });
   try {
     const favorite = await db.prisma.favorite.upsert({
@@ -123,7 +188,7 @@ app.post('/api/favorites', async (req, res) => {
 
 app.delete('/api/favorites/:designId', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
-  const userId = req.query.userId || 'guest';
+  const userId = auth.userIdFrom(req);
   const designId = parseInt(req.params.designId, 10);
   try {
     await db.prisma.favorite.deleteMany({ where: { userId, designId } });
@@ -134,11 +199,12 @@ app.delete('/api/favorites/:designId', async (req, res) => {
 // --- Tarama analizleri ---
 app.post('/api/analysis', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
+  const userId = auth.userIdFrom(req);
   const b = req.body || {};
   try {
     const analysis = await db.prisma.scanAnalysis.create({
       data: {
-        userId: b.userId || 'guest', toneKey: b.toneKey || null, undertone: b.undertone || null,
+        userId, toneKey: b.toneKey || null, undertone: b.undertone || null,
         fingerLength: b.fingerLength || null, nailShape: b.nailShape || null, hex: b.hex || null,
       },
     });
@@ -148,7 +214,7 @@ app.post('/api/analysis', async (req, res) => {
 
 app.get('/api/analysis/latest', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
-  const userId = req.query.userId || 'guest';
+  const userId = auth.userIdFrom(req);
   try {
     const analysis = await db.prisma.scanAnalysis.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
     res.json({ success: true, analysis });
@@ -166,17 +232,18 @@ app.post('/api/payments/checkout', async (req, res) => {
     return res.status(400).json({ success: false, error: 'itemId ve amount gerekli', code: 'BAD_REQUEST' });
   }
   const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
+  const userId = auth.userIdFrom(req);
   try {
     const result = await payments.createCheckout({
       provider: b.provider, kind: b.kind || 'plan', itemId: b.itemId,
       itemName: b.itemName || b.itemId, amount: Number(b.amount),
-      currency: b.currency || 'USD', userId: b.userId || 'guest', baseUrl,
+      currency: b.currency || 'USD', userId, baseUrl,
     });
     // Siparişi kaydet (DB varsa; yoksa sessiz geç)
     if (db.ready()) {
       try {
         await db.prisma.order.create({ data: {
-          userId: b.userId || 'guest', kind: b.kind || 'plan', itemId: String(b.itemId),
+          userId, kind: b.kind || 'plan', itemId: String(b.itemId),
           itemName: b.itemName || String(b.itemId), amount: Number(b.amount), currency: b.currency || 'USD',
           provider: result.provider || 'demo', status: 'pending', ref: result.ref || '',
         } });
@@ -190,7 +257,8 @@ app.post('/api/payments/checkout', async (req, res) => {
 
 // Demo/başarı onayı — gerçek sağlayıcıda bunu webhook/callback yapar
 app.post('/api/payments/confirm', async (req, res) => {
-  const { ref, userId = 'guest' } = req.body || {};
+  const { ref } = req.body || {};
+  const userId = auth.userIdFrom(req);
   if (db.ready() && ref) {
     try {
       await db.prisma.order.updateMany({ where: { ref: String(ref), userId }, data: { status: 'paid' } });

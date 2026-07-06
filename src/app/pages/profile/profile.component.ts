@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { I18nService, LOCALES } from '../../core/i18n.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
+import { AuthService } from '../../core/auth.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
 
 @Component({
@@ -14,10 +15,36 @@ import { DesignCardComponent } from '../../shared/design-card.component';
   template: `
     <div class="page">
       <header class="phead">
-        <div class="av"></div>
-        <h1 class="nm">Leman</h1>
-        <p class="em">l.shalili&#64;logper.com</p>
+        <div class="av">{{ auth.loggedIn() ? avatarLetter() : '👤' }}</div>
+        @if (auth.user(); as u) {
+          <h1 class="nm">{{ u.email.split('@')[0] }}</h1>
+          <p class="em">{{ u.email }}</p>
+          <button class="btn-ghost auth-btn" (click)="auth.logout()">{{ i18n.t('logout') }}</button>
+        } @else {
+          <h1 class="nm">{{ i18n.t('auth_guest') }}</h1>
+          <p class="em">{{ i18n.t('auth_sub') }}</p>
+          <button class="btn-primary auth-btn" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
+        }
       </header>
+
+      <!-- Giriş / Kayıt penceresi -->
+      @if (authOpen()) {
+        <div class="au-back" (click)="authOpen.set(false)"></div>
+        <div class="au card">
+          <h3 class="au-t">{{ authMode() === 'login' ? i18n.t('login') : i18n.t('register') }}</h3>
+          <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)"
+            [placeholder]="i18n.t('auth_email')" autocomplete="email" />
+          <input class="au-in" type="password" [value]="password()" (input)="password.set($any($event.target).value)"
+            [placeholder]="i18n.t('auth_password')" autocomplete="current-password" />
+          @if (authErr()) { <p class="au-err">⚠️ {{ authErr() }}</p> }
+          <button class="btn-primary au-go" (click)="submitAuth()" [disabled]="authBusy()">
+            {{ authBusy() ? '…' : (authMode() === 'login' ? i18n.t('login') : i18n.t('register')) }}
+          </button>
+          <button class="au-switch" (click)="toggleMode()">
+            {{ authMode() === 'login' ? i18n.t('auth_switch_reg') : i18n.t('auth_switch_log') }}
+          </button>
+        </div>
+      }
 
       <div class="stats">
         <div class="stat card"><span class="n">12</span><span class="l">{{ i18n.t('designs') }}</span></div>
@@ -80,10 +107,22 @@ import { DesignCardComponent } from '../../shared/design-card.component';
   `,
   styles: [`
     .phead { text-align: center; padding: 28px 0 10px; }
-    .av { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto;
-      background: var(--gold-grad); border: 3px solid rgba(212,175,55,0.5); }
+    .av { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto; display: flex;
+      align-items: center; justify-content: center; font-size: 38px; font-weight: 700; color: #1a1206;
+      background: var(--gold-grad); border: 3px solid rgba(212,175,55,0.5); text-transform: uppercase; }
     .nm { margin: 12px 0 2px; font-size: 22px; }
     .em { margin: 0; font-size: 12.5px; color: var(--muted-2); }
+    .auth-btn { margin-top: 12px; padding: 8px 22px; }
+    .au-back { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+    .au { position: fixed; z-index: 1101; inset-inline: 24px; top: 50%; transform: translateY(-50%);
+      margin: 0 auto; max-width: 380px; padding: 22px 18px; }
+    .au-t { margin: 0 0 16px; font-size: 20px; text-align: center; }
+    .au-in { width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+      border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none; }
+    .au-in:focus { border-color: rgba(212,175,55,0.5); }
+    .au-err { margin: 4px 0 8px; font-size: 12px; color: #f0b8b8; text-align: center; }
+    .au-go { width: 100%; margin-top: 6px; }
+    .au-switch { width: 100%; margin-top: 12px; background: transparent; color: var(--gold-soft); font-size: 13px; padding: 6px; }
     .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 18px 0; }
     .plan-card { padding: 16px; margin-bottom: 18px; }
     .plan-card.hl { border-color: rgba(212,175,55,0.5);
@@ -127,7 +166,49 @@ export class ProfileComponent {
   readonly fav = inject(FavoritesService);
   readonly plan = inject(PlanService);
   readonly quota = inject(ImageQuotaService);
+  readonly auth = inject(AuthService);
   readonly locales = LOCALES;
+
+  // Giriş/kayıt penceresi durumu
+  readonly authOpen = signal<boolean>(false);
+  readonly authMode = signal<'login' | 'register'>('login');
+  readonly email = signal<string>('');
+  readonly password = signal<string>('');
+  readonly authErr = signal<string | null>(null);
+  readonly authBusy = signal<boolean>(false);
+
+  avatarLetter(): string {
+    return this.auth.user()?.email.charAt(0) || '?';
+  }
+
+  openAuth(mode: 'login' | 'register'): void {
+    this.authMode.set(mode);
+    this.authErr.set(null);
+    this.authOpen.set(true);
+  }
+
+  toggleMode(): void {
+    this.authMode.set(this.authMode() === 'login' ? 'register' : 'login');
+    this.authErr.set(null);
+  }
+
+  async submitAuth(): Promise<void> {
+    const email = this.email().trim();
+    const password = this.password();
+    if (!email || !password) { this.authErr.set(this.i18n.t('auth_fill')); return; }
+    this.authBusy.set(true);
+    this.authErr.set(null);
+    const res = this.authMode() === 'login'
+      ? await this.auth.login(email, password)
+      : await this.auth.register(email, password);
+    this.authBusy.set(false);
+    if (res.ok) {
+      this.authOpen.set(false);
+      this.email.set(''); this.password.set('');
+    } else {
+      this.authErr.set(res.error ?? 'Hata');
+    }
+  }
 
   private readonly PLAN_KEYS: Record<string, string> = {
     free: 'pn_free', monthly: 'pn_monthly', yearly: 'pn_yearly', pro: 'pn_pro', pro_yearly: 'pn_pro_yearly',

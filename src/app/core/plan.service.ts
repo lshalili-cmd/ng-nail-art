@@ -47,6 +47,16 @@ export class PlanService {
     try { localStorage.setItem(this.KEY, JSON.stringify(next)); } catch { /* yoksa geç */ }
   }
 
+  /** Anlık durum (senkron için). */
+  snapshot(): PlanState { return this.state(); }
+
+  /** Sunucudan gelen planı uygular (cihazlar arası senkron). */
+  applyServer(id: string, since: number): void {
+    const next: PlanState = { id: id || 'free', since: since || this.now() };
+    this.state.set(next);
+    try { localStorage.setItem(this.KEY, JSON.stringify(next)); } catch { /* geç */ }
+  }
+
   private now(): number {
     return Date.now();
   }

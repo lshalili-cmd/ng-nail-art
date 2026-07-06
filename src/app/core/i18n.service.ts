@@ -354,6 +354,32 @@ Object.assign(TR, { per_mo: '/ay', per_yr: '/yıl' });
 Object.assign(RU, { per_mo: '/мес', per_yr: '/год' });
 Object.assign(AR, { per_mo: '/شهر', per_yr: '/سنة' });
 
+// ── Kimlik doğrulama (giriş/kayıt) ──
+Object.assign(EN, {
+  login: 'Log in', register: 'Sign up', auth_guest: 'Guest',
+  auth_sub: 'Log in to sync your favorites, plan and credits across devices.',
+  auth_email: 'Email', auth_password: 'Password (min 6)', auth_fill: 'Enter email and password',
+  auth_switch_reg: "Don't have an account? Sign up", auth_switch_log: 'Already a member? Log in',
+});
+Object.assign(TR, {
+  login: 'Giriş Yap', register: 'Kayıt Ol', auth_guest: 'Misafir',
+  auth_sub: 'Giriş yap; favorilerin, planın ve kredilerin cihazlar arası senkronlansın.',
+  auth_email: 'E-posta', auth_password: 'Şifre (en az 6)', auth_fill: 'E-posta ve şifre gir',
+  auth_switch_reg: 'Hesabın yok mu? Kayıt ol', auth_switch_log: 'Zaten üye misin? Giriş yap',
+});
+Object.assign(RU, {
+  login: 'Войти', register: 'Регистрация', auth_guest: 'Гость',
+  auth_sub: 'Войдите, чтобы синхронизировать избранное, план и кредиты между устройствами.',
+  auth_email: 'Эл. почта', auth_password: 'Пароль (мин. 6)', auth_fill: 'Введите почту и пароль',
+  auth_switch_reg: 'Нет аккаунта? Зарегистрируйтесь', auth_switch_log: 'Уже есть аккаунт? Войти',
+});
+Object.assign(AR, {
+  login: 'تسجيل الدخول', register: 'إنشاء حساب', auth_guest: 'ضيف',
+  auth_sub: 'سجّلي الدخول لمزامنة المفضلة والخطة والأرصدة بين الأجهزة.',
+  auth_email: 'البريد الإلكتروني', auth_password: 'كلمة المرور (٦ على الأقل)', auth_fill: 'أدخلي البريد وكلمة المرور',
+  auth_switch_reg: 'ليس لديك حساب؟ سجّلي', auth_switch_log: 'لديك حساب؟ ادخلي',
+});
+
 const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 
 @Injectable({ providedIn: 'root' })

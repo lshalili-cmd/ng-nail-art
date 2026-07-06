@@ -60,6 +60,27 @@ birkaç örnek tasarım ekler. **Veritabanı kurulmadan da sunucu çalışır** 
 - `GET  /api/favorites`  ·  `POST /api/favorites`  ·  `DELETE /api/favorites/:designId`  (query: `userId`, varsayılan `guest`)
 - `POST /api/analysis`  ·  `GET /api/analysis/latest`
 - `GET  /api/payments/status`  ·  `POST /api/payments/checkout`  ·  `POST /api/payments/confirm`
+- `POST /api/auth/register`  ·  `POST /api/auth/login`  ·  `GET /api/auth/me`  ·  `PUT /api/auth/state`
+
+## Kullanıcı girişi (JWT)
+
+Giriş/kayıt için iki paket gerekir ve `User` tablosu eklendiğinden yeni migrate şart:
+
+```bash
+cd server
+npm i bcryptjs jsonwebtoken
+npm run db:setup        # veya: npx prisma migrate dev --name users
+```
+
+`.env`'e bir gizli anahtar ekleyin (üretimde mutlaka değiştirin):
+
+```
+JWT_SECRET=uzun-rastgele-bir-deger
+```
+
+Paketler yoksa auth uçları `503` döner; uygulama **guest** modunda sorunsuz çalışır. Giriş
+yapılınca token istemcide saklanır ve tüm `/api` isteklerine `Authorization: Bearer` olarak eklenir;
+favoriler/analizler/siparişler kullanıcıya bağlanır, plan ve görsel kotası cihazlar arası senkronlanır.
 
 ## Ödeme (iyzico / Stripe / PayTR)
 

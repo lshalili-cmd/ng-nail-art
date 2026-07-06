@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BottomNavComponent } from './shared/bottom-nav.component';
 import { OnboardingComponent } from './shared/onboarding.component';
+import { AuthService } from './core/auth.service';
+import { SyncService } from './core/sync.service';
 
 @Component({
   selector: 'app-root',
@@ -14,4 +16,12 @@ import { OnboardingComponent } from './shared/onboarding.component';
     <app-onboarding />
   `,
 })
-export class AppComponent {}
+export class AppComponent {
+  private readonly auth = inject(AuthService);
+  private readonly sync = inject(SyncService);
+
+  constructor() {
+    this.sync.start();          // cihazlar arası senkron dinleyicileri
+    void this.auth.loadMe();    // token varsa kullanıcıyı yükle
+  }
+}

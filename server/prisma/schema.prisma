@@ -74,3 +74,16 @@ model Order {
   @@index([userId])
   @@index([status])
 }
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  plan         String   @default("free")
+  planSince    Float    @default(0)   // ms (BigInt yerine Float — JSON güvenli)
+  imagesUsed   Int      @default(0)
+  imagesExtra  Int      @default(0)
+  packId       String?
+  packSince    Float    @default(0)
+  createdAt    DateTime @default(now())
+}

@@ -99,6 +99,17 @@ export class ImageQuotaService {
     this.save({ key: this.periodKey(), used: s.used, extra: s.extra + images, packId: id, packSince: Date.now() });
   }
 
+  /** Anlık kota durumu (senkron için). */
+  snapshot(): { used: number; extra: number; packId: string | null; packSince: number } {
+    const s = this.synced();
+    return { used: s.used, extra: s.extra, packId: s.packId, packSince: s.packSince };
+  }
+
+  /** Sunucudan gelen kota durumunu uygular (cihazlar arası senkron). */
+  applyServer(v: { used: number; extra: number; packId: string | null; packSince: number }): void {
+    this.save({ key: this.periodKey(), used: v.used || 0, extra: v.extra || 0, packId: v.packId ?? null, packSince: v.packSince || 0 });
+  }
+
   private save(s: QuotaState): void {
     this.state.set(s);
     try { localStorage.setItem(this.KEY, JSON.stringify(s)); } catch { /* yoksa geç */ }
