@@ -158,14 +158,14 @@ import { DesignCardComponent } from '../../shared/design-card.component';
               <button class="btn-primary au-go" (click)="settingsOpen.set(false)">{{ i18n.t('pay_close') }}</button>
             }
             @default {
-              <button class="set-opt" (click)="setStep('changepw')">🔑 {{ i18n.t('set_changepw') }} <span class="ch">›</span></button>
-              <button class="set-opt" (click)="setStep('delete')">🗑️ {{ i18n.t('set_delete') }} <span class="ch">›</span></button>
+              <button class="set-opt" (click)="settingsGo('changepw')">🔑 {{ i18n.t('set_changepw') }} <span class="ch">›</span></button>
+              <button class="set-opt" (click)="settingsGo('delete')">🗑️ {{ i18n.t('set_delete') }} <span class="ch">›</span></button>
             }
           }
 
           @if (setInfo()) { <p class="au-demo">{{ setInfo() }}</p> }
           @if (setErr()) { <p class="au-err">⚠️ {{ setErr() }}</p> }
-          @if (settingsStep() !== 'menu' && settingsStep() !== 'deleted') { <button class="au-switch" (click)="setStep('menu')">← {{ i18n.t('back') }}</button> }
+          @if (settingsStep() !== 'menu' && settingsStep() !== 'deleted') { <button class="au-switch" (click)="settingsGo('menu')">← {{ i18n.t('back') }}</button> }
         </div>
       }
     </div>
@@ -290,7 +290,7 @@ export class ProfileComponent implements OnInit {
     this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delPw.set('');
     this.settingsOpen.set(true);
   }
-  setStep(s: 'menu' | 'changepw' | 'delete'): void {
+  settingsGo(s: 'menu' | 'changepw' | 'delete'): void {
     this.settingsStep.set(s); this.setErr.set(null); this.setInfo.set(null);
   }
 
