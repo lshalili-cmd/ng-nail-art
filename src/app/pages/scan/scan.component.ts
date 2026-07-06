@@ -11,6 +11,7 @@ import { BackendService } from '../../core/api.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { recommend, ScoredDesign } from '../../core/recommendation';
 import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
+import { NailSegService } from '../../core/nail-seg.service';
 
 type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
 type CaptureMode = 'full' | 'closeup';
@@ -178,6 +179,7 @@ export class ScanComponent implements OnDestroy {
   readonly data = inject(DataService);
   private readonly hands = inject(HandAnalysisService);
   private readonly backend = inject(BackendService);
+  private readonly seg = inject(NailSegService);
   private readonly store = inject(AnalysisStore);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
@@ -301,15 +303,17 @@ export class ScanComponent implements OnDestroy {
     work.getContext('2d')?.drawImage(v, 0, 0, work.width, work.height);
     this.stopCamera();
     if (this.mode() === 'closeup') {
-      this.runCloseup(work);
+      await this.runCloseup(work);
     } else {
       await this.runAnalysis(work);
     }
   }
 
-  /** Yakın çekim karesinden tırnak şeklini çıkarır ve seçili şekli günceller. */
-  private runCloseup(work: HTMLCanvasElement): void {
-    const res = detectNailShapeCloseup(work);
+  /** Yakın çekim karesinden tırnak şeklini çıkarır: ML modeli varsa onu, yoksa flood-fill. */
+  private async runCloseup(work: HTMLCanvasElement): Promise<void> {
+    // ML segmentasyon modeli yapılandırılmışsa önce onu dene (en yüksek doğruluk)
+    let res = this.seg.enabled() ? await this.seg.segmentShape(work) : null;
+    if (!res || !res.shape) res = detectNailShapeCloseup(work); // güvenilir fallback
     this.mode.set('full');
     if (!res.shape) {
       this.error.set(this.i18n.t('closeup_fail'));
@@ -336,7 +340,7 @@ export class ScanComponent implements OnDestroy {
       work.width = Math.round(img.naturalWidth * scale);
       work.height = Math.round(img.naturalHeight * scale);
       work.getContext('2d')?.drawImage(img, 0, 0, work.width, work.height);
-      this.runCloseup(work);
+      void this.runCloseup(work);
       URL.revokeObjectURL(img.src);
     };
     img.onerror = () => this.error.set(this.i18n.t('err_camera'));
