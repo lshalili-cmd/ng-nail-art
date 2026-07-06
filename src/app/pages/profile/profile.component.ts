@@ -103,29 +103,6 @@ import { DesignCardComponent } from '../../shared/design-card.component';
         <button class="btn-primary wide" routerLink="/shop">{{ i18n.t('manage_plan') }}</button>
       </div>
 
-      <!-- Favoriler -->
-      <h2 class="fav-title">❤️ {{ i18n.t('my_fav') }}</h2>
-      @if (favDesigns().length) {
-        <div class="fav-grid">
-          @for (d of favDesigns(); track d.id) {
-            <app-design-card [design]="d" [width]="0" />
-          }
-        </div>
-      } @else {
-        <p class="fav-empty">{{ i18n.t('no_favorites') }}</p>
-      }
-
-      <div class="lang-block card">
-        <p class="lbl">🌐 {{ i18n.t('language') }}</p>
-        <div class="langs">
-          @for (l of locales; track l.code) {
-            <button class="lang" [class.on]="l.code === i18n.locale()" (click)="i18n.setLocale(l.code)">
-              {{ l.flag }} {{ l.label }}
-            </button>
-          }
-        </div>
-      </div>
-
       <div class="menu card">
         @for (m of menu; track m.key) {
           <button class="row" (click)="go(m.key)">
@@ -135,6 +112,26 @@ import { DesignCardComponent } from '../../shared/design-card.component';
           </button>
         }
       </div>
+
+      <!-- Favorilerim penceresi (menüdeki butona tıklanınca açılır) -->
+      @if (favOpen()) {
+        <div class="fav-back" (click)="favOpen.set(false)"></div>
+        <div class="fav-modal card">
+          <div class="fav-head">
+            <h3 class="fav-mt">❤️ {{ i18n.t('my_fav') }}</h3>
+            <button class="fav-x" (click)="favOpen.set(false)" aria-label="Kapat">✕</button>
+          </div>
+          @if (favDesigns().length) {
+            <div class="fav-grid">
+              @for (d of favDesigns(); track d.id) {
+                <app-design-card [design]="d" [width]="0" />
+              }
+            </div>
+          } @else {
+            <p class="fav-empty">{{ i18n.t('no_favorites') }}</p>
+          }
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -182,6 +179,13 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .stat .n { font-size: 22px; font-weight: 700; color: var(--gold); font-family: var(--font-head); }
     .stat .l { font-size: 11px; color: var(--muted-2); }
     .fav-title { font-family: var(--font-head); font-size: 17px; margin: 6px 0 12px; }
+    .fav-back { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+    .fav-modal { position: fixed; z-index: 1101; inset-inline: 16px; top: 50%; transform: translateY(-50%);
+      margin: 0 auto; max-width: 460px; max-height: 80vh; overflow-y: auto; padding: 18px 16px; }
+    .fav-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .fav-mt { margin: 0; font-size: 18px; }
+    .fav-x { width: 34px; height: 34px; border-radius: 50%; font-size: 15px; color: var(--muted);
+      background: var(--surface-2); border: 1px solid var(--line); }
     .fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
     .fav-grid ::ng-deep .dc { width: 100% !important; }
     .fav-empty { color: var(--muted-2); font-size: 13px; text-align: center;
@@ -217,12 +221,14 @@ export class ProfileComponent implements OnInit {
     switch (key) {
       case 'subscription': void this.router.navigate(['/shop']); break;
       case 'tryon_hist': void this.router.navigate(['/ar']); break;
-      case 'my_fav': document.querySelector('.fav-title')?.scrollIntoView({ behavior: 'smooth' }); break;
-      case 'settings': document.querySelector('.lang-block')?.scrollIntoView({ behavior: 'smooth' }); break;
+      case 'my_fav': this.favOpen.set(true); break;
+      case 'settings': break;
       case 'help': window.location.href = 'mailto:l.shalili@logper.com'; break;
       case 'logout': if (this.auth.loggedIn()) this.auth.logout(); else this.openAuth('login'); break;
     }
   }
+
+  readonly favOpen = signal<boolean>(false);
 
   // Giriş/kayıt penceresi durumu
   readonly authOpen = signal<boolean>(false);
