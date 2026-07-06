@@ -358,7 +358,8 @@ const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
-  readonly locale = signal<Locale>('tr');
+  private readonly KEY = 'ngnail-locale';
+  readonly locale = signal<Locale>(this.load());
   readonly dir = computed<'rtl' | 'ltr'>(() => (this.locale() === 'ar' ? 'rtl' : 'ltr'));
 
   constructor() {
@@ -368,6 +369,16 @@ export class I18nService {
   setLocale(l: Locale): void {
     this.locale.set(l);
     this.apply(l);
+    try { localStorage.setItem(this.KEY, l); } catch { /* yoksa geç */ }
+  }
+
+  /** Kayıtlı dili okur (yoksa Türkçe). Böylece seçim sayfa yenilense de korunur. */
+  private load(): Locale {
+    try {
+      const v = localStorage.getItem(this.KEY);
+      if (v === 'tr' || v === 'en' || v === 'ru' || v === 'ar') return v;
+    } catch { /* geç */ }
+    return 'tr';
   }
 
   /** Reactive translate: reads the locale signal so templates update on change. */
