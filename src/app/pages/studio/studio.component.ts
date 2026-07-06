@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { AiService } from '../../core/ai.service';
+import { BackendService } from '../../core/api.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
 import { renderNailThumb, colorToHex } from '../../core/nail-art';
 import { FavoritesService } from '../../core/favorites.service';
@@ -168,6 +169,7 @@ import { Design } from '../../core/data.service';
 export class StudioComponent implements OnInit {
   readonly i18n = inject(I18nService);
   private readonly ai = inject(AiService);
+  private readonly backend = inject(BackendService);
   private readonly router = inject(Router);
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
@@ -245,6 +247,24 @@ export class StudioComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+    this.persistGenerated();
+  }
+
+  /** Üretilen tasarımı veritabanına kaydeder (sessiz-başarısız; backend kapalıysa atlar). */
+  private persistGenerated(): void {
+    const d = this.design();
+    if (!d) return;
+    void this.backend.saveDesign({
+      name: d.title,
+      artist: 'AI Studio',
+      pattern: this.patternFromSpec(d),
+      category: 'ai',
+      colors: d.colors,
+      shapes: [d.shape],
+      img: this.imageSrc() ?? '',
+      prompt: d.designPrompt,
+      source: d.source === 'demo' ? 'demo' : 'ai_studio',
+    });
   }
 
   /** Demo tasarım + istemci tarafı prosedürel görseli hemen ayarlar. */

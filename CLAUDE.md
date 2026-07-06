@@ -18,13 +18,18 @@ kullanıcıya kısa bir özet olarak raporlanır. Bu, kullanıcının her komutu
 ## Her komut sonrası check-in
 
 1. **Kod doğrulama** — değişen tüm `.ts` dosyaları sözdizimi kontrolünden, `.json` dosyaları
-   geçerlilik kontrolünden geçirilir (bulut ortamında otomatik).
+   geçerlilik kontrolünden geçirilir (bulut ortamında otomatik). NOT: bu kontrol yalnızca TS
+   sözdizimini görür, **Angular şablon hatalarını görmez** (örn. `@else if (...; as x)`), bu yüzden
+   3. adım (tarayıcı doğrulaması) zorunludur.
 2. **Lint** — `npm run lint` (angular-eslint). Bulut ortamı kullanıcı makinesinde kabuk
    çalıştıramadığında, lint kurulumu hazır tutulur ve kullanıcıya tek komut olarak bırakılır;
    tarayıcı testinde görülen çalışma-zamanı hataları ayrıca raporlanır.
-3. **Tarayıcı & uygulama testi** — çalışan uygulama (`http://localhost:4200`) kullanıcının
-   Chrome'unda açılır (Claude-in-Chrome), ana ekranlar (Ana Sayfa, Keşfet, Tara, Mağaza, Profil,
-   AI Studio) gezilir ve **konsol hataları** okunur. Kırmızı hata varsa düzeltilir.
+3. **Tarayıcı & derleme doğrulaması (ZORUNLU KAPI)** — çalışan uygulama (`http://localhost:4200`)
+   kullanıcının Chrome'unda açılır (Claude-in-Chrome) ve **değişiklikten etkilenen TÜM rotalar**
+   gezilir (Ana Sayfa, Keşfet, Tara, Stüdyo, AR, Mağaza, Profil, Tasarım). Her rotada
+   `read_console_messages(onlyErrors)` ile derleme/çalışma-zamanı hataları (NG kodları, exception)
+   okunur. **Sıfır hata olmadan iş "tamam" diye raporlanmaz;** hata varsa kullanıcıya söylemeden
+   düzeltilir. Amaç: kullanıcı uygulamayı webde açtığında asla hata görmesin.
 4. **GitHub check-in (commit + push)** — değişiklikler git'e commit edilip `origin main`'e push edilir.
    Bulut ortamı GitHub'a erişemediğinden bu, kullanıcı makinesinde çalışan `auto-git.ps1` izleyicisi
    tarafından otomatik yapılır (her ~90 sn'de değişiklik varsa commit+push).

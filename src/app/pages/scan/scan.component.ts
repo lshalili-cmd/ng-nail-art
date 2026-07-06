@@ -7,6 +7,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
 import { DataService, Design } from '../../core/data.service';
 import { HandAnalysisService, HandAnalysis, FingerLength } from '../../core/hand-analysis.service';
+import { BackendService } from '../../core/api.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { recommend, ScoredDesign } from '../../core/recommendation';
 import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
@@ -176,6 +177,7 @@ export class ScanComponent implements OnDestroy {
   readonly i18n = inject(I18nService);
   readonly data = inject(DataService);
   private readonly hands = inject(HandAnalysisService);
+  private readonly backend = inject(BackendService);
   private readonly store = inject(AnalysisStore);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
@@ -416,6 +418,11 @@ export class ScanComponent implements OnDestroy {
     // Otomatik tırnak şekli: silüet analizi çıktıysa onu, yoksa parmak yapısı tahminini kullan
     this.shape.set(result.nailShape ?? this.suggestShape(result.fingerLength));
     this.stage.set('results');
+    // Analizi veritabanına da kaydet (sessiz-başarısız; backend kapalıysa atlar)
+    void this.backend.saveAnalysis({
+      toneKey: result.toneKey, undertone: result.undertone,
+      fingerLength: result.fingerLength, nailShape: result.nailShape, hex: result.hex,
+    });
   }
 
   /** Tespit edilen noktaları kare üzerine çizer (örnekleme sonrası). */

@@ -9,6 +9,36 @@ import { renderNailThumb } from './nail-art';
 export class BackendService {
   private readonly http = inject(HttpClient);
 
+  /** Backend erişilebilirliği (bir kez ölçülür, önbelleğe alınır). Kapalıysa yazma denenmez. */
+  private healthy: boolean | null = null;
+
+  /** Sunucu ayakta mı? Tek sefer /api/health ile ölçer; kapalıysa yazma çağrıları no-op olur. */
+  async isAvailable(): Promise<boolean> {
+    if (this.healthy !== null) return this.healthy;
+    try {
+      const res = await firstValueFrom(
+        this.http.get<{ success: boolean }>('/api/health').pipe(timeout(2500)),
+      );
+      this.healthy = !!res?.success;
+    } catch {
+      this.healthy = false;
+    }
+    return this.healthy;
+  }
+
+  /** Tarama analizini veritabanına kaydeder (sessiz-başarısız). */
+  async saveAnalysis(input: SaveAnalysisInput): Promise<boolean> {
+    if (!(await this.isAvailable())) return false;
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ success: boolean }>('/api/analysis', input).pipe(timeout(6000)),
+      );
+      return !!res?.success;
+    } catch {
+      return false;
+    }
+  }
+
   /** Veritabanındaki kayıtlı tasarımlar (yoksa/backend kapalıysa boş dizi). */
   async getDesigns(): Promise<Design[]> {
     try {
@@ -24,6 +54,7 @@ export class BackendService {
 
   /** Bir tasarımı veritabanına kaydeder. Başarısızsa null döner. */
   async saveDesign(input: SaveDesignInput): Promise<Design | null> {
+    if (!(await this.isAvailable())) return null;
     try {
       const res = await firstValueFrom(
         this.http.post<{ success: boolean; design: ServerDesign }>('/api/designs', input).pipe(timeout(8000)),
@@ -85,4 +116,12 @@ export interface SaveDesignInput {
   img?: string;
   prompt?: string;
   source?: string;
+}
+
+export interface SaveAnalysisInput {
+  toneKey?: string | null;
+  undertone?: string | null;
+  fingerLength?: string | null;
+  nailShape?: string | null;
+  hex?: string | null;
 }
