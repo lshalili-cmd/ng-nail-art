@@ -90,14 +90,10 @@ type CaptureMode = 'full' | 'closeup';
           <!-- Tırnak şekli: manuel seçim asıl kaynak; otomatik yalnızca yaklaşık öneri -->
           <div class="section-head">
             <h2 class="section-title">{{ i18n.t('choose_shape') }}</h2>
-            @if (closeup(); as c) {
-              @if (c.shape) {
-                <span class="conf on">📸 {{ i18n.t('shp_' + c.shape) }} · %{{ pct(c.confidence) }}</span>
-              }
-            } @else if (analysis(); as a) {
-              @if (a.nailShape) {
-                <span class="conf">🤖 {{ i18n.t('shp_' + a.nailShape) }} · %{{ pct(a.shapeConfidence) }} · {{ i18n.t('approx') }}</span>
-              }
+            @if (closeup()?.shape) {
+              <span class="conf on">📸 {{ i18n.t('shp_' + closeup()?.shape) }} · %{{ pct(closeup()?.confidence ?? 0) }}</span>
+            } @else if (analysis()?.nailShape) {
+              <span class="conf">🤖 {{ i18n.t('shp_' + analysis()?.nailShape) }} · %{{ pct(analysis()?.shapeConfidence ?? 0) }} · {{ i18n.t('approx') }}</span>
             }
           </div>
           <p class="shhint">{{ i18n.t('shape_hint') }}</p>
