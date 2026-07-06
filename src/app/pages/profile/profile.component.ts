@@ -31,6 +31,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
       @if (authOpen()) {
         <div class="au-back" (click)="closeAuth()"></div>
         <div class="au card">
+          <button class="au-x" (click)="closeAuth()" aria-label="Kapat">✕</button>
           <h3 class="au-t">{{ i18n.t(stepTitle()) }}</h3>
 
           @switch (authStep()) {
@@ -128,9 +129,16 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 
       <div class="menu card">
         @for (m of menu; track m.key) {
-          <button class="row">
+          <button class="row" [routerLink]="m.route">
             <span class="mi">{{ m.icon }}</span>
             <span class="mt">{{ i18n.t(m.key) }}</span>
+            <span class="ch">›</span>
+          </button>
+        }
+        @if (auth.loggedIn()) {
+          <button class="row" (click)="auth.logout()">
+            <span class="mi">🚪</span>
+            <span class="mt">{{ i18n.t('logout') }}</span>
             <span class="ch">›</span>
           </button>
         }
@@ -149,6 +157,8 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .au { position: fixed; z-index: 1101; inset-inline: 24px; top: 50%; transform: translateY(-50%);
       margin: 0 auto; max-width: 380px; padding: 22px 18px; }
     .au-t { margin: 0 0 16px; font-size: 20px; text-align: center; }
+    .au-x { position: absolute; top: 10px; inset-inline-end: 12px; width: 34px; height: 34px; border-radius: 50%;
+      font-size: 15px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
     .au-in { width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
       border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none; }
     .au-in:focus { border-color: rgba(212,175,55,0.5); }
@@ -333,13 +343,11 @@ export class ProfileComponent implements OnInit {
   });
 
   readonly favDesigns = this.fav.items;
+  // Her satır gerçek bir sayfaya gider (dekoratif/ölü buton kalmadı).
   readonly menu = [
-    { icon: '❤️', key: 'my_fav' },
-    { icon: '📱', key: 'tryon_hist' },
-    { icon: '🎨', key: 'style_pref' },
-    { icon: '💎', key: 'subscription' },
-    { icon: '⚙️', key: 'settings' },
-    { icon: '❓', key: 'help' },
-    { icon: '🚪', key: 'logout' },
+    { icon: '💎', key: 'subscription', route: '/shop' },
+    { icon: '🔍', key: 'nav_explore', route: '/explore' },
+    { icon: '🎨', key: 'style_pref', route: '/scan' },
+    { icon: '📱', key: 'tryon_hist', route: '/ar' },
   ];
 }
