@@ -217,7 +217,6 @@ export class ProfileComponent implements OnInit {
     switch (key) {
       case 'subscription': void this.router.navigate(['/shop']); break;
       case 'tryon_hist': void this.router.navigate(['/ar']); break;
-      case 'style_pref': void this.router.navigate(['/scan']); break;
       case 'my_fav': document.querySelector('.fav-title')?.scrollIntoView({ behavior: 'smooth' }); break;
       case 'settings': document.querySelector('.lang-block')?.scrollIntoView({ behavior: 'smooth' }); break;
       case 'help': window.location.href = 'mailto:l.shalili@logper.com'; break;
@@ -350,7 +349,6 @@ export class ProfileComponent implements OnInit {
   readonly menu = [
     { icon: '❤️', key: 'my_fav' },
     { icon: '📱', key: 'tryon_hist' },
-    { icon: '🎨', key: 'style_pref' },
     { icon: '💎', key: 'subscription' },
     { icon: '⚙️', key: 'settings' },
     { icon: '❓', key: 'help' },
