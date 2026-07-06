@@ -69,3 +69,22 @@ src/
 5. **PWA/Native**: Capacitor ile Android/iOS paketleme.
 
 Detaylı değerlendirme ve gerekçeler için: `Miracle-NailArt-Denetim-Raporu.docx` ve `Miracle-NailArt-Akis-Diyagrami.html`.
+
+## Testler
+
+Birim testleri **Vitest** (hızlı, tarayıcısız), uçtan uca testler **Playwright** ile:
+
+```bash
+npm install                # vitest + @playwright/test kurar
+npm test                   # birim testleri (src/**/*.spec.ts)
+npm run test:watch         # izleme modunda
+
+npm run e2e:install        # ilk sefer: Playwright Chromium'u kurar
+npm run e2e                # uçtan uca duman testleri (e2e/, dev sunucusunu gerekirse başlatır)
+```
+
+Birim testleri saf mantığı kapsar: cilt tonu/ITA (`skin-tone`), öneri puanlama (`recommendation`),
+tırnak şekli sınıflandırma (`nail-shape-detect`). E2E testleri kritik akışları kapsar: ana sayfa +
+alt menü, mağaza planları, dil değişimi (TR/EN çeviri), Tara ekranının hatasız açılması.
+Not: `.spec.ts` dosyaları uygulama derlemesine dahil değildir (`tsconfig.app.json` yalnızca
+`main.ts` grafiğini derler), bu yüzden dev sunucusunu/derlemeyi etkilemezler.
