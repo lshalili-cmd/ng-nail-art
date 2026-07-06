@@ -32,6 +32,11 @@ const EN: Dict = {
   my_fav: 'My Favorites', tryon_hist: 'Try-On History', style_pref: 'Style Preferences',
   subscription: 'Subscription', settings: 'Settings', language: 'Language', help: 'Help & Support', logout: 'Log Out',
   manage_plan: 'Manage plan',
+  ob_skip: 'Skip', ob_next: 'Next', ob_start: 'Get Started',
+  ob1_t: 'Scan Your Hand', ob1_d: 'AI analyzes your skin tone, undertone and nail shape in seconds.',
+  ob2_t: 'Personal Picks', ob2_d: 'Designs matched to you — the AI chooses what suits you best.',
+  ob3_t: 'Try It in AR', ob3_d: 'See any design live on your own fingers, in real time.',
+  ob4_t: 'Unlimited with Premium', ob4_d: 'Unlimited AI designs and real image generation — upgrade anytime.',
 };
 
 const TR: Dict = {
@@ -55,6 +60,11 @@ const TR: Dict = {
   my_fav: 'Favorilerim', tryon_hist: 'Deneme Geçmişi', style_pref: 'Stil Tercihleri',
   subscription: 'Abonelik', settings: 'Ayarlar', language: 'Dil', help: 'Yardım ve Destek', logout: 'Çıkış Yap',
   manage_plan: 'Planı Yönet',
+  ob_skip: 'Atla', ob_next: 'İleri', ob_start: 'Hemen Başla',
+  ob1_t: 'Elini Tara', ob1_d: 'AI cilt tonunu, alt tonunu ve tırnak şeklini saniyeler içinde analiz eder.',
+  ob2_t: 'Sana Özel Öneriler', ob2_d: 'Analizine göre en yakışan tasarımları AI seçer.',
+  ob3_t: 'AR ile Dene', ob3_d: 'Beğendiğin tasarımı parmağında canlı, gerçek zamanlı gör.',
+  ob4_t: 'Premium ile Sınırsız', ob4_d: 'Sınırsız AI tasarım ve gerçek görsel üretimi; istediğin an yükselt.',
 };
 
 const RU: Dict = {
