@@ -38,7 +38,7 @@ interface Slide { icon: string; tKey: string; dKey: string; }
   styles: [`
     .ob { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 26px; padding: 32px 26px;
-      background: radial-gradient(circle at 50% 30%, rgba(212,175,55,0.14), var(--bg) 62%); }
+      background: radial-gradient(circle at 50% 30%, rgba(212,175,55,0.16), transparent 60%), var(--bg); }
     .skip { position: absolute; top: 18px; inset-inline-end: 18px; font-size: 13px; color: var(--muted-2);
       background: transparent; padding: 6px 10px; }
     .slide { text-align: center; max-width: 340px; }
