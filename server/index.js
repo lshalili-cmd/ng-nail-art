@@ -9,10 +9,14 @@ const ai = require('./ai');
 const db = require('./db');
 const payments = require('./payments');
 const auth = require('./auth');
+const sms = require('./sms');
+const mailer = require('./mailer');
 
 ai.initProviders();
 payments.initProviders();
 if (!auth.ready()) console.warn('ℹ️  Auth paketleri yok (npm i bcryptjs jsonwebtoken) — giriş uçları 503, guest modu çalışır.');
+if (!sms.ready()) console.warn('ℹ️  SMS sağlayıcısı yok — OTP DEMO modunda (kod yanıtta döner). Twilio/Netgsm anahtarı ekleyin.');
+if (!mailer.ready()) console.warn('ℹ️  SMTP yok — şifre sıfırlama e-postası DEMO modunda (bağlantı yanıtta döner).');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -106,15 +110,62 @@ function authNotReady(res) {
 app.post('/api/auth/register', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   if (!auth.ready()) return authNotReady(res);
-  const { email, password } = req.body || {};
-  if (!email || !password || String(password).length < 6) {
-    return res.status(400).json({ success: false, error: 'Geçerli e-posta ve en az 6 karakterli şifre gerekli', code: 'BAD_REQUEST' });
+  const b = req.body || {};
+  const firstName = String(b.firstName || '').trim();
+  const lastName = String(b.lastName || '').trim();
+  const email = String(b.email || '').toLowerCase().trim();
+  const phone = auth.normPhone(b.phone);
+  const password = String(b.password || '');
+  if (!firstName || !lastName || !email || !phone) {
+    return res.status(400).json({ success: false, error: 'Ad, soyad, e-posta ve telefon zorunludur', code: 'BAD_REQUEST' });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, error: 'Geçerli bir e-posta girin', code: 'BAD_EMAIL' });
+  if (phone.replace(/\D/g, '').length < 10) return res.status(400).json({ success: false, error: 'Geçerli bir telefon girin', code: 'BAD_PHONE' });
+  if (!auth.validPassword(password)) {
+    return res.status(400).json({ success: false, error: 'Şifre tam 1 harf ve geri kalanı rakam olmalı (en az 6 karakter)', code: 'BAD_PASSWORD' });
   }
   try {
-    const exists = await db.prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
-    if (exists) return res.status(409).json({ success: false, error: 'Bu e-posta zaten kayıtlı', code: 'EMAIL_TAKEN' });
-    const user = await db.prisma.user.create({ data: { email: String(email).toLowerCase(), passwordHash: await auth.hash(String(password)) } });
-    res.json({ success: true, token: auth.sign(user), user: auth.pub(user) });
+    if (await db.prisma.user.findUnique({ where: { email } })) return res.status(409).json({ success: false, error: 'Bu e-posta zaten kayıtlı', code: 'EMAIL_TAKEN' });
+    if (await db.prisma.user.findUnique({ where: { phone } })) return res.status(409).json({ success: false, error: 'Bu telefon zaten kayıtlı', code: 'PHONE_TAKEN' });
+    const code = auth.genOtp();
+    const user = await db.prisma.user.create({ data: {
+      firstName, lastName, email, phone, passwordHash: await auth.hash(password),
+      verified: false, otpCode: code, otpExpires: Date.now() + 10 * 60 * 1000,
+    } });
+    const sent = await sms.sendOtp(phone, code);
+    res.json({ success: true, needOtp: true, email, phone, otpProvider: sent.provider, demoOtp: sent.mode === 'demo' ? code : undefined });
+  } catch (e) { dbError(res, e); }
+});
+
+// Telefon OTP doğrulama → hesabı aktifleştirir ve token verir
+app.post('/api/auth/verify-otp', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const email = String((req.body || {}).email || '').toLowerCase();
+  const code = String((req.body || {}).code || '');
+  try {
+    const user = await db.prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ success: false, code: 'NOT_FOUND' });
+    if (user.verified) return res.json({ success: true, token: auth.sign(user), user: auth.pub(user) });
+    if (!user.otpCode || user.otpCode !== code || Date.now() > user.otpExpires) {
+      return res.status(400).json({ success: false, error: 'Kod hatalı veya süresi dolmuş', code: 'BAD_OTP' });
+    }
+    const u = await db.prisma.user.update({ where: { id: user.id }, data: { verified: true, otpCode: null, otpExpires: 0 } });
+    res.json({ success: true, token: auth.sign(u), user: auth.pub(u) });
+  } catch (e) { dbError(res, e); }
+});
+
+// OTP yeniden gönder
+app.post('/api/auth/resend-otp', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const email = String((req.body || {}).email || '').toLowerCase();
+  try {
+    const user = await db.prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(404).json({ success: false, code: 'NOT_FOUND' });
+    if (user.verified) return res.status(400).json({ success: false, error: 'Zaten doğrulanmış', code: 'ALREADY_VERIFIED' });
+    const code = auth.genOtp();
+    await db.prisma.user.update({ where: { id: user.id }, data: { otpCode: code, otpExpires: Date.now() + 10 * 60 * 1000 } });
+    const sent = await sms.sendOtp(user.phone, code);
+    res.json({ success: true, otpProvider: sent.provider, demoOtp: sent.mode === 'demo' ? code : undefined });
   } catch (e) { dbError(res, e); }
 });
 
@@ -127,7 +178,45 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !(await auth.compare(String(password || ''), user.passwordHash))) {
       return res.status(401).json({ success: false, error: 'E-posta veya şifre hatalı', code: 'BAD_CREDENTIALS' });
     }
+    if (!user.verified) return res.status(403).json({ success: false, error: 'Önce telefonunuzu doğrulayın', code: 'NOT_VERIFIED', email: user.email });
     res.json({ success: true, token: auth.sign(user), user: auth.pub(user) });
+  } catch (e) { dbError(res, e); }
+});
+
+// Şifremi unuttum → e-posta ile sıfırlama bağlantısı
+app.post('/api/auth/forgot', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const email = String((req.body || {}).email || '').toLowerCase();
+  try {
+    const user = await db.prisma.user.findUnique({ where: { email } });
+    if (user) {
+      const token = auth.genToken();
+      await db.prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetExpires: Date.now() + 60 * 60 * 1000 } });
+      const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
+      const link = `${baseUrl}/profile?reset=${token}`;
+      const sent = await mailer.sendResetLink(email, link);
+      return res.json({ success: true, demoLink: sent.mode === 'demo' ? link : undefined });
+    }
+    // Güvenlik: kullanıcı yoksa da aynı yanıt (e-posta sızdırma önlenir)
+    res.json({ success: true });
+  } catch (e) { dbError(res, e); }
+});
+
+// Sıfırlama jetonuyla yeni şifre belirle
+app.post('/api/auth/reset', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const token = String((req.body || {}).token || '');
+  const password = String((req.body || {}).password || '');
+  if (!auth.validPassword(password)) {
+    return res.status(400).json({ success: false, error: 'Şifre tam 1 harf ve geri kalanı rakam olmalı (en az 6 karakter)', code: 'BAD_PASSWORD' });
+  }
+  try {
+    const user = await db.prisma.user.findFirst({ where: { resetToken: token } });
+    if (!user || !user.resetToken || Date.now() > user.resetExpires) {
+      return res.status(400).json({ success: false, error: 'Bağlantı geçersiz veya süresi dolmuş', code: 'BAD_RESET' });
+    }
+    await db.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await auth.hash(password), resetToken: null, resetExpires: 0 } });
+    res.json({ success: true });
   } catch (e) { dbError(res, e); }
 });
 

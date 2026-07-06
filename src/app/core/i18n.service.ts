@@ -380,6 +380,52 @@ Object.assign(AR, {
   auth_switch_reg: 'ليس لديك حساب؟ سجّلي', auth_switch_log: 'لديك حساب؟ ادخلي',
 });
 
+// ── Kayıt alanları / OTP / şifre sıfırlama ──
+Object.assign(EN, {
+  auth_first: 'First name', auth_last: 'Last name', auth_phone: 'Phone number', auth_fill_all: 'Fill in all fields',
+  auth_pw_rule: 'Password: exactly 1 letter + the rest digits (min 6).',
+  auth_otp_title: 'Verify your phone', auth_otp: 'SMS code', auth_otp_sent: 'We sent a code to', auth_verify: 'Verify',
+  auth_resend: 'Resend code', auth_otp_resent: 'Code resent.',
+  auth_forgot: 'Forgot password?', auth_forgot_sub: 'Enter your email — we\'ll send a reset link.',
+  auth_send_link: 'Send reset link', auth_link_sent: 'If the email exists, a reset link was sent.',
+  auth_reset_title: 'New password', auth_reset_sub: 'Choose a new password.', auth_new_pw: 'New password',
+  auth_set_pw: 'Set password', auth_reset_done: 'Password updated — you can log in now.',
+  auth_demo_otp: 'Demo code', auth_demo_link: 'Demo link',
+});
+Object.assign(TR, {
+  auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
+  auth_pw_rule: 'Şifre: tam 1 harf + gerisi rakam (en az 6).',
+  auth_otp_title: 'Telefonunu doğrula', auth_otp: 'SMS kodu', auth_otp_sent: 'Kod gönderildi:', auth_verify: 'Doğrula',
+  auth_resend: 'Kodu yeniden gönder', auth_otp_resent: 'Kod yeniden gönderildi.',
+  auth_forgot: 'Şifremi unuttum', auth_forgot_sub: 'E-postanı gir — sıfırlama bağlantısı gönderelim.',
+  auth_send_link: 'Sıfırlama bağlantısı gönder', auth_link_sent: 'E-posta kayıtlıysa sıfırlama bağlantısı gönderildi.',
+  auth_reset_title: 'Yeni şifre', auth_reset_sub: 'Yeni bir şifre belirle.', auth_new_pw: 'Yeni şifre',
+  auth_set_pw: 'Şifreyi belirle', auth_reset_done: 'Şifre güncellendi — artık giriş yapabilirsin.',
+  auth_demo_otp: 'Demo kod', auth_demo_link: 'Demo bağlantı',
+});
+Object.assign(RU, {
+  auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
+  auth_pw_rule: 'Пароль: ровно 1 буква + остальные цифры (мин. 6).',
+  auth_otp_title: 'Подтвердите телефон', auth_otp: 'Код из SMS', auth_otp_sent: 'Код отправлен на', auth_verify: 'Подтвердить',
+  auth_resend: 'Отправить код снова', auth_otp_resent: 'Код отправлен повторно.',
+  auth_forgot: 'Забыли пароль?', auth_forgot_sub: 'Введите email — пришлём ссылку для сброса.',
+  auth_send_link: 'Отправить ссылку', auth_link_sent: 'Если email существует, ссылка отправлена.',
+  auth_reset_title: 'Новый пароль', auth_reset_sub: 'Задайте новый пароль.', auth_new_pw: 'Новый пароль',
+  auth_set_pw: 'Задать пароль', auth_reset_done: 'Пароль обновлён — теперь можно войти.',
+  auth_demo_otp: 'Демо-код', auth_demo_link: 'Демо-ссылка',
+});
+Object.assign(AR, {
+  auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
+  auth_pw_rule: 'كلمة المرور: حرف واحد فقط + الباقي أرقام (٦ على الأقل).',
+  auth_otp_title: 'وثّقي هاتفك', auth_otp: 'رمز SMS', auth_otp_sent: 'أرسلنا رمزاً إلى', auth_verify: 'تأكيد',
+  auth_resend: 'إعادة إرسال الرمز', auth_otp_resent: 'أُعيد إرسال الرمز.',
+  auth_forgot: 'نسيت كلمة المرور؟', auth_forgot_sub: 'أدخلي بريدك — سنرسل رابط إعادة تعيين.',
+  auth_send_link: 'إرسال الرابط', auth_link_sent: 'إن كان البريد موجوداً فقد أُرسل الرابط.',
+  auth_reset_title: 'كلمة مرور جديدة', auth_reset_sub: 'اختاري كلمة مرور جديدة.', auth_new_pw: 'كلمة المرور الجديدة',
+  auth_set_pw: 'تعيين', auth_reset_done: 'تم تحديث كلمة المرور — يمكنك الدخول الآن.',
+  auth_demo_otp: 'رمز تجريبي', auth_demo_link: 'رابط تجريبي',
+});
+
 const DICT: Record<Locale, Dict> = { en: EN, tr: TR, ru: RU, ar: AR };
 
 @Injectable({ providedIn: 'root' })

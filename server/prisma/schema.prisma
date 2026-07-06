@@ -78,7 +78,15 @@ model Order {
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
+  phone        String   @unique
+  firstName    String   @default("")
+  lastName     String   @default("")
   passwordHash String
+  verified     Boolean  @default(false)  // telefon OTP ile doğrulandı mı
+  otpCode      String?                    // aktif OTP (hash'siz — kısa ömürlü)
+  otpExpires   Float    @default(0)
+  resetToken   String?                    // şifre sıfırlama jetonu
+  resetExpires Float    @default(0)
   plan         String   @default("free")
   planSince    Float    @default(0)   // ms (BigInt yerine Float — JSON güvenli)
   imagesUsed   Int      @default(0)

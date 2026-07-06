@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { I18nService, LOCALES } from '../../core/i18n.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
-import { AuthService } from '../../core/auth.service';
+import { AuthService, validPassword } from '../../core/auth.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
 
 @Component({
@@ -27,22 +27,54 @@ import { DesignCardComponent } from '../../shared/design-card.component';
         }
       </header>
 
-      <!-- Giriş / Kayıt penceresi -->
+      <!-- Giriş / Kayıt / OTP / Şifre sıfırlama penceresi -->
       @if (authOpen()) {
-        <div class="au-back" (click)="authOpen.set(false)"></div>
+        <div class="au-back" (click)="closeAuth()"></div>
         <div class="au card">
-          <h3 class="au-t">{{ authMode() === 'login' ? i18n.t('login') : i18n.t('register') }}</h3>
-          <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)"
-            [placeholder]="i18n.t('auth_email')" autocomplete="email" />
-          <input class="au-in" type="password" [value]="password()" (input)="password.set($any($event.target).value)"
-            [placeholder]="i18n.t('auth_password')" autocomplete="current-password" />
+          <h3 class="au-t">{{ i18n.t(stepTitle()) }}</h3>
+
+          @switch (authStep()) {
+            @case ('register') {
+              <div class="au-row2">
+                <input class="au-in" [value]="firstName()" (input)="firstName.set($any($event.target).value)" [placeholder]="i18n.t('auth_first')" />
+                <input class="au-in" [value]="lastName()" (input)="lastName.set($any($event.target).value)" [placeholder]="i18n.t('auth_last')" />
+              </div>
+              <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
+              <input class="au-in" type="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" autocomplete="tel" />
+              <input class="au-in" type="password" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" />
+              <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
+            }
+            @case ('otp') {
+              <p class="au-note">{{ i18n.t('auth_otp_sent') }} {{ maskedPhone() }}</p>
+              <input class="au-in au-otp" inputmode="numeric" maxlength="6" [value]="otp()" (input)="otp.set($any($event.target).value)" [placeholder]="i18n.t('auth_otp')" />
+              <button class="au-switch" (click)="resend()">{{ i18n.t('auth_resend') }}</button>
+            }
+            @case ('forgot') {
+              <p class="au-note">{{ i18n.t('auth_forgot_sub') }}</p>
+              <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
+            }
+            @case ('reset') {
+              <p class="au-note">{{ i18n.t('auth_reset_sub') }}</p>
+              <input class="au-in" type="password" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_new_pw')" />
+              <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
+            }
+            @default {
+              <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
+              <input class="au-in" type="password" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" autocomplete="current-password" />
+              <button class="au-forgot" (click)="setStep('forgot')">{{ i18n.t('auth_forgot') }}</button>
+            }
+          }
+
+          @if (demoInfo()) { <p class="au-demo">🧪 {{ demoInfo() }}</p> }
           @if (authErr()) { <p class="au-err">⚠️ {{ authErr() }}</p> }
+
           <button class="btn-primary au-go" (click)="submitAuth()" [disabled]="authBusy()">
-            {{ authBusy() ? '…' : (authMode() === 'login' ? i18n.t('login') : i18n.t('register')) }}
+            {{ authBusy() ? '…' : i18n.t(ctaKey()) }}
           </button>
-          <button class="au-switch" (click)="toggleMode()">
-            {{ authMode() === 'login' ? i18n.t('auth_switch_reg') : i18n.t('auth_switch_log') }}
-          </button>
+
+          @if (authStep() === 'login') { <button class="au-switch" (click)="setStep('register')">{{ i18n.t('auth_switch_reg') }}</button> }
+          @if (authStep() === 'register') { <button class="au-switch" (click)="setStep('login')">{{ i18n.t('auth_switch_log') }}</button> }
+          @if (authStep() === 'forgot' || authStep() === 'otp' || authStep() === 'reset') { <button class="au-switch" (click)="setStep('login')">← {{ i18n.t('login') }}</button> }
         </div>
       }
 
@@ -123,6 +155,15 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .au-err { margin: 4px 0 8px; font-size: 12px; color: #f0b8b8; text-align: center; }
     .au-go { width: 100%; margin-top: 6px; }
     .au-switch { width: 100%; margin-top: 12px; background: transparent; color: var(--gold-soft); font-size: 13px; padding: 6px; }
+    .au-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .au-row2 .au-in { margin-bottom: 10px; }
+    .au-hint { margin: 2px 0 6px; font-size: 11.5px; color: var(--muted-2); }
+    .au-hint.ok { color: var(--gold-soft); }
+    .au-note { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.5; text-align: center; }
+    .au-otp { text-align: center; letter-spacing: 6px; font-size: 20px; font-weight: 700; }
+    .au-forgot { display: block; margin: 2px 0 4px auto; background: transparent; color: var(--gold-soft); font-size: 12px; padding: 4px; }
+    .au-demo { margin: 8px 0; font-size: 12px; color: var(--gold-soft); word-break: break-all; text-align: center;
+      background: rgba(212,175,55,0.1); border: 1px dashed rgba(212,175,55,0.4); border-radius: 10px; padding: 8px; }
     .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 18px 0; }
     .plan-card { padding: 16px; margin-bottom: 18px; }
     .plan-card.hl { border-color: rgba(212,175,55,0.5);
@@ -161,53 +202,120 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .ch { color: var(--muted-2); font-size: 20px; }
   `],
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   readonly i18n = inject(I18nService);
   readonly fav = inject(FavoritesService);
   readonly plan = inject(PlanService);
   readonly quota = inject(ImageQuotaService);
   readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   readonly locales = LOCALES;
 
   // Giriş/kayıt penceresi durumu
   readonly authOpen = signal<boolean>(false);
-  readonly authMode = signal<'login' | 'register'>('login');
+  readonly authStep = signal<'login' | 'register' | 'otp' | 'forgot' | 'reset'>('login');
+  readonly firstName = signal<string>('');
+  readonly lastName = signal<string>('');
   readonly email = signal<string>('');
+  readonly phone = signal<string>('');
   readonly password = signal<string>('');
+  readonly otp = signal<string>('');
+  readonly demoInfo = signal<string | null>(null);
   readonly authErr = signal<string | null>(null);
   readonly authBusy = signal<boolean>(false);
+  private resetToken = '';
 
-  avatarLetter(): string {
-    return this.auth.user()?.email.charAt(0) || '?';
+  readonly pwOk = computed(() => validPassword(this.password()));
+
+  ngOnInit(): void {
+    // Şifre sıfırlama bağlantısı: /profile?reset=TOKEN
+    const t = this.route.snapshot.queryParamMap.get('reset');
+    if (t) { this.resetToken = t; this.openAuth('reset'); }
   }
 
-  openAuth(mode: 'login' | 'register'): void {
-    this.authMode.set(mode);
-    this.authErr.set(null);
+  stepTitle(): string {
+    return { login: 'login', register: 'register', otp: 'auth_otp_title', forgot: 'auth_forgot', reset: 'auth_reset_title' }[this.authStep()];
+  }
+  ctaKey(): string {
+    return { login: 'login', register: 'register', otp: 'auth_verify', forgot: 'auth_send_link', reset: 'auth_set_pw' }[this.authStep()];
+  }
+  maskedPhone(): string {
+    const p = this.phone().replace(/\D/g, '');
+    return p.length >= 4 ? '•••• ' + p.slice(-4) : '';
+  }
+  avatarLetter(): string { return this.auth.user()?.email.charAt(0) || '?'; }
+
+  openAuth(step: 'login' | 'register' | 'reset'): void {
+    this.authStep.set(step);
+    this.clearAuth();
     this.authOpen.set(true);
   }
-
-  toggleMode(): void {
-    this.authMode.set(this.authMode() === 'login' ? 'register' : 'login');
+  setStep(step: 'login' | 'register' | 'otp' | 'forgot' | 'reset'): void {
+    this.authStep.set(step);
     this.authErr.set(null);
+    this.demoInfo.set(null);
+  }
+  closeAuth(): void { this.authOpen.set(false); this.clearAuth(); }
+  private clearAuth(): void {
+    this.firstName.set(''); this.lastName.set(''); this.phone.set(''); this.password.set(''); this.otp.set('');
+    this.authErr.set(null); this.demoInfo.set(null);
   }
 
   async submitAuth(): Promise<void> {
-    const email = this.email().trim();
-    const password = this.password();
-    if (!email || !password) { this.authErr.set(this.i18n.t('auth_fill')); return; }
-    this.authBusy.set(true);
     this.authErr.set(null);
-    const res = this.authMode() === 'login'
-      ? await this.auth.login(email, password)
-      : await this.auth.register(email, password);
+    const step = this.authStep();
+    const email = this.email().trim().toLowerCase();
+
+    if (step === 'login') {
+      if (!email || !this.password()) { this.authErr.set(this.i18n.t('auth_fill')); return; }
+      await this.run(() => this.auth.login(email, this.password()));
+    } else if (step === 'register') {
+      if (!this.firstName().trim() || !this.lastName().trim() || !email || !this.phone().trim()) { this.authErr.set(this.i18n.t('auth_fill_all')); return; }
+      if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
+      await this.run(() => this.auth.register({
+        firstName: this.firstName().trim(), lastName: this.lastName().trim(), email,
+        phone: this.phone().trim(), password: this.password(),
+      }));
+    } else if (step === 'otp') {
+      if (this.otp().trim().length < 4) { this.authErr.set(this.i18n.t('auth_fill')); return; }
+      await this.run(() => this.auth.verifyOtp(email, this.otp().trim()));
+    } else if (step === 'forgot') {
+      if (!email) { this.authErr.set(this.i18n.t('auth_fill')); return; }
+      await this.run(() => this.auth.forgot(email));
+    } else if (step === 'reset') {
+      if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
+      await this.run(() => this.auth.reset(this.resetToken, this.password()));
+    }
+  }
+
+  /** Bir auth çağrısını çalıştırır ve sonucuna göre akışı yönlendirir. */
+  private async run(fn: () => Promise<import('../../core/auth.service').AuthResult>): Promise<void> {
+    this.authBusy.set(true);
+    const res = await fn();
     this.authBusy.set(false);
+    const step = this.authStep();
+
+    if (res.needOtp) {
+      // Kayıt sonrası veya doğrulanmamış giriş → OTP adımı
+      if (res.email) this.email.set(res.email);
+      this.demoInfo.set(res.demoOtp ? `${this.i18n.t('auth_demo_otp')}: ${res.demoOtp}` : null);
+      this.setStep('otp');
+      return;
+    }
     if (res.ok) {
-      this.authOpen.set(false);
-      this.email.set(''); this.password.set('');
+      if (step === 'otp' || step === 'login') { this.closeAuth(); return; }        // giriş tamam
+      if (step === 'forgot') { this.demoInfo.set(res.demoLink ? `${this.i18n.t('auth_demo_link')}: ${res.demoLink}` : this.i18n.t('auth_link_sent')); return; }
+      if (step === 'reset') { this.demoInfo.set(this.i18n.t('auth_reset_done')); this.password.set(''); this.setStep('login'); this.demoInfo.set(this.i18n.t('auth_reset_done')); return; }
     } else {
       this.authErr.set(res.error ?? 'Hata');
     }
+  }
+
+  async resend(): Promise<void> {
+    const res = await this.auth.resendOtp(this.email().trim().toLowerCase());
+    if (res.demoOtp) this.demoInfo.set(`${this.i18n.t('auth_demo_otp')}: ${res.demoOtp}`);
+    else if (res.ok) this.demoInfo.set(this.i18n.t('auth_otp_resent'));
+    else this.authErr.set(res.error ?? 'Hata');
   }
 
   private readonly PLAN_KEYS: Record<string, string> = {
