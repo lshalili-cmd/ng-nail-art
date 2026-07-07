@@ -1,0 +1,14 @@
+﻿=== ngNailArt TEST RAPORU ===
+Tarih: 2026-07-07 13:03:21
+Git  : 70d91d8
+STATUS build=OK unit=OK pass=0 fail=0 lint=ATLANDI git=70d91d8
+
+--- SONUCLAR ---
+Derleme (ng build)     : BASARILI
+Birim testler (vitest) : 0 gecti, 0 kaldi
+Lint (ng lint)         : ATLANDI
+
+--- ONCEKI CALISMAYA GORE DEGISIM ---
+Onceki: STATUS build=OK unit=OK pass=3 fail=0 lint=ATLANDI git=7deebb7
+Simdi : STATUS build=OK unit=OK pass=0 fail=0 lint=ATLANDI git=70d91d8
+!!! Test regresyonu: onceki 3 gecti, simdi 0.
