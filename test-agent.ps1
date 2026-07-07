@@ -23,8 +23,8 @@ Write-Host "[2/3] Birim testler (vitest)..." -ForegroundColor Cyan
 $unit = Run-Cmd 'npx.cmd vitest run'
 $unitOk = ($unit.Code -eq 0)
 $pass = 0; $fail = 0
-if ($unit.Out -match '(?s).*(\d+)\s+passed') { $pass = [int]$Matches[1] }
-if ($unit.Out -match '(?s).*(\d+)\s+failed') { $fail = [int]$Matches[1] }
+if ($unit.Out -match '(?s).*\D(\d+)\s+passed') { $pass = [int]$Matches[1] }
+if ($unit.Out -match '(?s).*\D(\d+)\s+failed') { $fail = [int]$Matches[1] }
 Write-Host ("      -> $pass gecti, $fail kaldi") -ForegroundColor $(if ($unitOk) { 'Green' } else { 'Red' })
 $lintStatus = 'ATLANDI'
 if ($Lint) {
@@ -73,6 +73,7 @@ Write-Host "--- Onceki calismaya gore ---" -ForegroundColor Cyan
 foreach ($c in $changes) { $col = if ($c -like '!!!*') { 'Red' } elseif ($c -like '+++*') { 'Green' } else { 'Gray' }; Write-Host "  $c" -ForegroundColor $col }
 Write-Host ""; Write-Host "Rapor: $reportPath" -ForegroundColor Gray
 Write-Host "====================================" -ForegroundColor Magenta
+
 
 
 
