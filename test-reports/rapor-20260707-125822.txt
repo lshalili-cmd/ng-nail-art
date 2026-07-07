@@ -1,0 +1,12 @@
+﻿=== ngNailArt TEST RAPORU ===
+Tarih: 2026-07-07 12:58:22
+Git  : 7deebb7
+STATUS build=OK unit=OK pass=3 fail=0 lint=ATLANDI git=7deebb7
+
+--- SONUCLAR ---
+Derleme (ng build)     : BASARILI
+Birim testler (vitest) : 3 gecti, 0 kaldi
+Lint (ng lint)         : ATLANDI
+
+--- ONCEKI CALISMAYA GORE DEGISIM ---
+Ilk calisma - onceki rapor yok (baseline kaydedildi).
