@@ -32,9 +32,14 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
             <button class="btn ghost" (click)="logout()">Farklı hesapla gir</button>
           } @else {
             <input class="in" type="email" [(ngModel)]="email" placeholder="E-posta" autocomplete="email" />
-            <input class="in" type="password" [(ngModel)]="password" placeholder="Şifre" autocomplete="current-password" />
+            <div class="pw-wrap">
+              <input class="in" [type]="showPw() ? 'text' : 'password'" [(ngModel)]="password" placeholder="Şifre" autocomplete="current-password" />
+              <button type="button" class="eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button>
+            </div>
             @if (loginErr()) { <p class="err">{{ loginErr() }}</p> }
+            @if (loginInfo()) { <p class="info">{{ loginInfo() }}</p> }
             <button class="btn" [disabled]="busy()" (click)="login()">{{ busy() ? '...' : 'Giriş yap' }}</button>
+            <button class="lnk-forgot" (click)="forgot()">Şifremi unuttum</button>
             <p class="hint">Bir hesabı yönetici yapmak için sunucuda:<br><code>node scripts/make-admin.js e-posta</code></p>
           }
         </div>
@@ -216,6 +221,12 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
     .hint { font-size:11px; color:var(--muted,#b8ad97); margin-top:4px; line-height:1.5; }
     .hint code { color:var(--gold-soft,#e9d9a0); }
     .err { color:#e88; font-size:13px; }
+    .info { color:var(--gold-soft,#e9d9a0); font-size:12.5px; word-break:break-all; }
+    .pw-wrap { position:relative; }
+    .pw-wrap .in { padding-inline-end:44px; }
+    .eye { position:absolute; inset-inline-end:6px; top:50%; transform:translateY(-50%);
+      background:transparent; border:none; cursor:pointer; font-size:16px; line-height:1; padding:6px; }
+    .lnk-forgot { background:none; border:none; color:var(--gold-soft,#e9d9a0); font-size:12.5px; cursor:pointer; padding:4px; align-self:center; }
     .tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:10px; }
     .tab { flex:0 0 auto; padding:8px 14px; border-radius:20px; border:1px solid var(--line,#2c2418); background:#000; color:var(--muted,#b8ad97); font-size:13px; cursor:pointer; }
     .tab.on { border-color:var(--gold,#d4af37); color:var(--gold-soft,#e9d9a0); background:linear-gradient(180deg,#221c0c,#151109); }
@@ -273,7 +284,8 @@ export class AdminComponent {
   readonly isAdmin = computed(() => this.auth.user()?.role === 'admin');
 
   email = ''; password = '';
-  readonly loginErr = signal<string | null>(null); readonly busy = signal(false);
+  readonly loginErr = signal<string | null>(null); readonly loginInfo = signal<string | null>(null);
+  readonly busy = signal(false); readonly showPw = signal(false);
   readonly err = signal<string | null>(null);
 
   readonly stats = signal<AdminStats | null>(null);
@@ -299,6 +311,18 @@ export class AdminComponent {
     this.loadPanel();
   }
   logout(): void { this.auth.logout(); }
+
+  async forgot(): Promise<void> {
+    this.loginErr.set(null); this.loginInfo.set(null);
+    const email = this.email.trim().toLowerCase();
+    if (!email) { this.loginErr.set('Önce e-posta adresinizi yazın.'); return; }
+    this.busy.set(true);
+    const r = await this.auth.forgot(email);
+    this.busy.set(false);
+    if (r.demoLink) this.loginInfo.set('Sıfırlama bağlantısı (demo): ' + r.demoLink);
+    else if (r.ok) this.loginInfo.set('Sıfırlama bağlantısı e-postanıza gönderildi.');
+    else this.loginErr.set(r.error || 'Gönderilemedi');
+  }
 
   go(t: Tab): void {
     this.tab.set(t); this.err.set(null);
