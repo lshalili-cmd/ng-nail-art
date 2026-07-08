@@ -41,5 +41,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/design-detail/design-detail.component').then((m) => m.DesignDetailComponent),
     title: 'Tasarım — Miracle Nail Art AI',
   },
+  {
+    path: 'admin',
+    loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent),
+    title: 'Yönetici — Miracle Nail Art AI',
+  },
   { path: '**', redirectTo: '' },
 ];

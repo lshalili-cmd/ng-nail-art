@@ -55,6 +55,7 @@ function pub(u) {
     id: u.id, email: u.email, phone: u.phone, firstName: u.firstName, lastName: u.lastName,
     verified: u.verified, plan: u.plan, planSince: u.planSince,
     imagesUsed: u.imagesUsed, imagesExtra: u.imagesExtra, packId: u.packId, packSince: u.packSince,
+    role: u.role || 'user',
   };
 }
 

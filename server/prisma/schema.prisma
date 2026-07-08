@@ -104,5 +104,16 @@ model User {
   imagesExtra  Int      @default(0)
   packId       String?
   packSince    Float    @default(0)
+  role         String   @default("user")   // "user" | "admin"
   createdAt    DateTime @default(now())
+}
+
+model ErrorLog {
+  id        Int      @id @default(autoincrement())
+  level     String   @default("error")   // error | warn
+  message   String
+  source    String   @default("")        // örn: AI, DB, AUTH, PROCESS, HTTP
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

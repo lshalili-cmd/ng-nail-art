@@ -5,6 +5,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 export interface AuthUser {
   id: number; email: string; phone: string; firstName: string; lastName: string; verified: boolean;
   plan: string; planSince: number; imagesUsed: number; imagesExtra: number; packId: string | null; packSince: number;
+  role?: string;
 }
 export interface RegisterData { firstName: string; lastName: string; email: string; phone: string; password: string; }
 export interface AuthResult {

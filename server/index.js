@@ -11,6 +11,7 @@ const payments = require('./payments');
 const auth = require('./auth');
 const sms = require('./sms');
 const mailer = require('./mailer');
+const admin = require('./admin');
 
 ai.initProviders();
 payments.initProviders();
@@ -23,6 +24,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '4mb' }));
+
+// Yönetici: hata yakalama (loglanan tüm hatalar panele düşer) + bakım modu geçidi
+admin.captureConsole();
+app.use(admin.maintenanceGate);
 
 // Üretilen görsellerin klasörü + statik sunum
 const IMG_DIR = path.join(__dirname, 'images', 'ai-generated');
@@ -394,6 +399,9 @@ app.post('/api/payments/confirm', async (req, res) => {
   }
   res.json({ success: true, data: { status: 'paid', ref: ref || null } });
 });
+
+// Yönetici uçları (rol korumalı) — 404 yakalayıcıdan ÖNCE bağlanır
+admin.mount(app, { db, auth, ai, payments, sms, mailer });
 
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' }));
 
