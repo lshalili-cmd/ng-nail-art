@@ -31,6 +31,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
       @if (authOpen()) {
         <div class="au-back" (click)="closeAuth()"></div>
         <div class="au card">
+          <img class="au-logo" src="/icon-192.png" alt="Miracle Nail Art" />
           <h3 class="au-t">{{ i18n.t(stepTitle()) }}</h3>
 
           @switch (authStep()) {
@@ -181,6 +182,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .au-back { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
     .au { position: fixed; z-index: 1101; inset-inline: 24px; top: 50%; transform: translateY(-50%);
       margin: 0 auto; max-width: 380px; padding: 22px 18px; }
+    .au-logo { display: block; width: 76px; height: 76px; margin: 2px auto 10px; border-radius: 20px; }
     .au-t { margin: 0 0 16px; font-size: 20px; text-align: center; }
     .au-in { width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
       border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none; }
