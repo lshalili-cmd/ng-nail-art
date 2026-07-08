@@ -158,7 +158,7 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
             @if (system(); as s) {
               <div class="grid three">
                 <div class="stat"><div class="n">{{ s.db ? '✓' : '✕' }}</div><div class="l">Veritabanı</div></div>
-                <div class="stat"><div class="n" style="font-size:16px">{{ s.ai?.provider || 'demo' }}</div><div class="l">AI</div></div>
+                <div class="stat"><div class="n" style="font-size:16px">{{ s.ai.provider || 'demo' }}</div><div class="l">AI</div></div>
                 <div class="stat"><div class="n" style="font-size:16px">{{ s.sms }}</div><div class="l">SMS</div></div>
                 <div class="stat"><div class="n">{{ s.mailer ? '✓' : 'demo' }}</div><div class="l">E-posta</div></div>
                 <div class="stat"><div class="n">{{ s.uptime }}s</div><div class="l">Çalışma süresi</div></div>
