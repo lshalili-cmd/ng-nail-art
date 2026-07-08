@@ -34,7 +34,7 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
             <input class="in" type="email" [(ngModel)]="email" placeholder="E-posta" autocomplete="email" />
             <div class="pw-wrap">
               <input class="in" [type]="showPw() ? 'text' : 'password'" [(ngModel)]="password" placeholder="Şifre" autocomplete="current-password" />
-              <button type="button" class="eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button>
+              <button type="button" class="eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button>
             </div>
             @if (loginErr()) { <p class="err">{{ loginErr() }}</p> }
             @if (loginInfo()) { <p class="info">{{ loginInfo() }}</p> }

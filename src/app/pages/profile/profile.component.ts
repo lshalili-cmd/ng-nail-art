@@ -41,7 +41,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
               </div>
               <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
               <input class="au-in" type="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" autocomplete="tel" />
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
             }
             @case ('otp') {
@@ -55,12 +55,12 @@ import { DesignCardComponent } from '../../shared/design-card.component';
             }
             @case ('reset') {
               <p class="au-note">{{ i18n.t('auth_reset_sub') }}</p>
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_new_pw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_new_pw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
             }
             @default {
               <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" autocomplete="current-password" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" autocomplete="current-password" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <button class="au-forgot" (click)="setStep('forgot')">{{ i18n.t('auth_forgot') }}</button>
             }
           }
@@ -141,8 +141,8 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 
           @switch (settingsStep()) {
             @case ('changepw') {
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw()" (input)="newPw.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw2()" (input)="newPw2.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw2')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw()" (input)="newPw.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw2()" (input)="newPw2.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw2')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="newPwOk()">{{ newPwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
               <button class="btn-primary au-go" (click)="changePw()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_change_btn') }}</button>
               <button class="au-switch" (click)="forgotFromSettings()">{{ i18n.t('auth_forgot') }}</button>
@@ -150,7 +150,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
             @case ('delete') {
               <input class="au-in" type="email" [value]="delEmail()" (input)="delEmail.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" />
               <input class="au-in" type="tel" [value]="delPhone()" (input)="delPhone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" />
-              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="delPw()" (input)="delPw.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '🙈' : '👁️' }}</button></div>
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="delPw()" (input)="delPw.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <button class="btn-primary au-go set-danger" (click)="deleteAcc()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_del_btn') }}</button>
             }
             @case ('deleted') {
