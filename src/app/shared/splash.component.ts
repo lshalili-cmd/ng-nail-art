@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { I18nService } from '../core/i18n.service';
 
 /**
  * Açılış (splash) ekranı — uygulama açılınca tam ekran gelir,
@@ -45,11 +46,11 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
         <div class="brand">
           <div class="kicker">NAIL ART AI</div>
           <div class="name">miracle</div>
-          <div class="tag">◇&nbsp;&nbsp;size özel tasarımlar&nbsp;&nbsp;◇</div>
+          <div class="tag">◇&nbsp;&nbsp;{{ i18n.t('splash_slogan') }}&nbsp;&nbsp;◇</div>
         </div>
 
         <div class="divider"><span class="ln"></span>◇<span class="ln r"></span></div>
-        <div class="hint">DOKUN ▸</div>
+        <div class="hint">{{ i18n.t('splash_hint') }}</div>
       </div>
     }
   `,
@@ -97,6 +98,7 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
   `],
 })
 export class SplashComponent {
+  readonly i18n = inject(I18nService);
   readonly visible = signal(false);
   readonly leaving = signal(false);
   private done = false;
