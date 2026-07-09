@@ -474,13 +474,14 @@ export class I18nService {
     try { localStorage.setItem(this.KEY, l); } catch { /* yoksa geç */ }
   }
 
-  /** Kayıtlı dili okur (yoksa Türkçe). Böylece seçim sayfa yenilense de korunur. */
+  /** Kayıtlı dili okur (yoksa varsayılan İngilizce). İlk açılış İngilizce gelir,
+   *  kullanıcı bir dil seçince o dil kaydedilir ve seçime göre değişir. */
   private load(): Locale {
     try {
       const v = localStorage.getItem(this.KEY);
       if (v === 'tr' || v === 'en' || v === 'ru' || v === 'ar') return v;
     } catch { /* geç */ }
-    return 'tr';
+    return 'en';
   }
 
   /** Reactive translate: reads the locale signal so templates update on change. */
