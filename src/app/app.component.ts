@@ -2,18 +2,20 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BottomNavComponent } from './shared/bottom-nav.component';
 import { OnboardingComponent } from './shared/onboarding.component';
+import { SplashComponent } from './shared/splash.component';
 import { AuthService } from './core/auth.service';
 import { SyncService } from './core/sync.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, BottomNavComponent, OnboardingComponent],
+  imports: [RouterOutlet, BottomNavComponent, OnboardingComponent, SplashComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <router-outlet />
     <app-bottom-nav />
     <app-onboarding />
+    <app-splash />
   `,
 })
 export class AppComponent {
