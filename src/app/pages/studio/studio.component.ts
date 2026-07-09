@@ -25,24 +25,33 @@ import { AnalysisInput } from '../../core/recommendation';
         @if (statusLabel()) { <span class="prov">{{ statusLabel() }}</span> }
       </div>
 
-      <!-- Prompt -->
+      <!-- Prompt / otomatik üretim -->
       <div class="composer card">
         @if (tailored()) {
+          <!-- Taramadan gelindi: el verisiyle OTOMATİK üretim; kullanıcıdan giriş istenmez -->
           <div class="tailored-badge">{{ i18n.t('studio_tailored') }}</div>
-        }
-        <textarea
-          [value]="prompt()"
-          (input)="prompt.set($any($event.target).value)"
-          [placeholder]="i18n.t('studio_prompt_ph')"
-          rows="3"></textarea>
-        <div class="chips-row">
-          @for (s of suggestions; track s) {
-            <button class="chip" (click)="prompt.set(i18n.t(s))">{{ i18n.t(s) }}</button>
+          @if (loading()) {
+            <p class="tailored-gen">✨ {{ i18n.t('studio_generating') }}</p>
+          } @else {
+            <button class="btn-primary wide" (click)="generate()" [disabled]="loading()">
+              🔄 {{ i18n.t('studio_regenerate') }}
+            </button>
           }
-        </div>
-        <button class="btn-primary wide" (click)="generate()" [disabled]="loading() || !prompt().trim()">
-          {{ loading() ? ('✨ ' + i18n.t('studio_generating')) : ('✨ ' + i18n.t('studio_generate')) }}
-        </button>
+        } @else {
+          <textarea
+            [value]="prompt()"
+            (input)="prompt.set($any($event.target).value)"
+            [placeholder]="i18n.t('studio_prompt_ph')"
+            rows="3"></textarea>
+          <div class="chips-row">
+            @for (s of suggestions; track s) {
+              <button class="chip" (click)="prompt.set(i18n.t(s))">{{ i18n.t(s) }}</button>
+            }
+          </div>
+          <button class="btn-primary wide" (click)="generate()" [disabled]="loading() || !prompt().trim()">
+            {{ loading() ? ('✨ ' + i18n.t('studio_generating')) : ('✨ ' + i18n.t('studio_generate')) }}
+          </button>
+        }
         <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · {{ i18n.t('studio_hint') }}</p>
       </div>
 
@@ -172,6 +181,7 @@ import { AnalysisInput } from '../../core/recommendation';
     .tailored-badge { display: inline-block; margin-bottom: 10px; font-size: 12.5px; font-weight: 600;
       color: var(--gold-soft); background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4);
       padding: 6px 12px; border-radius: 999px; }
+    .tailored-gen { margin: 6px 0 2px; font-size: 14px; font-weight: 600; color: var(--gold-soft); text-align: center; }
   `],
 })
 export class StudioComponent implements OnInit {
@@ -318,8 +328,9 @@ export class StudioComponent implements OnInit {
         finish: d.finish,
       });
       this.image.set(img);
-    } catch {
-      // Gerçek üretim başarısızsa prosedürel önizlemeye düş
+    } catch (e) {
+      // Gerçek üretim başarısızsa prosedürel önizlemeye düş (ama hatayı gizleme — konsola yaz)
+      console.error('[AI] görsel üretimi başarısız, demo önizlemeye düşülüyor:', e);
       this.image.set(this.proceduralImage(d));
     } finally {
       this.imgLoading.set(false);

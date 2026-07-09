@@ -3,7 +3,7 @@ import { PlanService } from './plan.service';
 
 /** Plan başına aylık görsel üretim hakkı (financial-config.json ile uyumlu). */
 const PLAN_MONTHLY: Record<string, number> = {
-  free: 1,
+  free: 100,   // TEST/MVP: bol hak (yayına çıkarken tekrar 1'e düşürülebilir)
   monthly: 30,
   yearly: 30,
   pro: 100,

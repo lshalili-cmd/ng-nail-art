@@ -165,20 +165,36 @@ async function generateImage(input, imgDir) {
   } else if (gemini) {
     // ÜCRETSİZ görsel modeli (Gemini 2.5 Flash Image / "Nano Banana") — kart gerektirmez, ~500/gün.
     // Imagen'in ücretsiz katmanı YOK; o yüzden generateContent + IMAGE çıktısı kullanıyoruz.
+    // Model adı sürüme göre değişebildiği için birkaç geçerli adı sırayla deneriz.
     provider = 'gemini-flash-image';
-    const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
-    const response = await gemini.models.generateContent({
-      model,
-      contents: artPrompt,
-      config: { responseModalities: ['IMAGE'] },
-    });
-    let b64 = null;
-    const cand = response && response.candidates && response.candidates[0];
-    const parts = (cand && cand.content && cand.content.parts) || [];
-    for (const p of parts) {
-      if (p && p.inlineData && p.inlineData.data) { b64 = p.inlineData.data; break; }
+    const candidates = process.env.GEMINI_IMAGE_MODEL
+      ? [process.env.GEMINI_IMAGE_MODEL]
+      : ['gemini-2.5-flash-image', 'gemini-2.0-flash-preview-image-generation', 'gemini-2.5-flash-image-preview'];
+    let b64 = null, lastErr = null, usedModel = null;
+    for (const model of candidates) {
+      try {
+        const response = await gemini.models.generateContent({
+          model,
+          contents: artPrompt,
+          config: { responseModalities: ['IMAGE', 'TEXT'] },
+        });
+        const cand = response && response.candidates && response.candidates[0];
+        const parts = (cand && cand.content && cand.content.parts) || [];
+        for (const p of parts) {
+          if (p && p.inlineData && p.inlineData.data) { b64 = p.inlineData.data; break; }
+        }
+        if (b64) { usedModel = model; break; }
+        lastErr = new Error('görsel parçası yok');
+      } catch (e) {
+        lastErr = e;
+        console.warn(`[AI] Gemini model denendi, olmadı: ${model} — ${e && e.message ? e.message : e}`);
+      }
     }
-    if (!b64) throw makeError('Gemini görsel üretemedi (model/anahtar kontrol edin)', 'AI_ERROR', 500);
+    if (!b64) {
+      console.error('[AI] Gemini görsel üretemedi. Son hata:', lastErr && lastErr.message ? lastErr.message : lastErr);
+      throw makeError('Gemini görsel üretemedi: ' + (lastErr && lastErr.message ? lastErr.message : 'bilinmeyen'), 'AI_ERROR', 500);
+    }
+    console.log(`[AI] Gemini görsel üretildi (model: ${usedModel})`);
     imageBytesBuffer = Buffer.from(b64, 'base64');
     filename = `gemini_${stamp}_${rnd}.png`;
   } else if (openai) {
