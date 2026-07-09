@@ -47,7 +47,7 @@ import { recommend } from '../../core/recommendation';
       <!-- Top artists -->
       <div class="section-head">
         <h2 class="section-title">{{ i18n.t('top_artists') }}</h2>
-        <a class="section-link" routerLink="/shop">{{ i18n.t('see_all') }}</a>
+        <a class="section-link" routerLink="/explore">{{ i18n.t('see_all') }}</a>
       </div>
       <div class="rail">
         @for (a of data.artists; track a.id) {
