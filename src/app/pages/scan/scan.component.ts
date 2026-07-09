@@ -1,7 +1,7 @@
 import {
   ChangeDetectionStrategy, Component, ElementRef, inject, signal, computed, effect, viewChild, OnDestroy,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
@@ -181,6 +181,7 @@ export class ScanComponent implements OnDestroy {
   private readonly backend = inject(BackendService);
   private readonly seg = inject(NailSegService);
   private readonly store = inject(AnalysisStore);
+  private readonly router = inject(Router);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly frame = viewChild.required<ElementRef<HTMLCanvasElement>>('frame');
@@ -420,13 +421,21 @@ export class ScanComponent implements OnDestroy {
     this.drawLandmarks(disp, result);
     this.analysis.set(result);
     // Otomatik tırnak şekli: silüet analizi çıktıysa onu, yoksa parmak yapısı tahminini kullan
-    this.shape.set(result.nailShape ?? this.suggestShape(result.fingerLength));
+    const shape = result.nailShape ?? this.suggestShape(result.fingerLength);
+    this.shape.set(shape);
     this.stage.set('results');
     // Analizi veritabanına da kaydet (sessiz-başarısız; backend kapalıysa atlar)
     void this.backend.saveAnalysis({
       toneKey: result.toneKey, undertone: result.undertone,
       fingerLength: result.fingerLength, nailShape: result.nailShape, hex: result.hex,
     });
+    // ESAS AKIŞ: analiz biter bitmez el verisiyle OTOMATİK tasarım üretimine geç.
+    // Paylaşılan depoyu kesin doldur (Stüdyo bunu okuyup kendiliğinden görsel üretir).
+    this.store.set({
+      toneKey: result.toneKey, undertone: result.undertone,
+      fingerLength: result.fingerLength, nailShape: shape, lab: result.lab,
+    });
+    void this.router.navigate(['/studio']);
   }
 
   /** Tespit edilen noktaları kare üzerine çizer (örnekleme sonrası). */
