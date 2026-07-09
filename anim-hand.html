@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Miracle Nail Art — Hand AR</title>
+<style>
+  :root{
+    --bg:#0c0a08; --panel:#16130f; --line:#2c2418;
+    --gold:#d4af37; --gold-soft:#e9d9a0; --gold-deep:#b8912e;
+    --gold-grad:linear-gradient(135deg,#f3e5a8,#d4af37 45%,#b8912e);
+    --ink:#fff8e7; --muted:#b8ad97; --rose:#b76e79;
+    --serif:"Georgia","Times New Roman",serif; --sans:"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+  .frame{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1100px 640px at 50% 12%,#1d1610 0%,var(--bg) 62%)}
+  .brand{position:fixed;top:26px;left:34px;z-index:20;font-family:var(--serif);font-size:18px;color:var(--gold-soft);letter-spacing:.5px;opacity:.85}
+  .prog{position:fixed;top:0;left:0;height:4px;width:0;background:var(--gold-grad);z-index:30;transition:width .5s linear}
+  .scene{position:relative;z-index:5;display:flex;gap:70px;align-items:center;max-width:1140px;padding:0 40px;opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .scene.show{opacity:1;transform:none}
+
+  /* phone with camera screen */
+  .phone{width:320px;flex:0 0 auto}
+  .screen{position:relative;height:640px;border-radius:42px;overflow:hidden;background:#000;
+    border:1px solid #34302a;box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 0 8px #17140f;display:flex;flex-direction:column}
+  .screen::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:110px;height:24px;background:#000;border-radius:15px;z-index:9}
+  .cam{position:relative;flex:1;background:radial-gradient(120% 90% at 50% 30%,#241a16,#0a0708);overflow:hidden}
+  .camui{position:absolute;inset:0;z-index:6;pointer-events:none}
+  .brk{position:absolute;width:26px;height:26px;border:2px solid var(--gold-soft);opacity:.85}
+  .brk.tl{top:16px;left:16px;border-right:none;border-bottom:none}
+  .brk.tr{top:16px;right:16px;border-left:none;border-bottom:none}
+  .brk.bl{bottom:76px;left:16px;border-right:none;border-top:none}
+  .brk.br{bottom:76px;right:16px;border-left:none;border-top:none}
+  .rec{position:absolute;top:20px;left:52px;font-size:11px;color:#fff;letter-spacing:.1em;display:flex;align-items:center;gap:6px}
+  .rec b{width:8px;height:8px;border-radius:50%;background:#ff4d4d;display:inline-block}
+  .lbl{position:absolute;top:20px;right:50px;font-size:11px;color:var(--gold-soft);letter-spacing:.16em}
+  .status{position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:12px;color:var(--gold-soft);letter-spacing:.14em}
+  .scanline{position:absolute;left:8%;right:8%;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 18px 3px rgba(212,175,55,.6);top:12%;opacity:0}
+  .scanline.run{animation:scan 2.3s ease-in-out forwards}
+  @keyframes scan{0%{top:12%;opacity:1}90%{opacity:1}100%{top:74%;opacity:0}}
+  .hand{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);width:300px}
+  .heart{position:absolute;font-size:22px;opacity:0}
+  .heart.go{animation:rise 1.8s ease-out forwards}
+  @keyframes rise{0%{opacity:0;transform:translateY(10px) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(1.2)}}
+
+  /* AI studio screen */
+  .pbody{position:relative;flex:1;padding:14px 18px 0;background:var(--bg);display:flex;flex-direction:column}
+  .pt{font-family:var(--serif);font-size:23px;margin:2px 0}
+  .psub{color:var(--muted);font-size:12px;margin-bottom:14px;min-height:14px}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+  .chip{display:inline-block;padding:7px 12px;border:1px solid var(--line);border-radius:20px;font-size:11px;color:var(--muted);background:#000;margin-right:6px;transition:.4s}
+  .chip.on{border-color:var(--gold);color:var(--gold-soft);background:linear-gradient(180deg,#221c0c,#151109)}
+  .gen{position:relative;height:150px;border-radius:14px;background:linear-gradient(180deg,#1a1216,#0e0b0d);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .spin{width:38px;height:38px;border-radius:50%;border:3px solid #3a2f18;border-top-color:var(--gold);animation:sp 1s linear infinite;opacity:0}
+  .spin.on{opacity:1}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .genlabel{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11px;color:var(--gold-soft);letter-spacing:.12em}
+  .result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease}
+  .result.on{opacity:1}
+  .pbtn{text-align:center;padding:12px;border-radius:24px;font-weight:700;font-size:13px;background:var(--gold-grad);color:#1a1405;margin-top:12px}
+  .mininav{display:grid;grid-template-columns:repeat(6,1fr);padding:10px 2px;background:linear-gradient(180deg,#141019,#0c0a08);border-top:1px solid var(--line)}
+  .mininav div{text-align:center;font-size:17px;opacity:.45;filter:grayscale(1)}
+  .mininav div.on{opacity:1;filter:none}
+  .mininav div.on::after{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--gold);margin:2px auto 0}
+
+  .cap{max-width:430px}
+  .cap .eyebrow{letter-spacing:.34em;font-size:13px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;opacity:0;transform:translateY(8px);transition:.6s}
+  .cap h2{font-family:var(--serif);font-weight:600;font-size:40px;line-height:1.15;
+    background:linear-gradient(100deg,#fff 20%,var(--gold-soft) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;opacity:0;transform:translateY(10px);transition:.6s .1s}
+  .cap p{color:var(--muted);font-size:17px;line-height:1.6;margin-top:16px;opacity:0;transform:translateY(10px);transition:.6s .2s}
+  .cap .happy{margin-top:16px;font-size:15px;color:var(--rose);opacity:0;transform:translateY(8px);transition:.6s .3s;font-weight:600}
+  .scene.show .eyebrow,.scene.show .cap h2,.scene.show .cap p,.scene.show .cap .happy{opacity:1;transform:none}
+
+  .center{text-align:center}
+  .logo{font-family:var(--serif);font-size:74px;letter-spacing:.5px;
+    background:linear-gradient(100deg,#fff 8%,var(--gold-soft) 45%,var(--gold) 82%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .logo span{display:inline-block;opacity:0;transform:translateY(14px);transition:.5s}
+  .logo span.in{opacity:1;transform:none}
+  .tag{color:var(--gold-soft);font-size:24px;margin-top:20px;letter-spacing:.04em;opacity:0;transition:.8s;font-style:italic;font-family:var(--serif)}
+  .tag.in{opacity:1}
+  .cta{display:inline-block;margin-top:28px;padding:15px 40px;border-radius:40px;font-weight:800;font-size:18px;background:var(--gold-grad);color:#1a1405;box-shadow:0 10px 40px rgba(212,175,55,.5)}
+  .typing::after{content:"▌";color:var(--gold-soft)}
+</style>
+</head>
+<body>
+<div class="brand">Miracle Nail Art · AI</div>
+<div class="prog" id="prog"></div>
+<div class="frame"><div id="stage"></div></div>
+
+<script>
+const stage=document.getElementById('stage'), prog=document.getElementById('prog');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function show(html,cls){stage.innerHTML=`<div class="scene ${cls||''}">${html}</div>`;const el=stage.firstChild;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));return el;}
+
+// ---------- SVG hand ----------
+// style: 'bare' | 'red' | 'black'
+function gem(x,y,r){return `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffffff"/><circle cx="${x-r*0.3}" cy="${y-r*0.3}" r="${r*0.4}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${r*1.7}" fill="#ffffff" opacity="0.18"/>`;}
+function nail(f,style){
+  const x=f.cx, w=f.w*0.44, baseY=f.tip+8, tipY=f.tip-f.nl;
+  if(style==='bare'){
+    return `<ellipse cx="${x}" cy="${f.tip+4}" rx="${f.w*0.34}" ry="11" fill="#f4ddca"/><ellipse cx="${x}" cy="${f.tip+1}" rx="${f.w*0.22}" ry="5" fill="#fff" opacity="0.35"/>`;
+  }
+  const fill = style==='red' ? 'url(#redg)' : 'url(#blackg)';
+  const path = `M ${x-w},${baseY} C ${x-w},${baseY-f.nl*0.55} ${x-4},${tipY} ${x},${tipY} C ${x+4},${tipY} ${x+w},${baseY-f.nl*0.55} ${x+w},${baseY} Q ${x},${baseY+7} ${x-w},${baseY} Z`;
+  let gems='';
+  const gy=tipY+f.nl*0.42;
+  gems+=gem(x, gy, 3.4);
+  gems+=gem(x-w*0.42, gy+f.nl*0.18, 2.4);
+  gems+=gem(x+w*0.42, gy+f.nl*0.18, 2.4);
+  gems+=gem(x, gy-f.nl*0.2, 2.2);
+  return `<path d="${path}" fill="${fill}" stroke="rgba(0,0,0,.25)" stroke-width="0.6"/>
+    <path d="M ${x-w*0.5},${baseY-4} C ${x-w*0.5},${baseY-f.nl*0.5} ${x-2},${tipY+6} ${x-1},${tipY+6}" stroke="rgba(255,255,255,.5)" stroke-width="2" fill="none" stroke-linecap="round"/>${gems}`;
+}
+function hand(style){
+  const F=[{cx:78,tip:200,w:40,nl:46},{cx:132,tip:140,w:46,nl:56},{cx:188,tip:114,w:48,nl:62},{cx:244,tip:146,w:46,nl:56},{cx:300,tip:224,w:44,nl:48}];
+  let s=`<svg viewBox="0 0 360 440" width="100%" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0cда8"/><stop offset="0" stop-color="#eecba6"/><stop offset="1" stop-color="#cf9e78"/></linearGradient>
+    <linearGradient id="redg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a6a"/><stop offset="0.5" stop-color="#d21f32"/><stop offset="1" stop-color="#7d1522"/></linearGradient>
+    <linearGradient id="blackg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4650"/><stop offset="0.45" stop-color="#1c1a20"/><stop offset="1" stop-color="#0c0b0f"/></linearGradient>
+   </defs>`;
+  // palm
+  s+=`<path d="M40,300 Q36,250 80,240 L286,240 Q322,250 318,306 Q320,410 250,428 L120,428 Q44,414 40,300 Z" fill="url(#skin)"/>`;
+  // fingers (capsules) behind nails
+  F.forEach(f=>{ s+=`<rect x="${f.cx-f.w/2}" y="${f.tip}" width="${f.w}" height="${300-f.tip+40}" rx="${f.w/2}" fill="url(#skin)"/>`; });
+  // subtle knuckle shading
+  s+=`<ellipse cx="182" cy="300" rx="150" ry="60" fill="#c99872" opacity="0.18"/>`;
+  // nails on top
+  F.forEach(f=>{ s+=nail(f,style); });
+  s+=`</svg>`;
+  return s;
+}
+// fix accidental non-ascii in skin gradient
+function handFix(style){return hand(style).replace('#f0cда8','#f0cba8');}
+
+function camScreen(style, opts={}){
+  return `<div class="phone"><div class="screen"><div class="cam">
+    <div class="hand">${handFix(style)}</div>
+    ${opts.scan?'<div class="scanline" id="scanl"></div>':''}
+    <div class="camui">
+      <div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
+      <div class="rec"><b></b> ${opts.rec||'REC'}</div>
+      <div class="lbl">${opts.lbl||'AI SCAN'}</div>
+      <div class="status" id="camstat">${opts.status||''}</div>
+    </div>
+    <div id="hearts"></div>
+  </div>
+  <div class="mininav"><div>🏠</div><div>🔍</div><div class="on">🤚</div><div>🎨</div><div>🛍️</div><div>👤</div></div>
+  </div></div>`;
+}
+function cap(eb,h2,p,happy){return `<div class="cap"><div class="eyebrow">${eb}</div><h2>${h2}</h2><p>${p}</p>${happy?`<div class="happy">${happy}</div>`:''}</div>`;}
+function burstHearts(){const h=document.getElementById('hearts');if(!h)return;const em=['💖','✨','💅','💖'];for(let i=0;i<5;i++){const s=document.createElement('div');s.className='heart';s.textContent=em[i%em.length];s.style.left=(30+Math.random()*240)+'px';s.style.bottom=(120+Math.random()*120)+'px';h.appendChild(s);setTimeout(()=>s.classList.add('go'),i*180);}}
+
+// ---------- scenes ----------
+async function sIntro(){
+  show(`<div class="center"><div class="logo" id="lg">${'Miracle Nail Art'.split('').map(c=>c===' '?'<span>&nbsp;</span>':'<span>'+c+'</span>').join('')}</div><div class="tag" id="tg">Try any nail design — live, on your hand</div></div>`,'show');
+  const sp=document.querySelectorAll('#lg span');for(let i=0;i<sp.length;i++){sp[i].classList.add('in');await wait(55);}
+  await wait(150);document.getElementById('tg').classList.add('in');await wait(1600);
+}
+async function sScan(){
+  show(camScreen('bare',{scan:true,rec:'LIVE',lbl:'AI SCAN',status:'SCANNING YOUR HAND…'})+cap('Hand Analysis','Scan your hand','Point your camera at your hand — the app reads your skin tone and nail shape in seconds.'),'');
+  await wait(700);document.getElementById('scanl').classList.add('run');
+  await wait(2600);const st=document.getElementById('camstat');if(st)st.textContent='ANALYSIS COMPLETE ✓';
+  await wait(1400);
+}
+async function sTryRed(){
+  show(camScreen('red',{rec:'LIVE',lbl:'AR TRY-ON',status:'RED STILETTO · CRYSTALS'})+cap('Live Try-On','See it on your hand','Long red stiletto nails with crystals — placed live on your real hand through the camera.','She’s in love 💖'),'');
+  await wait(900);burstHearts();await wait(3200);
+}
+async function sAI(){
+  show(`<div class="phone"><div class="screen"><div class="pbody">
+      <div class="pt">Nail Art AI</div><div class="psub"><span id="typ" class="typing"></span></div>
+      <div style="margin-bottom:12px"><span class="chip on" id="c1">Stiletto</span><span class="chip">Crystals</span><span class="chip">Black</span></div>
+      <div class="gen"><div class="spin" id="sp"></div>
+        <div class="result" id="res"><div style="width:210px;height:120px;border-radius:12px;background:linear-gradient(180deg,#2a2630,#0d0c10);position:relative;display:flex;align-items:flex-end;justify-content:center;gap:5px;padding:8px" id="reshand"></div></div>
+        <div class="genlabel" id="gl"></div>
+      </div>
+      <div class="pbtn">✨ Generate</div>
+    </div>
+    <div class="mininav"><div>🏠</div><div>🔍</div><div>🤚</div><div class="on">🎨</div><div>🛍️</div><div>👤</div></div>
+  </div></div>`+cap('Nail Art AI','Describe your dream','Type the design you imagine — the AI creates a brand-new nail art image just for you.'),'');
+  const typ=document.getElementById('typ');const txt='black stiletto nails with crystals';
+  await wait(600);for(let i=0;i<=txt.length;i++){typ.textContent='✎ '+txt.slice(0,i);await wait(42);}
+  document.getElementById('sp').classList.add('on');document.getElementById('gl').textContent='AI GENERATING…';
+  await wait(1500);
+  // reveal generated black crystal nails (mini)
+  const rh=document.getElementById('reshand');
+  rh.innerHTML=[46,56,60,56,46].map((h,i)=>`<div style="width:14px;height:${h}px;border-radius:8px 8px 5px 5px;background:linear-gradient(180deg,#4a4650,#141218);box-shadow:0 0 0 1px #000;position:relative"><span style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#fff"></span></div>`).join('');
+  document.getElementById('sp').classList.remove('on');document.getElementById('res').classList.add('on');document.getElementById('gl').textContent='YOUR DESIGN IS READY ✓';
+  await wait(2200);
+}
+async function sTryBlack(){
+  show(camScreen('black',{rec:'LIVE',lbl:'AR TRY-ON',status:'BLACK STILETTO · CRYSTALS'})+cap('Live Try-On','Wear your AI design','Your black crystal stiletto set — created by AI, tried on live on your hand.','Absolutely stunning ✨'),'');
+  await wait(900);burstHearts();await wait(3200);
+}
+async function sOutro(){
+  show(`<div class="center"><div class="logo" id="lg2">${'Miracle Nail Art'.split('').map(c=>c===' '?'<span>&nbsp;</span>':'<span>'+c+'</span>').join('')}</div><div class="tag" id="tg2">AI designs that make you feel special</div><div><span class="cta">Try it today ✨</span></div></div>`,'show');
+  const sp=document.querySelectorAll('#lg2 span');for(let i=0;i<sp.length;i++){sp[i].classList.add('in');await wait(42);}
+  await wait(150);document.getElementById('tg2').classList.add('in');await wait(2600);
+}
+
+const TL=[sIntro,sScan,sTryRed,sAI,sTryBlack,sOutro];
+(async function run(){await wait(400);for(let i=0;i<TL.length;i++){prog.style.width=((i+1)/TL.length*100)+'%';await TL[i]();}prog.style.width='100%';window.__ANIM_DONE__=true;})();
+</script>
+</body>
+</html>

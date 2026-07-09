@@ -14,6 +14,17 @@ function provider() {
 }
 function ready() { return provider() !== 'demo'; }
 
+/** Telefonu uluslararası (E.164) biçime çevirir. Varsayılan ülke: Türkiye (+90). */
+function toE164(p) {
+  let s = String(p || '').replace(/[^\d+]/g, '');
+  if (s.startsWith('+')) return s;
+  if (s.startsWith('00')) return '+' + s.slice(2);
+  if (s.startsWith('0')) s = s.slice(1);                 // 0555... -> 555...
+  if (s.startsWith('90')) return '+' + s;                // 90555... -> +90555...
+  if (s.length === 10 && s.startsWith('5')) return '+90' + s; // 555... -> +90555...
+  return '+' + s;
+}
+
 /** OTP kodunu telefona gönderir. Dönüş: { mode:'live'|'demo', provider, code? } (code yalnızca demo'da). */
 async function sendOtp(phone, code) {
   const p = provider();
@@ -23,7 +34,7 @@ async function sendOtp(phone, code) {
       const Twilio = tryRequire('twilio');
       if (!Twilio) throw new Error('twilio paketi kurulu değil (npm i twilio)');
       const client = Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      await client.messages.create({ from: process.env.TWILIO_FROM, to: phone, body: msg });
+      await client.messages.create({ from: process.env.TWILIO_FROM, to: toE164(phone), body: msg });
       return { mode: 'live', provider: 'twilio' };
     }
     if (p === 'netgsm') {

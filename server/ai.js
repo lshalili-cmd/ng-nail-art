@@ -163,15 +163,24 @@ async function generateImage(input, imgDir) {
     if (remoteUrl && typeof remoteUrl.url === 'function') remoteUrl = remoteUrl.url();
     filename = `flux_${stamp}_${rnd}.png`;
   } else if (gemini) {
-    provider = 'imagen3';
-    const response = await gemini.models.generateImages({
-      model: 'imagen-3.0-generate-002',
-      prompt: artPrompt,
-      config: { numberOfImages: 1, aspectRatio: '1:1' },
+    // ÜCRETSİZ görsel modeli (Gemini 2.5 Flash Image / "Nano Banana") — kart gerektirmez, ~500/gün.
+    // Imagen'in ücretsiz katmanı YOK; o yüzden generateContent + IMAGE çıktısı kullanıyoruz.
+    provider = 'gemini-flash-image';
+    const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+    const response = await gemini.models.generateContent({
+      model,
+      contents: artPrompt,
+      config: { responseModalities: ['IMAGE'] },
     });
-    if (!response.generatedImages || !response.generatedImages.length) throw makeError('Imagen görsel üretemedi', 'AI_ERROR', 500);
-    imageBytesBuffer = Buffer.from(response.generatedImages[0].image.imageBytes, 'base64');
-    filename = `imagen_${stamp}_${rnd}.png`;
+    let b64 = null;
+    const cand = response && response.candidates && response.candidates[0];
+    const parts = (cand && cand.content && cand.content.parts) || [];
+    for (const p of parts) {
+      if (p && p.inlineData && p.inlineData.data) { b64 = p.inlineData.data; break; }
+    }
+    if (!b64) throw makeError('Gemini görsel üretemedi (model/anahtar kontrol edin)', 'AI_ERROR', 500);
+    imageBytesBuffer = Buffer.from(b64, 'base64');
+    filename = `gemini_${stamp}_${rnd}.png`;
   } else if (openai) {
     provider = 'dalle3';
     const imageResponse = await openai.images.generate({

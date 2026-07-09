@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Miracle Nail Art — Animation</title>
+<style>
+  :root{
+    --bg:#0c0a08; --panel:#16130f; --line:#2c2418;
+    --gold:#d4af37; --gold-soft:#e9d9a0; --gold-deep:#b8912e;
+    --gold-grad:linear-gradient(135deg,#f3e5a8,#d4af37 45%,#b8912e);
+    --ink:#fff8e7; --muted:#b8ad97; --rose:#b76e79;
+    --serif:"Georgia","Times New Roman",serif; --sans:"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1280px;height:720px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans)}
+  .frame{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1100px 640px at 50% 12%,#1d1610 0%,var(--bg) 62%)}
+  /* bokeh backdrop */
+  .bokeh{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .bokeh i{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.20),transparent 70%);opacity:.5}
+  @keyframes float{0%{transform:translateY(20px) scale(.8);opacity:0}50%{opacity:.5}100%{transform:translateY(-30px) scale(1.1);opacity:0}}
+
+  .brand{position:fixed;top:26px;left:34px;z-index:20;font-family:var(--serif);font-size:18px;color:var(--gold-soft);letter-spacing:.5px;opacity:.85}
+  .prog{position:fixed;top:0;left:0;height:4px;width:0;background:var(--gold-grad);z-index:30;transition:width .5s linear}
+
+  .scene{position:relative;z-index:5;display:flex;gap:80px;align-items:center;max-width:1120px;padding:0 40px;opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .scene.show{opacity:1;transform:none}
+
+  .phone{width:300px;flex:0 0 auto}
+  .screen{position:relative;height:620px;border-radius:40px;overflow:hidden;background:var(--bg);
+    border:1px solid #34302a;box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 0 8px #17140f;display:flex;flex-direction:column}
+  .screen::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:108px;height:24px;background:#000;border-radius:15px;z-index:9}
+  .sbar{display:flex;justify-content:space-between;padding:14px 22px 6px;font-size:12px;color:var(--muted)}
+  .pbody{flex:1;padding:8px 18px 0;overflow:hidden;position:relative}
+  .mininav{display:grid;grid-template-columns:repeat(6,1fr);padding:12px 2px;background:linear-gradient(180deg,#141019,#0c0a08);border-top:1px solid var(--line)}
+  .mininav div{text-align:center;font-size:19px;opacity:.45;filter:grayscale(1);transition:.5s}
+  .mininav div.on{opacity:1;filter:none;transform:translateY(-2px)}
+  .mininav div.on::after{content:"";display:block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin:3px auto 0}
+
+  .pt{font-family:var(--serif);font-size:23px;margin:4px 0 2px}
+  .psub{color:var(--muted);font-size:12px;margin-bottom:15px;min-height:14px}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:14px;margin-bottom:12px}
+  .hand{display:flex;gap:6px;justify-content:center;align-items:flex-end;height:92px}
+  .nail{width:23px;border-radius:12px 12px 8px 8px;position:relative;box-shadow:inset 0 -6px 10px rgba(0,0,0,.35);transition:background 1.1s ease,height .6s ease}
+  .nail::after{content:"";position:absolute;top:6px;left:5px;width:6px;height:42%;border-radius:6px;background:rgba(255,255,255,.5)}
+  .n1{height:58px}.n2{height:72px}.n3{height:82px}.n4{height:70px}.n5{height:52px}
+  .pbtn{text-align:center;padding:13px;border-radius:26px;font-weight:700;font-size:14px;background:var(--gold-grad);color:#1a1405;box-shadow:0 8px 24px rgba(212,175,55,.3)}
+  .pbtn.glow{box-shadow:0 8px 40px rgba(212,175,55,.7)}
+  @keyframes glow{0%,100%{box-shadow:0 8px 24px rgba(212,175,55,.3)}50%{box-shadow:0 8px 40px rgba(212,175,55,.75)}}
+  .prow{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin:4px 2px 12px}
+  .ppill{font-size:11px;padding:3px 10px;border-radius:13px;background:#000;border:1px solid var(--gold-deep);color:var(--gold-soft)}
+  .chip{display:inline-block;padding:7px 13px;border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--muted);background:#000;margin-right:6px;transition:.4s}
+  .chip.on{border-color:var(--gold);color:var(--gold-soft);background:linear-gradient(180deg,#221c0c,#151109)}
+  .swatch{width:28px;height:28px;border-radius:50%;border:2px solid #000;box-shadow:0 0 0 1px var(--line);transform:scale(0);transition:transform .4s cubic-bezier(.2,1.4,.4,1)}
+  .swatch.pop{transform:scale(1)}
+  .plan{background:linear-gradient(180deg,#1b1710,#121014);border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:9px;position:relative;opacity:0;transform:translateX(30px);transition:.5s}
+  .plan.in{opacity:1;transform:none}
+  .plan.best{border-color:var(--gold)}
+  .plan .bt{position:absolute;right:10px;top:-9px;font-size:10px;background:var(--gold);color:#1a1405;padding:2px 9px;border-radius:11px;font-weight:800;opacity:0;transition:.4s}
+  .plan.best.in .bt{opacity:1}
+  .price{font-family:var(--serif);font-size:21px}.price small{font-size:11px;color:var(--muted)}
+  .avatar{width:62px;height:62px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:27px;color:#1a1405;background:var(--gold-grad);transform:scale(0);transition:transform .6s cubic-bezier(.2,1.4,.4,1)}
+  .avatar.pop{transform:scale(1)}
+  .mrow{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:14px;opacity:0;transform:translateX(-14px);transition:.4s}
+  .mrow.in{opacity:1;transform:none}
+  .mrow span:first-child{width:22px;text-align:center;font-size:16px}
+  /* scan line */
+  .scanline{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 16px 3px rgba(212,175,55,.6);top:0;opacity:0}
+  .scanline.run{animation:scan 2.2s ease-in-out forwards}
+  @keyframes scan{0%{top:6px;opacity:1}90%{opacity:1}100%{top:180px;opacity:0}}
+
+  .cap{max-width:440px}
+  .cap .eyebrow{letter-spacing:.34em;font-size:13px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;opacity:0;transform:translateY(8px);transition:.6s}
+  .cap h2{font-family:var(--serif);font-weight:600;font-size:42px;line-height:1.14;
+    background:linear-gradient(100deg,#fff 20%,var(--gold-soft) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;opacity:0;transform:translateY(10px);transition:.6s .1s}
+  .cap p{color:var(--muted);font-size:18px;line-height:1.6;margin-top:18px;opacity:0;transform:translateY(10px);transition:.6s .2s}
+  .scene.show .eyebrow,.scene.show .cap h2,.scene.show .cap p{opacity:1;transform:none}
+
+  /* intro/outro */
+  .center{text-align:center}
+  .logo{font-family:var(--serif);font-size:76px;letter-spacing:.5px;
+    background:linear-gradient(100deg,#fff 8%,var(--gold-soft) 45%,var(--gold) 82%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .logo span{display:inline-block;opacity:0;transform:translateY(14px);filter:blur(6px);transition:.6s}
+  .logo span.in{opacity:1;transform:none;filter:none}
+  .tag{color:var(--muted);font-size:22px;margin-top:18px;letter-spacing:.05em;opacity:0;transition:.8s}
+  .tag.in{opacity:1}
+  .center .hand{height:130px;margin:38px auto 0}
+  .center .nail{width:32px}
+  .cta{display:inline-block;margin-top:30px;padding:15px 40px;border-radius:40px;font-weight:800;font-size:18px;background:var(--gold-grad);color:#1a1405;box-shadow:0 10px 40px rgba(212,175,55,.6)}
+  @keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 10px 30px rgba(212,175,55,.35)}50%{transform:scale(1.05);box-shadow:0 10px 46px rgba(212,175,55,.7)}}
+  .typing::after{content:"▌";color:var(--gold-soft)}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="brand">Miracle Nail Art · AI</div>
+<div class="prog" id="prog"></div>
+<div class="frame"><div id="stage"></div></div>
+
+<script>
+const stage=document.getElementById('stage'), prog=document.getElementById('prog');
+// bokeh dots
+
+function nav(a){const t=['🏠','🔍','🤚','🎨','🛍️','👤'];return '<div class="mininav">'+t.map((x,i)=>`<div class="${i===a?'on':''}">${x}</div>`).join('')+'</div>';}
+function phone(a,inner){return `<div class="phone"><div class="screen"><div class="sbar"><span>9:41</span><span>✦ ⬤ 100%</span></div><div class="pbody">${inner}</div>${nav(a)}</div></div>`;}
+function cap(eb,h2,p){return `<div class="cap"><div class="eyebrow">${eb}</div><h2>${h2}</h2><p>${p}</p></div>`;}
+function show(html,cls){stage.innerHTML=`<div class="scene ${cls||''}">${html}</div>`;const el=stage.firstChild;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));return el;}
+const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
+function countUp(el,to,ms,suffix){return new Promise(res=>{const steps=24,iv=Math.max(16,ms/steps);let i=0;const t=setInterval(()=>{i++;el.textContent=Math.round(to*i/steps)+(suffix||'');if(i>=steps){clearInterval(t);res();}},iv);});}
+
+const nailsNude=[1,2,3,4,5].map(i=>`<div class="nail n${i} paint" style="background:linear-gradient(180deg,#efe3d4,#cdb7a3)"></div>`).join('');
+const nailsRose=`<div class="nail n1" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div><div class="nail n2" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div><div class="nail n3" style="background:linear-gradient(180deg,#f0d8b0,#c9a24a)"></div><div class="nail n4" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div><div class="nail n5" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div>`;
+
+// ---- scenes (each returns after its full duration) ----
+async function sIntro(){
+  show(`<div class="center"><div class="logo" id="lg">${'Miracle Nail Art'.split('').map(c=>c===' '?'<span>&nbsp;</span>':'<span>'+c+'</span>').join('')}</div><div class="tag" id="tg">Your AI nail studio — in your pocket</div><div class="hand">${nailsRose}</div></div>`,'show');
+  const sp=document.querySelectorAll('#lg span');
+  for(let i=0;i<sp.length;i++){sp[i].classList.add('in');await wait(70);}
+  await wait(200);document.getElementById('tg').classList.add('in');
+  await wait(1000);
+}
+async function sHome(){
+  show(phone(0,`<div class="pt">Hello Leman ✨</div><div class="psub">Today's inspiration, for your skin tone</div><div class="pcard" style="background:linear-gradient(135deg,#231a0c,#12100a);border-color:var(--gold-deep)"><div class="hand">${nailsRose}</div><div class="prow" style="margin-top:10px"><span style="color:var(--ink)">Rose Quartz & Gold · <b id="pct">0%</b></span><span class="ppill">Try ▸</span></div></div><div class="pbtn glow">✨ Create with AI</div>`)+cap('Home','It knows what suits you','Open the app and your home screen greets you with designs picked for your skin tone.'));
+  await wait(900);await countUp(document.getElementById('pct'),94,1100,'%');
+  await wait(1500);
+}
+async function sStudio(){
+  show(phone(3,`<div class="pt">Studio</div><div class="psub"><span id="typ" class="typing"></span></div><div style="margin-bottom:12px"><span class="chip" id="c1">Glitter</span><span class="chip">Matte</span><span class="chip">Chrome</span></div><div class="pcard" style="text-align:center;background:linear-gradient(180deg,#1a1216,#0e0b0d)"><div class="hand" id="nailwrap">${nailsNude}</div></div><div class="prow"><span>Image credits left</span><span class="ppill" id="cr">28 / 30</span></div><div class="pbtn" id="gen">✨ Generate</div>`)+cap('AI Studio','Describe it. See it.','Type the look you dream of — AI turns your words into a design in seconds.'));
+  // typing
+  const typ=document.getElementById('typ');const txt='red glitter night nails';
+  await wait(700);for(let i=0;i<=txt.length;i++){typ.textContent='✎ '+txt.slice(0,i);await wait(55);}
+  await wait(250);document.getElementById('c1').classList.add('on');
+  await wait(300);document.getElementById('gen').classList.add('glow');
+  // paint wave nude -> red glitter
+  const nails=document.querySelectorAll('#nailwrap .nail');
+  nails.forEach((n,i)=>{n.style.transitionDelay=(i*0.12)+'s';setTimeout(()=>{n.style.background='linear-gradient(180deg,#ff7a7a,#8b1e2d)';},900+i*10);});
+  await wait(1400);await countUp(document.getElementById('cr'),27,500,' / 30'); document.getElementById('cr').textContent='27 / 30';
+  await wait(1300);
+}
+async function sScan(){
+  show(phone(2,`<div class="pt">Your Hand</div><div class="psub">Show your hand, we'll do the rest</div><div style="position:relative"><div class="scanline" id="sl"></div><div class="pcard"><div style="display:flex;gap:12px;align-items:center"><div class="swatch pop" style="background:#e7c2a0"></div><div><div style="font-size:13px">Skin tone · Warm / Peach</div><div style="color:var(--muted);font-size:10px">ITA 41° · undertone: gold</div></div></div></div><div class="pcard"><div style="font-size:13px;margin-bottom:8px">Nail shape · <b style="color:var(--gold-soft)">Almond</b></div><div class="hand" style="height:64px">${[1,2,3,4,5].map(i=>`<div class="nail n${i}" style="background:linear-gradient(180deg,#efe3d4,#cdb7a3)"></div>`).join('')}</div></div></div><div class="psub" style="margin:2px 0 8px">Colors that flatter you</div><div style="display:flex;justify-content:space-between;padding:0 6px" id="sw"><div class="swatch" style="background:#b76e79"></div><div class="swatch" style="background:#c9a24a"></div><div class="swatch" style="background:#7d5a4f"></div><div class="swatch" style="background:#2f6b5e"></div><div class="swatch" style="background:#843b4a"></div></div>`)+cap('Hand Analysis','Scan. Get matched.','We read your skin tone and nail shape, then suggest your most flattering colors.'));
+  await wait(500);document.getElementById('sl').classList.add('run');
+  await wait(2400);const sws=document.querySelectorAll('#sw .swatch');for(const s of sws){s.classList.add('pop');await wait(160);}
+  await wait(1300);
+}
+async function sShop(){
+  show(phone(4,`<div class="pt">Membership</div><div class="psub">Upgrade anytime, add extra credits</div><div class="plan" id="p1"><div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:13px">Monthly</div><div class="price">₺149<small>/mo</small></div></div><div style="color:var(--muted);font-size:11px;margin-top:3px">30 images per month</div></div><div class="plan best" id="p2"><div class="bt">MOST POPULAR</div><div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:13px;color:var(--gold-soft)">Yearly</div><div class="price">₺119<small>/mo</small></div></div><div style="color:var(--muted);font-size:11px;margin-top:3px">30 / month · 360 a year</div></div><div class="plan" id="p3"><div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:13px">Pro</div><div class="price">₺349<small>/mo</small></div></div><div style="color:var(--muted);font-size:11px;margin-top:3px">100 images per month</div></div>`)+cap('Membership','A plan that grows with you','Monthly, yearly or pro — with more image credits as you grow.'));
+  await wait(700);document.getElementById('p1').classList.add('in');await wait(280);document.getElementById('p2').classList.add('in');await wait(280);document.getElementById('p3').classList.add('in');
+  await wait(1400);
+}
+async function sProfile(){
+  show(phone(5,`<div style="text-align:center;padding:8px 0 4px"><div class="avatar" id="av">L</div><div style="font-family:var(--serif);font-size:18px;margin-top:8px">Leman</div><div style="color:var(--muted);font-size:11px">l.shalili@logper.com</div></div><div class="pcard" style="background:linear-gradient(135deg,#231a0c,#12100a);border-color:var(--gold-deep)"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;color:var(--gold-soft)">Yearly Premium</div><div style="color:var(--muted);font-size:10px">312 days left</div></div><span class="ppill">27 credits</span></div></div><div class="mrow" id="m1"><span>❤️</span> Favorites</div><div class="mrow" id="m2"><span>💎</span> Subscription</div><div class="mrow" id="m3"><span>⚙️</span> Settings</div><div class="mrow" id="m4" style="border:none"><span>🔒</span> Secured with phone verification</div>`)+cap('Your Account','Everything in one place','Your plan, credits and settings — secured with phone verification.'));
+  await wait(500);document.getElementById('av').classList.add('pop');
+  await wait(400);for(const id of ['m1','m2','m3','m4']){document.getElementById(id).classList.add('in');await wait(200);}
+  await wait(1300);
+}
+async function sOutro(){
+  show(`<div class="center"><div class="logo" id="lg2">${'Miracle Nail Art'.split('').map(c=>c===' '?'<span>&nbsp;</span>':'<span>'+c+'</span>').join('')}</div><div class="tag" id="tg2">Your nails, reimagined by AI</div><div><span class="cta">Try it today ✨</span></div></div>`,'show');
+  const sp=document.querySelectorAll('#lg2 span');for(let i=0;i<sp.length;i++){sp[i].classList.add('in');await wait(45);}
+  await wait(200);document.getElementById('tg2').classList.add('in');
+  await wait(2400);
+}
+
+const TL=[sIntro,sHome,sStudio,sScan,sShop,sProfile,sOutro];
+(async function run(){
+  await wait(500);
+  for(let i=0;i<TL.length;i++){prog.style.width=((i+1)/TL.length*100)+'%';await TL[i]();}
+  prog.style.width='100%';
+  window.__ANIM_DONE__=true;
+})();
+</script>
+</body>
+</html>

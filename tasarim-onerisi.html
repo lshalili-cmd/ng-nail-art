@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miracle Nail Art — Tasarım Önerisi</title>
+<style>
+  :root{
+    /* Uygulamanın GERÇEK tokenları (src/styles.css) */
+    --bg:#0c0a08; --bg2:#141019; --line:#2c2418;
+    --gold:#d4af37; --gold-soft:#e9d9a0; --gold-deep:#b8912e;
+    --gold-grad:linear-gradient(135deg,#f3e5a8 0%,#d4af37 45%,#b8912e 100%);
+    --ink:#fff8e7; --muted:#b8ad97; --muted2:#8a8172; --rose:#b76e79;
+    --panel:#16130f; --panel2:#1c1811;
+    --sans:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;
+    --serif:"Georgia","Times New Roman",serif;
+    --shadow:0 18px 50px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1100px 560px at 20% -10%,#1a1410 0%,transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--sans);line-height:1.6;padding:0 0 80px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+
+  /* cover */
+  .cover{text-align:center;padding:64px 22px 30px}
+  .kicker{letter-spacing:.42em;font-size:11px;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+  .cover h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,52px);letter-spacing:.5px;
+    background:linear-gradient(100deg,#fff 8%,var(--gold-soft) 42%,var(--gold) 78%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .cover .lead{color:var(--muted);max-width:640px;margin:16px auto 0;font-size:16px}
+  .meta{color:var(--muted2);font-size:12px;margin-top:18px;letter-spacing:.05em}
+  .rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold-deep),transparent);max-width:960px;margin:26px auto}
+
+  h2{font-family:var(--serif);font-size:24px;font-weight:600;margin:44px 0 6px;color:var(--ink)}
+  h2 .num{color:var(--gold);font-size:15px;font-family:var(--sans);letter-spacing:.1em;margin-right:10px}
+  .sub{color:var(--muted2);font-size:13px;margin-bottom:18px}
+  p.t{color:var(--muted);font-size:15px;margin:10px 0}
+  .ink{color:var(--ink)}
+  strong{color:var(--gold-soft);font-weight:600}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .card h3{font-size:14px;color:var(--gold-soft);margin-bottom:7px;display:flex;gap:9px;align-items:center}
+  .card p{color:var(--muted);font-size:13.5px}
+
+  /* palette */
+  .pal{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:12px}
+  .sw{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .sw .b{height:56px}
+  .sw .m{padding:8px 10px;font-size:11px;background:#0f0d0a}
+  .sw .m b{display:block;color:var(--ink);font-size:12px}
+  .sw .m span{color:var(--muted2);font-family:monospace}
+
+  /* type scale */
+  .type div{border-bottom:1px dashed var(--line);padding:10px 0;display:flex;align-items:baseline;gap:14px}
+  .type .lb{color:var(--muted2);font-size:11px;width:120px;flex:0 0 auto}
+  .serif{font-family:var(--serif)}
+
+  /* component demo */
+  .demo{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:12px}
+  .btn{padding:11px 20px;border-radius:24px;font-weight:700;font-size:13px;background:var(--gold-grad);color:#1a1405;border:none;box-shadow:0 6px 18px rgba(212,175,55,.28)}
+  .btn.ghost{background:transparent;color:var(--gold-soft);border:1px solid var(--gold-deep);box-shadow:none}
+  .chip{padding:7px 14px;border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--muted);background:#000}
+  .chip.on{border-color:var(--gold);color:var(--gold-soft);background:linear-gradient(180deg,#221c0c,#151109)}
+  .badge{font-size:12px;padding:4px 11px;border-radius:14px;background:rgba(212,175,55,.16);color:var(--gold-soft);border:1px solid rgba(212,175,55,.4);font-weight:600}
+
+  /* 6-tab nav demo */
+  .navrow{display:grid;grid-template-columns:repeat(6,1fr);background:linear-gradient(180deg,#141019,#0c0a08);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:12px}
+  .navrow .t{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 2px;font-size:9.5px;color:var(--muted2);font-weight:600}
+  .navrow .t .ic{font-size:20px;filter:grayscale(.4) opacity(.7)}
+  .navrow .t.on{color:var(--gold-soft)}
+  .navrow .t.on .ic{filter:none;transform:translateY(-1px)}
+  .navrow .t.on{background:radial-gradient(60px 40px at 50% 120%,rgba(212,175,55,.18),transparent)}
+  .callout{margin-top:10px;font-size:13px;color:var(--muted);border-left:2px solid var(--gold);padding-left:12px}
+
+  /* phones */
+  .stage{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .phone{width:248px}
+  .plabel{text-align:center;color:var(--gold-soft);font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:9px;font-weight:600}
+  .screen{position:relative;height:510px;border-radius:30px;overflow:hidden;background:var(--bg);border:1px solid #33302a;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .sbar{display:flex;justify-content:space-between;padding:11px 16px 4px;font-size:10px;color:var(--muted2)}
+  .pbody{flex:1;padding:4px 13px 0;overflow:hidden}
+  .pt{font-family:var(--serif);font-size:18px;margin:2px 0}
+  .ps{color:var(--muted2);font-size:10.5px;margin-bottom:10px}
+  .mininav{display:grid;grid-template-columns:repeat(6,1fr);padding:7px 2px;background:linear-gradient(180deg,#141019,#0c0a08);border-top:1px solid var(--line)}
+  .mininav div{text-align:center;font-size:15px;opacity:.5;filter:grayscale(1)}
+  .mininav div.on{opacity:1;filter:none}
+  .mininav div.on::after{content:"";display:block;width:4px;height:4px;border-radius:50%;background:var(--gold);margin:2px auto 0}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px;margin-bottom:9px}
+  .hand{display:flex;gap:4px;justify-content:center;align-items:flex-end;height:64px}
+  .nail{width:17px;border-radius:9px 9px 6px 6px;position:relative;box-shadow:inset 0 -5px 8px rgba(0,0,0,.35)}
+  .nail::after{content:"";position:absolute;top:4px;left:3px;width:5px;height:38%;border-radius:5px;background:rgba(255,255,255,.4)}
+  .h1{height:42px}.h2{height:53px}.h3{height:60px}.h4{height:52px}.h5{height:38px}
+  .pbtn{text-align:center;padding:10px;border-radius:22px;font-weight:700;font-size:12px;background:var(--gold-grad);color:#1a1405}
+  .prow{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--muted);margin:2px 1px 8px}
+  .ppill{font-size:10px;padding:2px 8px;border-radius:12px;background:#000;border:1px solid var(--gold-deep);color:var(--gold-soft)}
+
+  /* phased plan */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:12px;position:relative;padding-left:56px}
+  .phase .n{position:absolute;left:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--gold-grad);color:#1a1405;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .phase h4{font-size:15px;margin-bottom:4px}
+  .phase p{color:var(--muted);font-size:13.5px}
+  .tag{display:inline-block;font-size:10px;color:var(--muted2);border:1px solid var(--line);border-radius:10px;padding:2px 8px;margin-top:8px}
+
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--gold-soft);font-size:12px;font-weight:600;letter-spacing:.04em}
+  td.scr{color:var(--ink);white-space:nowrap;font-weight:600}
+  td .now{color:var(--muted2)} td .prop{color:var(--muted)}
+  .foot{text-align:center;color:#5f5c55;font-size:12px;margin-top:52px}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="kicker">Miracle Nail Art AI</div>
+  <h1>Tasarım Önerisi</h1>
+  <p class="lead">Mevcut uygulamanın kimliğini bozmadan, onu bir “araç”tan bir <span class="ink">lüks markaya</span> yükseltmek için tasarım yönü. Palet, tipografi ve bileşenler uygulamanın bugünkü koduyla birebir hizalıdır.</p>
+  <div class="meta">v1 · 07.07.2026 · 6 sekmeli mevcut yapı esas alınmıştır</div>
+</div>
+<div class="rule"></div>
+
+<div class="wrap">
+
+  <h2><span class="num">01</span>Amaç</h2>
+  <p class="t">Uygulama teknik olarak zaten çalışıyor: AI görsel üretimi, el analizi, üyelik/kota, çoklu ödeme, kimlik doğrulama ve cihazlar arası senkron. Eksik olan teknik değil, <strong>algı</strong>. Bu öneri yeni özellik eklemez; mevcut altı ekranın <strong>görsel dilini tekleştirip</strong> premium bir his verir. Hedef: kullanıcı ilk saniyede “bu ciddi, pahalı bir uygulama” hissetsin.</p>
+
+  <h2><span class="num">02</span>Mevcut durum (baz alınan)</h2>
+  <p class="t">Öneri, uygulamanın <strong>gerçek 6 sekmeli alt menüsü</strong> üzerine kuruludur. AI Stüdyo, ana navigasyonun birinci sınıf üyesidir — 4. sekme:</p>
+  <div class="navrow">
+    <div class="t"><span class="ic">🏠</span>Ana Sayfa</div>
+    <div class="t"><span class="ic">🔍</span>Keşfet</div>
+    <div class="t"><span class="ic">🤚</span>Tara</div>
+    <div class="t on"><span class="ic">🎨</span>Stüdyo</div>
+    <div class="t"><span class="ic">🛍️</span>Mağaza</div>
+    <div class="t"><span class="ic">👤</span>Profil</div>
+  </div>
+  <div class="callout"><strong>AI Stüdyo butonu nerede?</strong> Alt menüde soldan dördüncü sekme (🎨 Stüdyo). Ayrıca öneride, Ana Sayfa’da bir de büyük “✨ AI ile üret” kısayolu duruyor — çünkü bu, uygulamanın kalbidir ve iki tıkla değil tek tıkla erişilmeli. AR ekranı navigasyonda değildir; tasarım detayından ve profil geçmişinden açılır (ikincil).</p></div>
+
+  <h2><span class="num">03</span>Tasarım ilkeleri</h2>
+  <div class="cards">
+    <div class="card"><h3>🖤 Koyu zemin, tek vurgu</h3><p>Neredeyse siyah (#0c0a08) zemin, tek metalik vurgu altın. Renkli olan tek şey tırnakların kendisi olsun — göz hep ürüne gitsin.</p></div>
+    <div class="card"><h3>✍️ İki font, net hiyerarşi</h3><p>Başlıklarda ince serif (mücevher/parfüm hissi), gövdede sade sans. “Ucuz uygulama” algısını kıran en kritik detay.</p></div>
+    <div class="card"><h3>🎯 Ekran başına tek eylem</h3><p>Her ekranda gözü yormayan tek bir altın buton: Üret · Yükselt · Dene. Kullanıcı ne yapacağını düşünmesin.</p></div>
+    <div class="card"><h3>🫧 Ferahlık = lüks</h3><p>Premium his kalabalıktan değil boşluktan gelir. Bol nefes alanı, yuvarlak köşeler, tek sütun.</p></div>
+    <div class="card"><h3>🔗 Analiz → satış köprüsü</h3><p>Tara ekranı sadece “şeklin badem” demez; sana yakışan paleti ve “Dene” yolunu sunar. Analiz, üretime ve satışa bağlanır.</p></div>
+    <div class="card"><h3>💎 Kota her yerde görünür</h3><p>“27/30 görsel” rozeti Stüdyo ve Profil’de sabit durur; hak azalınca baskı değil, yumuşak bir yükseltme daveti çıkar.</p></div>
+  </div>
+
+  <h2><span class="num">04</span>Renk sistemi</h2>
+  <div class="sub">Uygulamanın mevcut CSS değişkenleriyle birebir — yeni renk icat edilmedi, sistem netleştirildi.</div>
+  <div class="pal">
+    <div class="sw"><div class="b" style="background:#0c0a08"></div><div class="m"><b>Zemin</b><span>--bg #0c0a08</span></div></div>
+    <div class="sw"><div class="b" style="background:#141019"></div><div class="m"><b>Panel</b><span>--bg-2 #141019</span></div></div>
+    <div class="sw"><div class="b" style="background:#2c2418"></div><div class="m"><b>Çizgi</b><span>--line #2c2418</span></div></div>
+    <div class="sw"><div class="b" style="background:linear-gradient(135deg,#f3e5a8,#d4af37 45%,#b8912e)"></div><div class="m"><b>Altın (vurgu)</b><span>--gold-grad</span></div></div>
+    <div class="sw"><div class="b" style="background:#e9d9a0"></div><div class="m"><b>Yumuşak altın</b><span>--gold-soft #e9d9a0</span></div></div>
+    <div class="sw"><div class="b" style="background:#fff8e7"></div><div class="m"><b>Metin (sıcak ak)</b><span>--ink #fff8e7</span></div></div>
+    <div class="sw"><div class="b" style="background:#b8ad97"></div><div class="m"><b>Sönük metin</b><span>--muted #b8ad97</span></div></div>
+    <div class="sw"><div class="b" style="background:#b76e79"></div><div class="m"><b>Gül (2. vurgu)</b><span>--rose #b76e79</span></div></div>
+  </div>
+  <p class="t" style="margin-top:14px">Öneri: <strong>gül tonunu (#b76e79) ikincil vurgu</strong> olarak sisteme katmak — altın “değer”i, gül “sıcaklık”ı taşır; ikisi tırnak estetiğiyle doğal uyum kurar.</p>
+
+  <h2><span class="num">05</span>Tipografi</h2>
+  <div class="type">
+    <div><span class="lb">Başlık · Serif</span><span class="serif" style="font-size:26px">Bugünün ilhamı</span></div>
+    <div><span class="lb">Alt başlık · Serif</span><span class="serif" style="font-size:19px">Stüdyo</span></div>
+    <div><span class="lb">Gövde · Sans</span><span style="font-size:15px">Hayalini yaz, AI tırnağa döksün.</span></div>
+    <div><span class="lb">Etiket · Sans</span><span style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft)">Kalan görsel hakkı</span></div>
+  </div>
+
+  <h2><span class="num">06</span>Bileşen dili</h2>
+  <div class="demo">
+    <button class="btn">✨ Üret</button>
+    <button class="btn ghost">Yükselt</button>
+    <span class="chip on">Simli</span>
+    <span class="chip">Mat</span>
+    <span class="chip">Fransız</span>
+    <span class="badge">27 / 30 görsel</span>
+  </div>
+  <p class="t" style="margin-top:12px">Tek birincil buton stili (altın degrade), tek ikincil (altın çerçeve), seçilebilir çipler ve her yerde aynı kota rozeti. Kartlar: koyu panel, ince altın çizgi, 14–16px köşe.</p>
+
+  <h2><span class="num">07</span>Ekran bazlı öneriler</h2>
+  <div class="sub">6 sekme + ikincil ekranlar. “Şu an” yapıyı bozmadan, “Öneri” cilalar.</div>
+  <table>
+    <tr><th>Ekran</th><th>Şu an</th><th>Öneri</th></tr>
+    <tr><td class="scr">🏠 Ana Sayfa</td><td class="now">Tasarım ızgarası</td><td class="prop">Üstte cilt tonuna göre “bugünün ilhamı” hero’su + büyük <b>✨ AI ile üret</b> kısayolu; altında kişiselleştirilmiş öneri ızgarası.</td></tr>
+    <tr><td class="scr">🔍 Keşfet</td><td class="now">Arama + kategori</td><td class="prop">Filtre çiplerini altın “seçili” diline getir; kartlarda tutarlı favori (🤍) ve %uyum rozeti.</td></tr>
+    <tr><td class="scr">🤚 Tara</td><td class="now">Analiz sonucu</td><td class="prop">Sonucu “cilt tonu · şekil · yakışan renkler” kartlarına böl; en altta doğrudan <b>Stüdyo’da dene</b> köprüsü.</td></tr>
+    <tr><td class="scr">🎨 Stüdyo</td><td class="now">Prompt + üretim</td><td class="prop">Prompt satırı + stil çipleri + büyük önizleme + tek <b>✨ Üret</b>; sağ üstte sabit <b>kota rozeti</b> ve “yeniden üret ↻”.</td></tr>
+    <tr><td class="scr">🛍️ Mağaza</td><td class="now">Plan kartları</td><td class="prop">Yıllık Premium’u “en popüler” rozetiyle öne çıkar; fiyatı aya bölüp yıllık toplam görseli (360 / 1.200) yanına not et.</td></tr>
+    <tr><td class="scr">👤 Profil</td><td class="now">7’li menü</td><td class="prop">Üstte plan durumu kartı (kalan gün + kota); altında sade menü satırları. Ayarlar’da şifre/hesap işlemleri.</td></tr>
+    <tr><td class="scr">✨ AR / Detay</td><td class="now">İkincil</td><td class="prop">Navigasyonda kalmasın; tasarım detayından “AR’da dene” butonuyla açılsın — ana akışı sadeleştirir.</td></tr>
+  </table>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="plabel">🎨 Stüdyo</div>
+      <div class="screen">
+        <div class="sbar"><span>9:41</span><span>✦ ⬤ 100%</span></div>
+        <div class="pbody">
+          <div class="pt">Stüdyo</div><div class="ps">Hayalini yaz, AI tırnağa döksün</div>
+          <div class="pcard" style="display:flex;align-items:center;gap:8px;padding:10px"><span style="color:var(--muted2);font-size:12px">✎ kırmızı simli gece tırnağı…</span></div>
+          <div style="display:flex;gap:6px;margin-bottom:9px"><span class="chip on" style="font-size:11px;padding:5px 11px">Simli</span><span class="chip" style="font-size:11px;padding:5px 11px">Mat</span><span class="chip" style="font-size:11px;padding:5px 11px">Krom</span></div>
+          <div class="pcard" style="text-align:center;background:linear-gradient(180deg,#1a1216,#0e0b0d)">
+            <div class="hand" style="height:80px">
+              <div class="nail h1" style="background:linear-gradient(180deg,#ff6b6b,#8b1e2d)"></div>
+              <div class="nail h2" style="background:linear-gradient(180deg,#ff7a7a,#8b1e2d)"></div>
+              <div class="nail h3" style="background:linear-gradient(180deg,#ff8585,#961f2f)"></div>
+              <div class="nail h4" style="background:linear-gradient(180deg,#ff7a7a,#8b1e2d)"></div>
+              <div class="nail h5" style="background:linear-gradient(180deg,#ff6b6b,#8b1e2d)"></div>
+            </div>
+          </div>
+          <div class="prow"><span>Kalan görsel hakkı</span><span class="ppill">27 / 30</span></div>
+          <div class="pbtn">✨ Üret</div>
+        </div>
+        <div class="mininav"><div>🏠</div><div>🔍</div><div>🤚</div><div class="on">🎨</div><div>🛍️</div><div>👤</div></div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="plabel">🏠 Ana Sayfa</div>
+      <div class="screen">
+        <div class="sbar"><span>9:41</span><span>✦ ⬤ 100%</span></div>
+        <div class="pbody">
+          <div class="pt">Merhaba Leman ✨</div><div class="ps">Bugünün ilhamı cilt tonuna göre seçildi</div>
+          <div class="pcard" style="background:linear-gradient(135deg,#231a0c,#12100a);border-color:var(--gold-deep)">
+            <div class="hand">
+              <div class="nail h1" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div>
+              <div class="nail h2" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div>
+              <div class="nail h3" style="background:linear-gradient(180deg,#f0d8b0,#c9a24a)"></div>
+              <div class="nail h4" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div>
+              <div class="nail h5" style="background:linear-gradient(180deg,#e8b4b8,#b76e79)"></div>
+            </div>
+            <div class="prow" style="margin-top:9px"><span style="color:var(--ink);font-size:12px">Gül Kuvars & Altın · %94</span><span class="ppill">Dene ▸</span></div>
+          </div>
+          <div class="pbtn" style="margin:2px 0 9px">✨ AI ile üret</div>
+          <div class="ps" style="margin:0 0 6px">Senin için seçildi</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+            <div style="height:52px;border-radius:12px;background:linear-gradient(160deg,#3a2a3f,#1c1420);border:1px solid var(--line)"></div>
+            <div style="height:52px;border-radius:12px;background:linear-gradient(160deg,#123027,#0c1a16);border:1px solid var(--line)"></div>
+          </div>
+        </div>
+        <div class="mininav"><div class="on">🏠</div><div>🔍</div><div>🤚</div><div>🎨</div><div>🛍️</div><div>👤</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="num">08</span>Uygulama planı (düşük risk)</h2>
+  <div class="sub">Mevcut Angular bileşenlerini yeniden yazmadan, adım adım. Her fazdan sonra test ajanı (test.bat) ile derleme + test doğrulanır.</div>
+  <div class="phase"><div class="n">1</div><h4>Tasarım tokenları netleştir</h4><p>styles.css’teki değişkenleri tek kaynak yap; gül tonunu (#b76e79) ikincil vurgu olarak ekle. Görsel değişim minimum, altyapı hazır olur.</p><span class="tag">~yarım gün · risk: düşük</span></div>
+  <div class="phase"><div class="n">2</div><h4>Ortak bileşenleri hizala</h4><p>Buton, çip, kart, kota rozeti ve 6’lı alt menü tek stile. Sayfalar bu bileşenleri kullandığı için tüm ekranlar birlikte cilalanır.</p><span class="tag">1–2 gün · risk: düşük</span></div>
+  <div class="phase"><div class="n">3</div><h4>Ana Sayfa + Stüdyo</h4><p>Ana Sayfa’ya hero + “✨ AI ile üret” kısayolu; Stüdyo’da önizleme ve sabit kota rozeti. Kalbin olduğu iki ekran önce parlar.</p><span class="tag">2 gün · risk: orta</span></div>
+  <div class="phase"><div class="n">4</div><h4>Tara → Stüdyo köprüsü</h4><p>Analiz sonucuna “Stüdyo’da dene” bağlantısı; analizi üretime ve satışa bağla.</p><span class="tag">1 gün · risk: düşük</span></div>
+  <div class="phase"><div class="n">5</div><h4>Mağaza + Profil rötuşu</h4><p>Plan kartlarında “en popüler” + yıllık toplam notu; Profil’de plan durumu kartı. Deploy öncesi son cila.</p><span class="tag">1 gün · risk: düşük</span></div>
+
+  <div class="foot">Bu bir tasarım yönü önerisidir — kod değişikliği içermez. Onayladığın fazları sırayla, adım adım onayınla uygularız.</div>
+</div>
+
+</body>
+</html>
