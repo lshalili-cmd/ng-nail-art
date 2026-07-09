@@ -14,6 +14,7 @@ type Dict = Record<string, string>;
 const EN: Dict = {
   app_name: 'Miracle Nail Art AI',
   splash_slogan: 'designs made just for you', splash_hint: 'TAP ▸',
+  studio_tailored: '✨ Tailored to your hand scan', studio_tailored_prompt: 'An elegant, salon-quality nail design tailored to my {shape} nail shape and {tone} undertone',
   nav_home: 'Home', nav_scan: 'Scan', nav_explore: 'Explore', nav_shop: 'Shop', nav_profile: 'Profile',
   hero_overline: 'AI-POWERED BEAUTY', hero_title: 'Discover Your Perfect Nail Style',
   hero_sub: 'Let AI analyze your hand and recommend stunning designs', btn_scan: 'Scan Your Hand',
@@ -43,6 +44,7 @@ const EN: Dict = {
 const TR: Dict = {
   app_name: 'Miracle Nail Art AI',
   splash_slogan: 'size özel tasarımlar', splash_hint: 'DOKUN ▸',
+  studio_tailored: '✨ Elinize özel — tarama sonucuna göre', studio_tailored_prompt: '{shape} tırnak şeklime ve {tone} ten tonuma uygun, salon kalitesinde zarif bir tırnak tasarımı',
   nav_home: 'Ana Sayfa', nav_scan: 'Tara', nav_explore: 'Keşfet', nav_shop: 'Mağaza', nav_profile: 'Profil',
   hero_overline: 'YAPAY ZEKA GÜZELLİĞİ', hero_title: 'Mükemmel Tırnak Stilini Keşfet',
   hero_sub: 'Yapay zeka elinizi analiz etsin ve harika tasarımlar önersin', btn_scan: 'Elini Tara',
@@ -72,6 +74,7 @@ const TR: Dict = {
 const RU: Dict = {
   app_name: 'Miracle Nail Art AI',
   splash_slogan: 'дизайны специально для вас', splash_hint: 'НАЖМИТЕ ▸',
+  studio_tailored: '✨ Подобрано по результатам сканирования', studio_tailored_prompt: 'Элегантный маникюр салонного качества для моей формы ногтей «{shape}» и {tone} подтона',
   nav_home: 'Главная', nav_scan: 'Скан', nav_explore: 'Обзор', nav_shop: 'Магазин', nav_profile: 'Профиль',
   hero_overline: 'КРАСОТА НА ИИ', hero_title: 'Откройте свой идеальный стиль',
   hero_sub: 'ИИ проанализирует вашу руку и подберёт дизайны', btn_scan: 'Сканировать руку',
@@ -95,6 +98,7 @@ const RU: Dict = {
 const AR: Dict = {
   app_name: 'ميراكل نيل آرت',
   splash_slogan: 'تصاميم خاصة بك', splash_hint: 'المس ▸',
+  studio_tailored: '✨ مصمم خصيصًا لك حسب فحص يدك', studio_tailored_prompt: 'تصميم أظافر أنيق بجودة الصالون يناسب شكل أظافري {shape} ودرجة لوني {tone}',
   nav_home: 'الرئيسية', nav_scan: 'مسح', nav_explore: 'استكشاف', nav_shop: 'المتجر', nav_profile: 'الملف',
   hero_overline: 'جمال بالذكاء الاصطناعي', hero_title: 'اكتشفي أسلوب أظافرك المثالي',
   hero_sub: 'دعي الذكاء الاصطناعي يحلل يدك ويقترح تصاميم رائعة', btn_scan: 'امسحي يدك',

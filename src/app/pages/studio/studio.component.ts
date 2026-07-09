@@ -9,6 +9,8 @@ import { renderNailThumb, colorToHex } from '../../core/nail-art';
 import { FavoritesService } from '../../core/favorites.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { Design } from '../../core/data.service';
+import { AnalysisStore } from '../../core/analysis-store';
+import { AnalysisInput } from '../../core/recommendation';
 
 @Component({
   selector: 'app-studio',
@@ -25,6 +27,9 @@ import { Design } from '../../core/data.service';
 
       <!-- Prompt -->
       <div class="composer card">
+        @if (tailored()) {
+          <div class="tailored-badge">{{ i18n.t('studio_tailored') }}</div>
+        }
         <textarea
           [value]="prompt()"
           (input)="prompt.set($any($event.target).value)"
@@ -164,6 +169,9 @@ import { Design } from '../../core/data.service';
       background: var(--surface-3); border: 1px solid var(--line); color: var(--muted); text-transform: capitalize; }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
     .actions > * { flex: 1; min-width: 120px; }
+    .tailored-badge { display: inline-block; margin-bottom: 10px; font-size: 12.5px; font-weight: 600;
+      color: var(--gold-soft); background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4);
+      padding: 6px 12px; border-radius: 999px; }
   `],
 })
 export class StudioComponent implements OnInit {
@@ -173,8 +181,10 @@ export class StudioComponent implements OnInit {
   private readonly router = inject(Router);
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
+  private readonly analysisStore = inject(AnalysisStore);
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
+  readonly tailored = signal<boolean>(false);   // taramadan gelen "elinize özel" rozeti
 
   readonly prompt = signal<string>('');
   readonly loading = signal<boolean>(false);
@@ -208,7 +218,28 @@ export class StudioComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.ai.status().then((s) => this.status.set(s));
+    void this.ai.status().then((s) => {
+      this.status.set(s);
+      // Taramadan (el analizinden) gelindiyse: o ele ÖZEL tasarımı otomatik üret.
+      const a = this.analysisStore.current();
+      if (a && (a.nailShape || a.undertone) && !this.prompt().trim()) {
+        this.tailored.set(true);
+        this.prompt.set(this.buildTailoredPrompt(a));
+        this.analysisStore.clear();          // bir kez kullan (yenile'de tekrar tetiklenmesin)
+        void this.generate();                // otomatik üret
+      }
+    });
+  }
+
+  /** El analizinden (tırnak şekli + ten tonu) kişiye özel istem metni üretir. */
+  private buildTailoredPrompt(a: AnalysisInput): string {
+    const shape = a.nailShape ? this.i18n.t('shp_' + a.nailShape) : '';
+    const tone = a.undertone ? this.i18n.t('ut_' + a.undertone) : '';
+    return this.i18n.t('studio_tailored_prompt')
+      .replace('{shape}', shape)
+      .replace('{tone}', tone)
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   async generate(): Promise<void> {
