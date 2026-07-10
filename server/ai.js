@@ -48,14 +48,16 @@ function initProviders() {
 }
 
 function status() {
+  const hasText = !!(openai || gemini);            // metin/tasarım-spec LLM'i
   return {
-    configured: !!(openai || gemini || replicate),
-    provider: AI_PROVIDER,
-    model: AI_MODEL,
-    imageGenAvailable: !!(openai || gemini || replicate),
-    imageProvider: gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'none')),
+    configured: true,                              // Pollinations sayesinde görsel her zaman var
+    provider: AI_PROVIDER !== 'none' ? AI_PROVIDER : 'pollinations',
+    model: AI_MODEL || 'flux (pollinations)',
+    textAvailable: hasText,                         // spec için LLM var mı (yoksa istemci mockDesign)
+    imageGenAvailable: true,                        // Pollinations ücretsiz görsel üretir
+    imageProvider: gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'pollinations')),
     fluxAvailable: !!replicate,
-    status: (openai || gemini || replicate) ? 'ready' : 'not_configured',
+    status: 'ready',                                // görsel üretimi her zaman hazır
   };
 }
 
@@ -138,9 +140,7 @@ function download(url, dest) {
 
 async function generateImage(input, imgDir) {
   const { prompt, style, shape, colors, finish, tier } = input;
-  if (!openai && !gemini && !replicate) {
-    throw makeError('Görsel üretim servisi yok. .env içine bir AI anahtarı ekleyin.', 'AI_NOT_CONFIGURED', 503);
-  }
+  // Anahtar yoksa hata verme — ÜCRETSİZ Pollinations'a düşülecek (aşağıdaki son 'else').
   const colorStr = (colors && colors.length) ? colors.join(', ') : '';
   const artPrompt = [
     `Professional nail art photography, close-up of a single elegant female hand with perfectly manicured ${shape || 'almond'}-shaped nails.`,
@@ -213,6 +213,13 @@ async function generateImage(input, imgDir) {
     remoteUrl = Array.isArray(output) ? output[0] : output;
     if (remoteUrl && typeof remoteUrl.url === 'function') remoteUrl = remoteUrl.url();
     filename = `flux_${stamp}_${rnd}.png`;
+  } else {
+    // ÜCRETSİZ, ANAHTARSIZ — Pollinations (Flux tabanlı). Kullanıcı üretimi + AR için.
+    provider = 'pollinations';
+    const seed = stamp % 100000;
+    remoteUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(artPrompt) +
+      '?width=768&height=1024&nologo=true&model=flux&seed=' + seed;
+    filename = `poll_${stamp}_${rnd}.jpg`;
   }
 
   const imgPath = path.join(imgDir, filename);

@@ -12,7 +12,8 @@ import { FavoritesService } from '../core/favorites.service';
   template: `
     <article class="dc" [style.width.px]="width" [routerLink]="['/design', design.id]">
       <div class="thumb" [style.background]="design.grad">
-        @if (design.img) { <img class="art" [src]="design.img" alt="" loading="lazy" /> }
+        <!-- Önce STATİK katalog görseli; yoksa/404 ise çizime düş -->
+        <img class="art" [src]="imgSrc" (error)="onImgError()" alt="" loading="lazy" />
         @if (design.badge) {
           <span class="badge" [class.badge-gold]="design.badge !== 'new'" [class.badge-new]="design.badge === 'new'">
             {{ label }}
@@ -55,6 +56,19 @@ export class DesignCardComponent {
   @Input({ required: true }) design!: Design;
   @Input() width = 150;
   @Input() score?: number;
+
+  private photoFailed = false;
+
+  /** Statik katalog görseli varsa onu, yüklenemezse çizim önizlemesini kullan. */
+  get imgSrc(): string {
+    if (this.design.photo && !this.photoFailed) return this.design.photo;
+    return this.design.img ?? '';
+  }
+
+  onImgError(): void {
+    // Statik dosya yoksa (404) çizime düş; çizim de yoksa gradient kalır.
+    if (!this.photoFailed) this.photoFailed = true;
+  }
 
   toggleFav(e: Event): void {
     e.stopPropagation();

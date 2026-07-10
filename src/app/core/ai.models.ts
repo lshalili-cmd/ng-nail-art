@@ -58,6 +58,7 @@ export interface AiStatus {
   configured: boolean;
   provider: string;
   model: string;
+  textAvailable?: boolean;      // tasarım-spec için LLM var mı (yoksa istemci mockDesign)
   imageGenAvailable: boolean;
   imageProvider: string;
   fluxAvailable: boolean;

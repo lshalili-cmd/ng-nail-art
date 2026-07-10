@@ -11,6 +11,7 @@ import { ImageQuotaService } from '../../core/image-quota.service';
 import { Design } from '../../core/data.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { AnalysisInput } from '../../core/recommendation';
+import { TryonStore } from '../../core/tryon-store';
 
 @Component({
   selector: 'app-studio',
@@ -192,6 +193,7 @@ export class StudioComponent implements OnInit {
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
   private readonly analysisStore = inject(AnalysisStore);
+  private readonly tryon = inject(TryonStore);
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
   readonly tailored = signal<boolean>(false);   // taramadan gelen "elinize özel" rozeti
@@ -268,12 +270,13 @@ export class StudioComponent implements OnInit {
     try {
       const s = this.status();
       if (s && s.status === 'ready') {
-        // AI hazır → gerçek tasarım + görsel
-        const d = await this.ai.chat(p, this.i18n.locale());
+        // Görsel üretimi hazır (Pollinations ücretsiz ya da paid AI).
+        // Tasarım-spec: metin LLM'i varsa ondan, yoksa istemci-tarafı mockDesign.
+        const d = s.textAvailable ? await this.ai.chat(p, this.i18n.locale()) : this.ai.mockDesign(p);
         this.design.set(d);
         await this.genImage();
       } else {
-        // AI yapılandırılmamış → gereksiz backend çağrısı yapma, doğrudan demo + prosedürel görsel
+        // Görsel üretimi yok → demo + prosedürel görsel
         this.demoDesign(p);
       }
     } catch {
@@ -315,8 +318,10 @@ export class StudioComponent implements OnInit {
     this.imgLoading.set(true);
     this.error.set(null);
     try {
-      if (d.source === 'demo') {
-        // Demo: istemci tarafında prosedürel tırnak önizlemesi üret (sunucu gerektirmez)
+      // Görsel üretimi mevcutsa (Pollinations ücretsiz ya da paid) GERÇEK görsel üret;
+      // tasarım-spec demo/heuristik olsa bile. Yoksa prosedürel önizlemeye düş.
+      const s = this.status();
+      if (!s?.imageGenAvailable) {
         this.image.set(this.proceduralImage(d));
         return;
       }
@@ -358,8 +363,11 @@ export class StudioComponent implements OnInit {
 
   tryAr(): void {
     const d = this.design();
-    const params = d ? { color: colorToHex(d.colors[0] ?? 'gold'), pattern: this.patternFromSpec(d) } : {};
-    void this.router.navigate(['/ar'], { queryParams: params });
+    const color = d ? colorToHex(d.colors[0] ?? 'gold') : '#d4af37';
+    const pattern = d ? this.patternFromSpec(d) : 'glossy';
+    // Üretilen tasarım görselini de taşı → AR onu canlı tırnağa bindirir.
+    this.tryon.set({ imageUrl: this.imageSrc(), color, pattern });
+    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
   }
 
   /** Görsel hakkı bitince Mağaza'ya yönlendirir. */

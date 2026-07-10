@@ -7,7 +7,8 @@ export interface Design {
   artist: string;
   badge?: 'trending' | 'new' | 'premium';
   grad: string;          // CSS gradient (görsel yüklenemezse yedek)
-  img?: string;          // istemci tarafı çizilen tırnak önizlemesi (data URL)
+  photo?: string;        // STATİK katalog görseli (public/designs/*.jpg) — bir kez üretilir, bedava
+  img?: string;          // istemci tarafı çizilen tırnak önizlemesi (data URL) — statik yoksa yedek
   pattern?: string;      // çizim deseni: french | ombre | marble | galaxy | chrome | line | glossy
   category: string;
   // Öneri motoru etiketleri
@@ -76,9 +77,13 @@ export class DataService {
       1: 'chrome', 2: 'ombre', 3: 'galaxy', 4: 'french', 5: 'marble',
       6: 'line', 7: 'glossy', 8: 'chrome', 9: 'chrome',
     };
-    // Her tasarım için istemci tarafında bir tırnak önizlemesi üret (harici görsel yok)
+    // Her tasarım için:
+    //  - photo: STATİK katalog görseli (public/designs/design-<id>.jpg). Bir kez üretilir,
+    //    çalışma anında AI çağrısı YOK, maliyet YOK. Dosya yoksa img'e düşülür (design-card).
+    //  - img: istemci tarafı çizilen tırnak önizlemesi (statik dosya gelene kadar yedek).
     for (const d of this.all) {
       d.pattern = patterns[d.id] ?? 'glossy';
+      d.photo = `designs/design-${d.id}.jpg`;
       d.img = renderNailThumb(d.colors, d.pattern);
     }
   }
