@@ -307,6 +307,13 @@ export class StudioComponent implements OnInit {
   /** Demo tasarım + istemci tarafı prosedürel görseli hemen ayarlar. */
   private demoDesign(prompt: string): void {
     const demo = this.ai.mockDesign(prompt);
+    // Demo modda (Flux yokken) "Farklı tasarım" GÖRÜNÜR değişsin diye rastgele varyasyon.
+    // Gerçek çeşitlilik Flux 1.1 Pro bağlanınca gelir.
+    const palette = ['gold', 'red', 'pink', 'blue', 'black', 'white', 'chrome', 'green', 'purple', 'nude', 'silver'];
+    const patterns = ['french', 'marble', 'galaxy', 'chrome', 'ombre', 'line', 'glossy'];
+    const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+    demo.colors = (demo.colors.length ? [...demo.colors] : [pick(palette)]).concat(pick(palette));
+    demo.patterns = [pick(patterns)];
     this.design.set(demo);
     this.image.set(this.proceduralImage(demo));
   }
