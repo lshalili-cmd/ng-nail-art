@@ -161,7 +161,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
-// OTP yeniden gönder
+// OTP yeniden gönder → SMS DEĞİL, E-POSTA. (İlk kod SMS ile 1 kez; tekrar gönderme maile gider.)
 app.post('/api/auth/resend-otp', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
@@ -171,8 +171,8 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     if (user.verified) return res.status(400).json({ success: false, error: 'Zaten doğrulanmış', code: 'ALREADY_VERIFIED' });
     const code = auth.genOtp();
     await db.prisma.user.update({ where: { id: user.id }, data: { otpCode: code, otpExpires: Date.now() + 10 * 60 * 1000 } });
-    const sent = await sms.sendOtp(user.phone, code);
-    res.json({ success: true, otpProvider: sent.provider, demoOtp: sent.mode === 'demo' ? code : undefined });
+    const sent = await mailer.sendOtpEmail(user.email, code);   // e-posta ile (SMS'i tekrar kullanma)
+    res.json({ success: true, otpChannel: 'email', otpMode: sent.mode, demoOtp: sent.mode === 'demo' ? code : undefined });
   } catch (e) { dbError(res, e); }
 });
 
@@ -243,6 +243,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 });
 
 // Hesabı sil (e-posta + telefon + şifre doğrulanır) → 40 gün aynı e-posta/telefonla kayıt engeli
+// Hesap silme — ADIM 1: kimlik doğrula, E-POSTA ile onay linki gönder (silme e-posta ile onaylanır).
 app.post('/api/auth/delete-account', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   if (!auth.ready()) return authNotReady(res);
@@ -254,8 +255,28 @@ app.post('/api/auth/delete-account', async (req, res) => {
     if (!user || user.phone !== phone || !(await auth.compare(password, user.passwordHash))) {
       return res.status(401).json({ success: false, error: 'E-posta, telefon veya şifre hatalı', code: 'BAD_CREDENTIALS' });
     }
+    const token = auth.genToken();
+    // Silme jetonu — şema değişmeden resetToken alanında 'del:' önekiyle tutulur (1 saat).
+    await db.prisma.user.update({ where: { id: user.id }, data: { resetToken: 'del:' + token, resetExpires: Date.now() + 60 * 60 * 1000 } });
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const link = `${baseUrl}/profile?delete=${token}`;
+    const sent = await mailer.sendDeleteLink(user.email, link);
+    res.json({ success: true, needEmail: true, emailMode: sent.mode, demoLink: sent.mode === 'demo' ? link : undefined });
+  } catch (e) { dbError(res, e); }
+});
+
+// Hesap silme — ADIM 2: e-postadaki linkle onay → hesabı kalıcı sil.
+app.post('/api/auth/confirm-delete', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const token = String((req.body || {}).token || '');
+  if (!token) return res.status(400).json({ success: false, code: 'BAD_REQUEST' });
+  try {
+    const user = await db.prisma.user.findFirst({ where: { resetToken: 'del:' + token } });
+    if (!user || Date.now() > user.resetExpires) {
+      return res.status(400).json({ success: false, error: 'Silme bağlantısı geçersiz veya süresi dolmuş', code: 'BAD_TOKEN' });
+    }
     const uid = String(user.id);
-    await db.prisma.blockedSignup.create({ data: { email, phone, until: Date.now() + 40 * 24 * 60 * 60 * 1000 } });
+    await db.prisma.blockedSignup.create({ data: { email: user.email, phone: user.phone, until: Date.now() + 40 * 24 * 60 * 60 * 1000 } });
     await db.prisma.favorite.deleteMany({ where: { userId: uid } }).catch(() => {});
     await db.prisma.scanAnalysis.deleteMany({ where: { userId: uid } }).catch(() => {});
     await db.prisma.order.deleteMany({ where: { userId: uid } }).catch(() => {});

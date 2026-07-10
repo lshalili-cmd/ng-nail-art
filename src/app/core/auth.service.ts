@@ -10,11 +10,13 @@ export interface AuthUser {
 export interface RegisterData { firstName: string; lastName: string; email: string; phone: string; password: string; }
 export interface AuthResult {
   ok: boolean; error?: string; needOtp?: boolean; email?: string; demoOtp?: string; demoLink?: string;
+  needEmail?: boolean; channel?: string;
 }
 
 interface AuthResp {
   success: boolean; token?: string; user?: AuthUser; needOtp?: boolean; email?: string;
   demoOtp?: string; demoLink?: string; error?: string; code?: string;
+  needEmail?: boolean; otpChannel?: string;
 }
 
 /**
@@ -62,10 +64,11 @@ export class AuthService {
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
+  /** Kodu YENİDEN gönder → e-posta ile (ilk kod SMS ile 1 kez gitti). */
   async resendOtp(email: string): Promise<AuthResult> {
     try {
       const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/resend-otp', { email }).pipe(timeout(9000)));
-      return { ok: !!res?.success, demoOtp: res?.demoOtp };
+      return { ok: !!res?.success, demoOtp: res?.demoOtp, channel: res?.otpChannel || 'email' };
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
@@ -105,10 +108,19 @@ export class AuthService {
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
-  /** Hesabı siler (e-posta + telefon + şifre doğrulamasıyla). */
+  /** Hesap silme ADIM 1: kimlik doğrula → e-posta ile onay linki gönderilir (hemen silinmez). */
   async deleteAccount(email: string, phone: string, password: string): Promise<AuthResult> {
     try {
       const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/delete-account', { email, phone, password }).pipe(timeout(9000)));
+      if (res?.success) return { ok: true, needEmail: !!res.needEmail, demoLink: res.demoLink };
+      return { ok: false, error: 'Hata' };
+    } catch (e) { return { ok: false, error: this.errMsg(e) }; }
+  }
+
+  /** Hesap silme ADIM 2: e-postadaki linkin jetonuyla kalıcı sil. */
+  async confirmDelete(token: string): Promise<AuthResult> {
+    try {
+      const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/confirm-delete', { token }).pipe(timeout(9000)));
       if (res?.success) { this.logout(); return { ok: true }; }
       return { ok: false, error: 'Hata' };
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }

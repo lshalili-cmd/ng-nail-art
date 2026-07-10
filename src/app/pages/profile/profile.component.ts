@@ -325,8 +325,19 @@ export class ProfileComponent implements OnInit {
     this.setBusy.set(true);
     const res = await this.auth.deleteAccount(this.delEmail().trim().toLowerCase(), this.delPhone().trim(), this.delPw());
     this.setBusy.set(false);
-    if (res.ok) { this.settingsStep.set('deleted'); this.setErr.set(null); this.setInfo.set(null); }
-    else this.setErr.set(res.error ?? 'Hata');
+    if (res.ok) {
+      // Silme e-posta ile onaylanır — hemen silinmez, onay linki gönderildi.
+      this.setErr.set(null);
+      this.setInfo.set(res.demoLink ? `${this.i18n.t('set_del_email')} · ${this.i18n.t('auth_demo_link')}: ${res.demoLink}` : this.i18n.t('set_del_email'));
+    } else this.setErr.set(res.error ?? 'Hata');
+  }
+
+  /** E-postadaki silme linkiyle (/profile?delete=TOKEN) hesabı kalıcı sil. */
+  private async confirmDeleteFlow(token: string): Promise<void> {
+    const res = await this.auth.confirmDelete(token);
+    this.settingsOpen.set(true);
+    if (res.ok) { this.settingsStep.set('deleted'); this.setErr.set(null); }
+    else { this.settingsStep.set('menu'); this.setErr.set(res.error ?? 'Hata'); }
   }
 
   // Giriş/kayıt penceresi durumu
@@ -349,6 +360,9 @@ export class ProfileComponent implements OnInit {
     // Şifre sıfırlama bağlantısı: /profile?reset=TOKEN
     const t = this.route.snapshot.queryParamMap.get('reset');
     if (t) { this.resetToken = t; this.openAuth('reset'); }
+    // Hesap silme onay bağlantısı: /profile?delete=TOKEN
+    const d = this.route.snapshot.queryParamMap.get('delete');
+    if (d) void this.confirmDeleteFlow(d);
   }
 
   stepTitle(): string {
@@ -430,9 +444,10 @@ export class ProfileComponent implements OnInit {
   }
 
   async resend(): Promise<void> {
+    // Tekrar gönderim E-POSTA ile (ilk kod SMS ile 1 kez gitti).
     const res = await this.auth.resendOtp(this.email().trim().toLowerCase());
     if (res.demoOtp) this.demoInfo.set(`${this.i18n.t('auth_demo_otp')}: ${res.demoOtp}`);
-    else if (res.ok) this.demoInfo.set(this.i18n.t('auth_otp_resent'));
+    else if (res.ok) this.demoInfo.set(this.i18n.t('auth_resent_email'));
     else this.authErr.set(res.error ?? 'Hata');
   }
 
