@@ -90,10 +90,39 @@ async function withReplicate() {
   return true;
 }
 
+// --- Pollinations (ÜCRETSİZ, anahtarsız) — galeri için birincil yöntem ---
+async function withPollinations() {
+  const https = require('https');
+  const dl = (url, dest) => new Promise((res, rej) => {
+    https.get(url, (r) => {
+      if ((r.headers['content-type'] || '').startsWith('image')) {
+        const f = fs.createWriteStream(dest); r.pipe(f); f.on('finish', () => f.close(res));
+      } else { rej(new Error('HTTP ' + r.statusCode)); }
+    }).on('error', rej);
+  });
+  console.log('🌸 Pollinations ile üretiliyor (ücretsiz, anahtarsız)...');
+  console.log('   (her görsel 10-30 sn; anonim sınır ~15 sn/görsel — sabırlı ol)');
+  for (const d of DESIGNS) {
+    try {
+      const u = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt(d)) +
+        '?width=768&height=1024&nologo=true&model=flux&seed=' + (1000 + d.id);
+      await dl(u, path.join(OUT, `design-${d.id}.jpg`));
+      console.log(`  ✓ design-${d.id} (${d.name})`);
+      await new Promise((r) => setTimeout(r, 16000)); // anonim hız sınırına takılmamak için
+    } catch (e) { console.warn(`  ✗ design-${d.id} — ${e.message}`); }
+  }
+  return true;
+}
+
 (async () => {
   console.log('📦 Katalog görselleri üretiliyor →', OUT);
-  if (await withGemini()) { console.log('✅ Bitti (Gemini).'); return; }
-  if (await withReplicate()) { console.log('✅ Bitti (Flux schnell).'); return; }
-  console.error('\n⚠️  Anahtar yok. .env içine GEMINI_API_KEY (ücretsiz) veya REPLICATE_API_TOKEN ekleyip tekrar çalıştırın.');
-  console.error('    Alternatif: görselleri elle design-1.jpg ... design-9.jpg olarak public/designs/ içine koyun.');
+  // Öncelik: ücretsiz Pollinations (galeri için). İstersen anahtarla Gemini/Flux de kullanılabilir.
+  if (process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.startsWith('your-')) {
+    if (await withGemini()) { console.log('✅ Bitti (Gemini).'); return; }
+  }
+  if (process.env.REPLICATE_API_TOKEN && !process.env.REPLICATE_API_TOKEN.startsWith('your-')) {
+    if (await withReplicate()) { console.log('✅ Bitti (Flux).'); return; }
+  }
+  await withPollinations();
+  console.log('✅ Bitti (Pollinations). public/designs/ dolduruldu.');
 })();

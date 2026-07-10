@@ -48,16 +48,16 @@ function initProviders() {
 }
 
 function status() {
-  const hasText = !!(openai || gemini);            // metin/tasarım-spec LLM'i
+  const hasImage = !!(openai || gemini || replicate);   // kullanıcı üretimi (Flux 1.1 Pro vb.)
   return {
-    configured: true,                              // Pollinations sayesinde görsel her zaman var
-    provider: AI_PROVIDER !== 'none' ? AI_PROVIDER : 'pollinations',
-    model: AI_MODEL || 'flux (pollinations)',
-    textAvailable: hasText,                         // spec için LLM var mı (yoksa istemci mockDesign)
-    imageGenAvailable: true,                        // Pollinations ücretsiz görsel üretir
-    imageProvider: gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'pollinations')),
+    configured: hasImage,
+    provider: AI_PROVIDER,
+    model: AI_MODEL,
+    textAvailable: !!(openai || gemini),                 // spec için LLM (yoksa istemci mockDesign)
+    imageGenAvailable: hasImage,
+    imageProvider: gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'none')),
     fluxAvailable: !!replicate,
-    status: 'ready',                                // görsel üretimi her zaman hazır
+    status: hasImage ? 'ready' : 'not_configured',
   };
 }
 
@@ -140,7 +140,11 @@ function download(url, dest) {
 
 async function generateImage(input, imgDir) {
   const { prompt, style, shape, colors, finish, tier } = input;
-  // Anahtar yoksa hata verme — ÜCRETSİZ Pollinations'a düşülecek (aşağıdaki son 'else').
+  // KULLANICI ÜRETİMİ = Flux 1.1 Pro (Replicate) / OpenAI / Gemini. Anahtar yoksa demo'ya düşülür.
+  // (Ücretsiz Pollinations SADECE galeri içindir — scripts/gen-catalog.js ile, canlı uçta değil.)
+  if (!openai && !gemini && !replicate) {
+    throw makeError('Görsel üretim servisi yok. Kullanıcı üretimi için REPLICATE_API_TOKEN (Flux 1.1 Pro) ekleyin.', 'AI_NOT_CONFIGURED', 503);
+  }
   const colorStr = (colors && colors.length) ? colors.join(', ') : '';
   // ÜSTTEN ÇEKİM TEK TIRNAK — hem stüdyo önizlemesi hem AR bindirmesi için ideal:
   // elsiz/parmaksız, tasarım kareyi doldurur; AR bunu tırnağa temiz bindirir.
@@ -215,13 +219,6 @@ async function generateImage(input, imgDir) {
     remoteUrl = Array.isArray(output) ? output[0] : output;
     if (remoteUrl && typeof remoteUrl.url === 'function') remoteUrl = remoteUrl.url();
     filename = `flux_${stamp}_${rnd}.png`;
-  } else {
-    // ÜCRETSİZ, ANAHTARSIZ — Pollinations (Flux tabanlı). Kullanıcı üretimi + AR için.
-    provider = 'pollinations';
-    const seed = stamp % 100000;
-    remoteUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(artPrompt) +
-      '?width=768&height=1024&nologo=true&model=flux&seed=' + seed;
-    filename = `poll_${stamp}_${rnd}.jpg`;
   }
 
   const imgPath = path.join(imgDir, filename);
