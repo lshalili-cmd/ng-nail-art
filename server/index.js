@@ -284,6 +284,28 @@ app.post('/api/auth/confirm-delete', async (req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
+// Yardım/Destek — kullanıcı sorununu yazar, admin panelinde görünür (giriş şart değil)
+app.post('/api/support', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const b = req.body || {};
+  const message = String(b.message || '').trim();
+  if (message.length < 3) return res.status(400).json({ success: false, error: 'Lütfen sorununuzu yazın', code: 'EMPTY' });
+  const uid = auth.userIdFrom(req);   // giriş yapılmışsa id, değilse 'guest'
+  try {
+    let name = String(b.name || '').trim();
+    let email = String(b.email || '').trim().toLowerCase();
+    // Giriş yapılmışsa iletişim bilgisini kullanıcıdan al (istemciye güvenme)
+    if (uid !== 'guest') {
+      const u = await db.prisma.user.findUnique({ where: { id: Number(uid) } });
+      if (u) { name = `${u.firstName} ${u.lastName}`.trim(); email = u.email; }
+    }
+    await db.prisma.supportTicket.create({
+      data: { userId: uid === 'guest' ? '' : String(uid), name, email, message: message.slice(0, 2000), status: 'open' },
+    });
+    res.json({ success: true });
+  } catch (e) { dbError(res, e); }
+});
+
 app.get('/api/auth/me', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const uid = auth.userIdFrom(req);

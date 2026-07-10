@@ -400,6 +400,8 @@ Object.assign(EN, {
   auth_code_ph: '6-digit code',
   auth_set_pw: 'Set password', auth_reset_done: 'Password updated — you can log in now.',
   auth_demo_otp: 'Demo code', auth_demo_link: 'Demo link',
+  sup_title: 'Help & Support', sup_sub: 'Describe your issue and we\'ll get back to you.', sup_ph: 'Write your problem here…',
+  sup_email_ph: 'Email (for our reply)', sup_send: 'Send', sup_sent: 'Your message was sent — thank you!',
 });
 Object.assign(TR, {
   auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
@@ -412,6 +414,8 @@ Object.assign(TR, {
   auth_code_ph: '6 haneli kod',
   auth_set_pw: 'Şifreyi belirle', auth_reset_done: 'Şifre güncellendi — artık giriş yapabilirsin.',
   auth_demo_otp: 'Demo kod', auth_demo_link: 'Demo bağlantı',
+  sup_title: 'Yardım & Destek', sup_sub: 'Sorununu yaz, sana dönelim.', sup_ph: 'Sorununu buraya yaz…',
+  sup_email_ph: 'E-posta (yanıt için)', sup_send: 'Gönder', sup_sent: 'Mesajın iletildi — teşekkürler!',
 });
 Object.assign(RU, {
   auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
@@ -424,6 +428,8 @@ Object.assign(RU, {
   auth_code_ph: 'Код из 6 цифр',
   auth_set_pw: 'Задать пароль', auth_reset_done: 'Пароль обновлён — теперь можно войти.',
   auth_demo_otp: 'Демо-код', auth_demo_link: 'Демо-ссылка',
+  sup_title: 'Помощь и поддержка', sup_sub: 'Опишите проблему — мы ответим.', sup_ph: 'Опишите проблему здесь…',
+  sup_email_ph: 'Email (для ответа)', sup_send: 'Отправить', sup_sent: 'Сообщение отправлено — спасибо!',
 });
 Object.assign(AR, {
   auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
@@ -436,6 +442,8 @@ Object.assign(AR, {
   auth_code_ph: 'رمز من ٦ أرقام',
   auth_set_pw: 'تعيين', auth_reset_done: 'تم تحديث كلمة المرور — يمكنك الدخول الآن.',
   auth_demo_otp: 'رمز تجريبي', auth_demo_link: 'رابط تجريبي',
+  sup_title: 'المساعدة والدعم', sup_sub: 'اكتبي مشكلتك وسنعود إليك.', sup_ph: 'اكتبي مشكلتك هنا…',
+  sup_email_ph: 'البريد (للرد)', sup_send: 'إرسال', sup_sent: 'تم إرسال رسالتك — شكراً!',
 });
 
 // ── Ayarlar: şifre değiştir / hesabı sil ──

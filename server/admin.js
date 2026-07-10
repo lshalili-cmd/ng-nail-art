@@ -144,6 +144,26 @@ function mount(app, ctx) {
     try { await db.prisma.blockedSignup.delete({ where: { id: Number(req.params.id) } }); res.json({ success: true }); } catch (e) { fail(res, e); }
   });
 
+  // --- Destek mesajları (kullanıcı sorunları) ---
+  app.get('/api/admin/support', requireAdmin, async (_req, res) => {
+    try {
+      const rows = await db.prisma.supportTicket.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+      const open = rows.filter((t) => t.status === 'open').length;
+      res.json({ success: true, tickets: rows, summary: { total: rows.length, open } });
+    } catch (e) { fail(res, e); }
+  });
+  app.post('/api/admin/support/:id/close', requireAdmin, async (req, res) => {
+    try {
+      const t = await db.prisma.supportTicket.findUnique({ where: { id: Number(req.params.id) } });
+      if (!t) return res.status(404).json({ success: false, error: 'Bulunamadı' });
+      const upd = await db.prisma.supportTicket.update({ where: { id: t.id }, data: { status: t.status === 'open' ? 'closed' : 'open' } });
+      res.json({ success: true, status: upd.status });
+    } catch (e) { fail(res, e); }
+  });
+  app.delete('/api/admin/support/:id', requireAdmin, async (req, res) => {
+    try { await db.prisma.supportTicket.delete({ where: { id: Number(req.params.id) } }); res.json({ success: true }); } catch (e) { fail(res, e); }
+  });
+
   // --- Sistem / hatalar / bakım (müdahale) ---
   app.get('/api/admin/errors', requireAdmin, (_req, res) => res.json({ success: true, errors: RING.slice(0, 200) }));
   app.delete('/api/admin/errors', requireAdmin, async (_req, res) => {

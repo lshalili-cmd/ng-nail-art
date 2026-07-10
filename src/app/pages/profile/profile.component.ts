@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, timeout } from 'rxjs';
 import { I18nService, LOCALES } from '../../core/i18n.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { PlanService } from '../../core/plan.service';
@@ -192,6 +194,26 @@ import { COUNTRIES } from '../../core/countries';
           @if (settingsStep() !== 'menu' && settingsStep() !== 'deleted') { <button class="au-switch" (click)="settingsGo('menu')">← {{ i18n.t('back') }}</button> }
         </div>
       }
+
+      <!-- Yardım / Destek penceresi -->
+      @if (supportOpen()) {
+        <div class="au-back" (click)="supportOpen.set(false)"></div>
+        <div class="au card">
+          <h3 class="au-t">❓ {{ i18n.t('sup_title') }}</h3>
+          @if (supportSent()) {
+            <p class="au-note">✅ {{ i18n.t('sup_sent') }}</p>
+            <button class="btn-primary au-go" (click)="supportOpen.set(false)">{{ i18n.t('pay_close') }}</button>
+          } @else {
+            <p class="au-note">{{ i18n.t('sup_sub') }}</p>
+            @if (!auth.loggedIn()) {
+              <input class="au-in" type="email" [value]="supportEmail()" (input)="supportEmail.set($any($event.target).value)" [placeholder]="i18n.t('sup_email_ph')" autocomplete="email" />
+            }
+            <textarea class="au-in au-ta" rows="5" [value]="supportMsg()" (input)="supportMsg.set($any($event.target).value)" [placeholder]="i18n.t('sup_ph')"></textarea>
+            @if (supportErr()) { <p class="au-err">⚠️ {{ supportErr() }}</p> }
+            <button class="btn-primary au-go" (click)="sendSupport()" [disabled]="supportBusy()">{{ supportBusy() ? '…' : i18n.t('sup_send') }}</button>
+          }
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -210,6 +232,7 @@ import { COUNTRIES } from '../../core/countries';
     .au-in { width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
       border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none; }
     .au-in:focus { border-color: rgba(212,175,55,0.5); }
+    .au-ta { resize: vertical; min-height: 96px; line-height: 1.5; font-family: inherit; }
     .au-err { margin: 4px 0 8px; font-size: 12px; color: #f0b8b8; text-align: center; }
     .au-go { width: 100%; margin-top: 6px; }
     .au-switch { width: 100%; margin-top: 12px; background: transparent; color: var(--gold-soft); font-size: 13px; padding: 6px; }
@@ -287,7 +310,34 @@ export class ProfileComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
   readonly locales = LOCALES;
+
+  // Yardım / Destek penceresi
+  readonly supportOpen = signal<boolean>(false);
+  readonly supportMsg = signal<string>('');
+  readonly supportEmail = signal<string>('');
+  readonly supportBusy = signal<boolean>(false);
+  readonly supportErr = signal<string | null>(null);
+  readonly supportSent = signal<boolean>(false);
+
+  openSupport(): void {
+    this.supportMsg.set(''); this.supportEmail.set(this.auth.user()?.email ?? '');
+    this.supportErr.set(null); this.supportSent.set(false); this.supportBusy.set(false);
+    this.supportOpen.set(true);
+  }
+  async sendSupport(): Promise<void> {
+    this.supportErr.set(null);
+    const msg = this.supportMsg().trim();
+    if (msg.length < 3) { this.supportErr.set(this.i18n.t('auth_fill')); return; }
+    this.supportBusy.set(true);
+    try {
+      await firstValueFrom(this.http.post('/api/support', { message: msg, email: this.supportEmail().trim() }).pipe(timeout(9000)));
+      this.supportSent.set(true);
+    } catch {
+      this.supportErr.set('Sunucuya ulaşılamadı (backend kapalı olabilir)');
+    } finally { this.supportBusy.set(false); }
+  }
 
   /** Menü satırına tıklanınca ilgili yere gider (butonların adı/sırası değişmedi). */
   go(key: string): void {
@@ -296,7 +346,7 @@ export class ProfileComponent implements OnInit {
       case 'tryon_hist': void this.router.navigate(['/ar']); break;
       case 'my_fav': this.favOpen.set(true); break;
       case 'settings': this.openSettings(); break;
-      case 'help': window.location.href = 'mailto:l.shalili@logper.com'; break;
+      case 'help': this.openSupport(); break;
       case 'logout': if (this.auth.loggedIn()) this.auth.logout(); else this.openAuth('login'); break;
     }
   }

@@ -3,10 +3,10 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import {
-  AdminService, AdminStats, AdminUser, AdminOrder, AdminDesign, AdminBlocked, AdminError, AdminSystem,
+  AdminService, AdminStats, AdminUser, AdminOrder, AdminDesign, AdminBlocked, AdminError, AdminSystem, AdminTicket,
 } from '../../core/admin.service';
 
-type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
+type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 'system';
 
 @Component({
   selector: 'app-admin',
@@ -159,6 +159,35 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
             </div>
           }
 
+          @case ('support') {
+            @if (ticketSum(); as ts) {
+              <div class="grid three">
+                <div class="stat"><div class="n">{{ ts.total }}</div><div class="l">Toplam mesaj</div></div>
+                <div class="stat" [class.warn]="ts.open > 0"><div class="n">{{ ts.open }}</div><div class="l">Açık (yeni)</div></div>
+              </div>
+            }
+            <p class="muted small">Kullanıcıların "Yardım / Destek" kutusundan yazdığı sorunlar. Yanıt için e-postalarını kullanabilirsin.</p>
+            <div class="tbl">
+              @for (t of tickets(); track t.id) {
+                <div class="ticket" [class.closed]="t.status === 'closed'">
+                  <div class="tk-head">
+                    <span class="tk-who"><b>{{ t.name || 'İsimsiz kullanıcı' }}</b> <small class="muted">{{ t.email || 'e-posta yok' }}</small></span>
+                    <span class="tk-meta">
+                      <span class="badge" [class.ok]="t.status === 'closed'">{{ t.status === 'open' ? 'açık' : 'kapalı' }}</span>
+                      <small class="muted">{{ t.createdAt | date:'short' }}</small>
+                    </span>
+                  </div>
+                  <p class="tk-msg">{{ t.message }}</p>
+                  <div class="tk-act">
+                    @if (t.email) { <a class="mini" [href]="'mailto:' + t.email">E-posta ile yanıtla</a> }
+                    <button class="mini" (click)="toggleTicket(t)">{{ t.status === 'open' ? 'Çözüldü işaretle' : 'Yeniden aç' }}</button>
+                    <button class="mini danger" (click)="removeTicket(t)">Sil</button>
+                  </div>
+                </div>
+              } @empty { <div class="tr"><span class="muted">Henüz destek mesajı yok</span></div> }
+            </div>
+          }
+
           @case ('system') {
             @if (system(); as s) {
               <div class="grid three">
@@ -267,6 +296,15 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'system';
     .line.warnline .lv { color:var(--gold,#d4af37); }
     .line .src { color:var(--muted,#b8ad97); font-size:10px; }
     .line .msg { color:var(--ink,#fff8e7); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ticket { padding:12px 14px; border-bottom:1px solid var(--line,#2c2418); }
+    .ticket:last-child { border-bottom:none; }
+    .ticket.closed { opacity:.6; }
+    .tk-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+    .tk-who { font-size:13px; }
+    .tk-meta { display:flex; align-items:center; gap:8px; }
+    .tk-msg { margin:6px 0 10px; font-size:13px; line-height:1.55; color:var(--ink,#fff8e7); white-space:pre-wrap; word-break:break-word; }
+    .tk-act { display:flex; gap:6px; flex-wrap:wrap; }
+    .tk-act a.mini { text-decoration:none; }
     @media(max-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} .tr,.tr.o,.tr.d,.tr.b{grid-template-columns:1fr 1fr; row-gap:4px} }
   `],
 })
@@ -277,7 +315,7 @@ export class AdminComponent {
   readonly tabs: { key: Tab; label: string }[] = [
     { key: 'panel', label: 'Genel' }, { key: 'users', label: 'Kullanıcılar' },
     { key: 'orders', label: 'Siparişler' }, { key: 'designs', label: 'Tasarımlar' },
-    { key: 'blocked', label: 'Engeller' }, { key: 'system', label: 'Sistem' },
+    { key: 'blocked', label: 'Engeller' }, { key: 'support', label: 'Destek' }, { key: 'system', label: 'Sistem' },
   ];
 
   readonly tab = signal<Tab>('panel');
@@ -294,6 +332,7 @@ export class AdminComponent {
   readonly designs = signal<AdminDesign[]>([]);
   readonly blocked = signal<AdminBlocked[]>([]);
   readonly errors = signal<AdminError[]>([]); readonly system = signal<AdminSystem | null>(null);
+  readonly tickets = signal<AdminTicket[]>([]); readonly ticketSum = signal<{ total: number; open: number } | null>(null);
 
   readonly editId = signal(0); ePlan = ''; eExtra = 0; eRole = 'user';
 
@@ -319,8 +358,8 @@ export class AdminComponent {
     this.busy.set(true);
     const r = await this.auth.forgot(email);
     this.busy.set(false);
-    if (r.demoLink) this.loginInfo.set('Sıfırlama bağlantısı (demo): ' + r.demoLink);
-    else if (r.ok) this.loginInfo.set('Sıfırlama bağlantısı e-postanıza gönderildi.');
+    if (r.demoOtp) this.loginInfo.set('Sıfırlama kodu (demo): ' + r.demoOtp + ' — kodla sıfırlamak için uygulamadaki Profil › Şifremi unuttum ekranını kullanın.');
+    else if (r.ok) this.loginInfo.set('Sıfırlama kodu e-postanıza gönderildi.');
     else this.loginErr.set(r.error || 'Gönderilemedi');
   }
 
@@ -331,6 +370,7 @@ export class AdminComponent {
     if (t === 'orders') this.loadOrders();
     if (t === 'designs') this.loadDesigns();
     if (t === 'blocked') this.loadBlocked();
+    if (t === 'support') this.loadSupport();
     if (t === 'system') this.loadSystem();
   }
 
@@ -345,6 +385,9 @@ export class AdminComponent {
   loadDesigns(): void { this.wrap(this.api.designs(), (r) => this.designs.set(r.designs)); }
   loadBlocked(): void { this.wrap(this.api.blocked(), (r) => this.blocked.set(r.blocked)); }
   loadSystem(): void { this.wrap(this.api.system(), (r) => this.system.set(r.data)); this.wrap(this.api.errors(), (r) => this.errors.set(r.errors)); }
+  loadSupport(): void { this.wrap(this.api.support(), (r) => { this.tickets.set(r.tickets); this.ticketSum.set(r.summary); }); }
+  toggleTicket(t: AdminTicket): void { this.wrap(this.api.toggleTicket(t.id), () => this.loadSupport()); }
+  removeTicket(t: AdminTicket): void { if (confirm('Bu destek mesajı silinsin mi?')) this.wrap(this.api.deleteTicket(t.id), () => this.loadSupport()); }
 
   edit(u: AdminUser): void { this.editId.set(u.id); this.ePlan = u.plan; this.eExtra = u.imagesExtra; this.eRole = u.role || 'user'; }
   saveUser(u: AdminUser): void {

@@ -117,3 +117,15 @@ model ErrorLog {
 
   @@index([createdAt])
 }
+
+model SupportTicket {
+  id        Int      @id @default(autoincrement())
+  userId    String   @default("")        // giriş yapmışsa kullanıcı id (yoksa boş)
+  name      String   @default("")        // ad soyad (varsa)
+  email     String   @default("")        // yanıt için iletişim e-postası
+  message   String                        // kullanıcının yazdığı sorun/mesaj
+  status    String   @default("open")    // open | closed
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
