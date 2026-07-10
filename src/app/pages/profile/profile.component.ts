@@ -166,7 +166,14 @@ import { COUNTRIES } from '../../core/countries';
             }
             @case ('delete') {
               <input class="au-in" type="email" [value]="delEmail()" (input)="delEmail.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" />
-              <input class="au-in" type="tel" [value]="delPhone()" (input)="delPhone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" />
+              <div class="au-phone">
+                <select class="au-in au-cc" [value]="delCountryDial()" (change)="delCountryDial.set($any($event.target).value)">
+                  @for (c of countries; track c.iso) {
+                    <option [value]="c.dial">{{ c.flag }} {{ c.name }} ({{ c.dial }})</option>
+                  }
+                </select>
+                <input class="au-in au-ph" type="tel" [value]="delPhone()" (input)="delPhone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" autocomplete="tel" />
+              </div>
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="delPw()" (input)="delPw.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <button class="btn-primary au-go set-danger" (click)="deleteAcc()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_del_btn') }}</button>
             }
@@ -305,6 +312,7 @@ export class ProfileComponent implements OnInit {
   readonly setCode = signal<string>('');
   readonly delEmail = signal<string>('');
   readonly delPhone = signal<string>('');
+  readonly delCountryDial = signal<string>('+90');   // varsayılan Türkiye (kayıttaki ile aynı)
   readonly delPw = signal<string>('');
   readonly setErr = signal<string | null>(null);
   readonly setInfo = signal<string | null>(null);
@@ -314,7 +322,7 @@ export class ProfileComponent implements OnInit {
   private openSettings(): void {
     this.settingsStep.set('menu');
     this.setErr.set(null); this.setInfo.set(null);
-    this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delPw.set(''); this.setCode.set('');
+    this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delCountryDial.set('+90'); this.delPw.set(''); this.setCode.set('');
     this.settingsOpen.set(true);
   }
   settingsGo(s: 'menu' | 'changepw' | 'delete'): void {
@@ -363,7 +371,10 @@ export class ProfileComponent implements OnInit {
     this.setErr.set(null);
     if (!this.delEmail().trim() || !this.delPhone().trim() || !this.delPw()) { this.setErr.set(this.i18n.t('auth_fill_all')); return; }
     this.setBusy.set(true);
-    const res = await this.auth.deleteAccount(this.delEmail().trim().toLowerCase(), this.delPhone().trim(), this.delPw());
+    // Ülke kodu + yerel numara (baştaki 0'lar atılır) → kayıttaki ile aynı tam numara
+    const localNum = this.delPhone().replace(/\D/g, '').replace(/^0+/, '');
+    const fullPhone = this.delCountryDial() + localNum;
+    const res = await this.auth.deleteAccount(this.delEmail().trim().toLowerCase(), fullPhone, this.delPw());
     this.setBusy.set(false);
     if (res.ok) {
       // Silme e-posta ile onaylanır — hemen silinmez, onay linki gönderildi.
