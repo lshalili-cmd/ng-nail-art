@@ -44,21 +44,6 @@ import { recommend } from '../../core/recommendation';
         <a class="section-link" routerLink="/explore">{{ i18n.t('see_all') }} →</a>
       </section>
 
-      <!-- Top artists -->
-      <div class="section-head">
-        <h2 class="section-title">{{ i18n.t('top_artists') }}</h2>
-        <a class="section-link" routerLink="/explore">{{ i18n.t('see_all') }}</a>
-      </div>
-      <div class="rail">
-        @for (a of data.artists; track a.id) {
-          <div class="artist">
-            <div class="av" [style.background]="a.grad"></div>
-            <p class="an">{{ a.name }}</p>
-            <p class="ar">{{ a.role }}</p>
-          </div>
-        }
-      </div>
-
       <!-- AI picks -->
       <div class="section-head">
         <h2 class="section-title">💎 {{ personalized() ? i18n.t('for_you') : i18n.t('ai_picks') }}</h2>

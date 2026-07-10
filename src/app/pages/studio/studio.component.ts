@@ -270,7 +270,7 @@ export class StudioComponent implements OnInit {
     try {
       const s = this.status();
       if (s && s.status === 'ready') {
-        // Görsel üretimi hazır (Pollinations ücretsiz ya da paid AI).
+        // Görsel üretimi hazır (Flux 1.1 Pro / paid AI).
         // Tasarım-spec: metin LLM'i varsa ondan, yoksa istemci-tarafı mockDesign.
         const d = s.textAvailable ? await this.ai.chat(p, this.i18n.locale()) : this.ai.mockDesign(p);
         this.design.set(d);
@@ -318,7 +318,7 @@ export class StudioComponent implements OnInit {
     this.imgLoading.set(true);
     this.error.set(null);
     try {
-      // Görsel üretimi mevcutsa (Pollinations ücretsiz ya da paid) GERÇEK görsel üret;
+      // Görsel üretimi mevcutsa (Flux 1.1 Pro / paid) GERÇEK görsel üret;
       // tasarım-spec demo/heuristik olsa bile. Yoksa prosedürel önizlemeye düş.
       const s = this.status();
       if (!s?.imageGenAvailable) {

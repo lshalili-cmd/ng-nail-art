@@ -141,7 +141,6 @@ function download(url, dest) {
 async function generateImage(input, imgDir) {
   const { prompt, style, shape, colors, finish, tier } = input;
   // KULLANICI ÜRETİMİ = Flux 1.1 Pro (Replicate) / OpenAI / Gemini. Anahtar yoksa demo'ya düşülür.
-  // (Ücretsiz Pollinations SADECE galeri içindir — scripts/gen-catalog.js ile, canlı uçta değil.)
   if (!openai && !gemini && !replicate) {
     throw makeError('Görsel üretim servisi yok. Kullanıcı üretimi için REPLICATE_API_TOKEN (Flux 1.1 Pro) ekleyin.', 'AI_NOT_CONFIGURED', 503);
   }

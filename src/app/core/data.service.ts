@@ -83,8 +83,8 @@ export class DataService {
     //  - img: istemci tarafı çizilen tırnak önizlemesi (statik dosya gelene kadar yedek).
     for (const d of this.all) {
       d.pattern = patterns[d.id] ?? 'glossy';
-      // GALERİ: statik görsel (public/designs/design-<id>.jpg) — Pollinations ile bir kez üretilir
-      // (scripts/gen-catalog.js). Dosya yoksa design-card otomatik çizime düşer.
+      // GALERİ: statik görsel (public/designs/design-<id>.jpg) — kendi nail art görsellerin.
+      // Dosya yoksa design-card otomatik çizime düşer.
       d.photo = `designs/design-${d.id}.jpg`;
       d.img = renderNailThumb(d.colors, d.pattern);
     }
