@@ -41,18 +41,6 @@ import { TryonStore } from '../../core/tryon-store';
               <div class="attr"><span class="k">{{ i18n.t('studio_finish') }}</span><span class="v">{{ d.pattern || '—' }}</span></div>
             </div>
 
-            <div class="actions">
-              <button class="btn-primary" (click)="tryAr(d)">📱 {{ i18n.t('try_on') }}</button>
-              <button class="btn-ghost" (click)="toggleFav()">
-                {{ fav.has(d.id) ? ('❤️ ' + i18n.t('my_fav')) : ('🤍 ' + i18n.t('my_fav')) }}
-              </button>
-            </div>
-            @if (d.img) {
-              <div class="actions">
-                <button class="btn-ghost" (click)="download(d)">💾 {{ i18n.t('download') }}</button>
-                <button class="btn-ghost" (click)="share(d)">📤 {{ i18n.t('share') }}</button>
-              </div>
-            }
           </div>
         </div>
       } @else {
