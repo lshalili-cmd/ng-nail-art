@@ -406,6 +406,7 @@ Object.assign(EN, {
   agree_text: 'I have read and accept the Privacy Policy, KVKK Notice and Terms of Use.',
   agree_required: 'Please accept the terms to continue.',
   leg_privacy: 'Privacy Policy', leg_kvkk: 'KVKK Notice', leg_terms: 'Terms of Use', legal: 'Privacy & Legal',
+  currency: 'Currency',
 });
 Object.assign(TR, {
   auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
@@ -424,6 +425,7 @@ Object.assign(TR, {
   agree_text: 'Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları\'nı okudum, kabul ediyorum.',
   agree_required: 'Devam etmek için şartları kabul etmelisiniz.',
   leg_privacy: 'Gizlilik Politikası', leg_kvkk: 'KVKK Aydınlatma', leg_terms: 'Kullanım Şartları', legal: 'Gizlilik ve Yasal',
+  currency: 'Para birimi',
 });
 Object.assign(RU, {
   auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
@@ -442,6 +444,7 @@ Object.assign(RU, {
   agree_text: 'Я прочитал(а) и принимаю Политику конфиденциальности, Уведомление KVKK и Условия использования.',
   agree_required: 'Чтобы продолжить, примите условия.',
   leg_privacy: 'Политика конфиденциальности', leg_kvkk: 'Уведомление KVKK', leg_terms: 'Условия использования', legal: 'Конфиденциальность и право',
+  currency: 'Валюта',
 });
 Object.assign(AR, {
   auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
@@ -460,6 +463,7 @@ Object.assign(AR, {
   agree_text: 'لقد قرأت وأوافق على سياسة الخصوصية وإشعار KVKK وشروط الاستخدام.',
   agree_required: 'يرجى قبول الشروط للمتابعة.',
   leg_privacy: 'سياسة الخصوصية', leg_kvkk: 'إشعار KVKK', leg_terms: 'شروط الاستخدام', legal: 'الخصوصية والقانون',
+  currency: 'العملة',
 });
 
 // ── Ayarlar: şifre değiştir / hesabı sil ──

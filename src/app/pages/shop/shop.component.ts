@@ -5,12 +5,13 @@ import { I18nService } from '../../core/i18n.service';
 import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { PaymentService } from '../../core/payment.service';
+import { CurrencyService, CURRENCIES } from '../../core/pricing';
 
 interface Plan {
-  id: string; nameKey: string; price: string; periodKey?: string;
+  id: string; nameKey: string; periodKey?: string;
   highlight?: boolean; badgeKey?: string; featureKeys: string[];
 }
-interface Pack { id: string; nameKey: string; credits: number; price: string; }
+interface Pack { id: string; nameKey: string; credits: number; }
 interface CartItem { kind: 'plan' | 'pack'; id: string; name: string; amount: number; priceLabel: string; credits?: number; }
 const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe', paytr: 'PayTR' };
 
@@ -22,7 +23,12 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
   template: `
     <app-header />
     <div class="page">
-      <div class="section-head"><h2 class="section-title">💎 {{ i18n.t('membership') }}</h2></div>
+      <div class="section-head">
+        <h2 class="section-title">💎 {{ i18n.t('membership') }}</h2>
+        <select class="cur-sel" [value]="cur.currency()" (change)="cur.set($any($event.target).value)" [attr.aria-label]="i18n.t('currency')">
+          @for (c of currencies; track c) { <option [value]="c">{{ c }}</option> }
+        </select>
+      </div>
       <p class="intro">{{ i18n.t('membership_sub') }}</p>
 
       <div class="plans">
@@ -30,7 +36,7 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
           <div class="plan card" [class.hl]="p.highlight" [class.on]="plan.current() === p.id">
             @if (p.badgeKey) { <span class="tag">{{ i18n.t(p.badgeKey) }}</span> }
             <h3 class="pname">{{ i18n.t(p.nameKey) }}</h3>
-            <p class="price">{{ p.price }}<span class="per">{{ p.periodKey ? i18n.t(p.periodKey) : '' }}</span></p>
+            <p class="price">{{ cur.label(p.id) }}<span class="per">{{ p.periodKey ? i18n.t(p.periodKey) : '' }}</span></p>
             <ul class="feats">
               @for (f of p.featureKeys; track f) { <li>✓ {{ i18n.t(f) }}</li> }
             </ul>
@@ -59,7 +65,7 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
           <div class="pack card" [class.on]="quota.activePackId() === k.id">
             <p class="kname">{{ i18n.t(k.nameKey) }}</p>
             <p class="credits">{{ k.credits }} {{ i18n.t('credits') }}</p>
-            <p class="kprice">{{ k.price }}</p>
+            <p class="kprice">{{ cur.label(k.id) }}</p>
             @if (quota.activePackId() === k.id) {
               <button class="btn-ghost sel" disabled>✓ {{ quota.packDaysLeft() }} {{ i18n.t('days_left') }}</button>
             } @else if (canBuyPack(k)) {
@@ -110,6 +116,9 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
   `,
   styles: [`
     .intro { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+    .cur-sel { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+      border-radius: 10px; padding: 6px 10px; font: inherit; font-size: 13px; font-weight: 700; outline: none; }
+    .cur-sel:focus { border-color: rgba(212,175,55,0.5); }
     .plans { display: flex; flex-direction: column; gap: 12px; }
     .plan { position: relative; padding: 18px 16px; }
     .plan.hl { border-color: rgba(212,175,55,0.55);
@@ -169,6 +178,8 @@ export class ShopComponent implements OnInit {
   readonly plan = inject(PlanService);
   readonly quota = inject(ImageQuotaService);
   readonly payment = inject(PaymentService);
+  readonly cur = inject(CurrencyService);
+  readonly currencies = CURRENCIES;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly added = signal<number | null>(null);
@@ -204,23 +215,24 @@ export class ShopComponent implements OnInit {
 
   // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
   // (kart metinleri: aylık üretim + yıllık toplam notları — 2026-07-03)
+  // Fiyatlar artık para birimine göre pricing.ts'ten gelir (Model B — sabit kademeler).
   readonly plans: Plan[] = [
-    { id: 'free', nameKey: 'pn_free', price: '$0',
+    { id: 'free', nameKey: 'pn_free',
       featureKeys: ['f_free_img', 'f_free_tools', 'f_gallery'] },
-    { id: 'monthly', nameKey: 'pn_monthly', price: '$7.85', periodKey: 'per_mo',
+    { id: 'monthly', nameKey: 'pn_monthly', periodKey: 'per_mo',
       featureKeys: ['f_m30', 'f_tools_unlim', 'f_extra'] },
-    { id: 'yearly', nameKey: 'pn_yearly', price: '$70.65', periodKey: 'per_yr', highlight: true, badgeKey: 'badge_25',
+    { id: 'yearly', nameKey: 'pn_yearly', periodKey: 'per_yr', highlight: true, badgeKey: 'badge_25',
       featureKeys: ['f_m30', 'f_y360', 'f_all_unlim', 'f_589', 'f_extra'] },
-    { id: 'pro', nameKey: 'pn_pro', price: '$24.99', periodKey: 'per_mo',
+    { id: 'pro', nameKey: 'pn_pro', periodKey: 'per_mo',
       featureKeys: ['f_p100', 'f_all_unlim', 'f_salon'] },
-    { id: 'pro_yearly', nameKey: 'pn_pro_yearly', price: '$224.99', periodKey: 'per_yr', badgeKey: 'badge_25',
+    { id: 'pro_yearly', nameKey: 'pn_pro_yearly', periodKey: 'per_yr', badgeKey: 'badge_25',
       featureKeys: ['f_p100', 'f_py1200', 'f_all_unlim', 'f_1875', 'f_bigsalon'] },
   ];
 
   readonly packs: Pack[] = [
-    { id: 'pack_10', nameKey: 'pk_mini', credits: 10, price: '$6.00' },
-    { id: 'pack_25', nameKey: 'pk_standart', credits: 25, price: '$13.00' },
-    { id: 'pack_50', nameKey: 'pk_mega', credits: 50, price: '$25.00' },
+    { id: 'pack_10', nameKey: 'pk_mini', credits: 10 },
+    { id: 'pack_25', nameKey: 'pk_standart', credits: 25 },
+    { id: 'pack_50', nameKey: 'pk_mega', credits: 50 },
   ];
 
   /**
@@ -261,7 +273,7 @@ export class ShopComponent implements OnInit {
     const p = this.plans.find((x) => x.id === id);
     if (!p) return;
     const period = p.periodKey ? this.i18n.t(p.periodKey) : '';
-    this.startCheckout({ kind: 'plan', id, name: this.i18n.t(p.nameKey), amount: this.priceNum(p.price), priceLabel: p.price + period });
+    this.startCheckout({ kind: 'plan', id, name: this.i18n.t(p.nameKey), amount: this.cur.amount(id), priceLabel: this.cur.label(id) + period });
   }
 
   /**
@@ -282,7 +294,7 @@ export class ShopComponent implements OnInit {
     if (!this.canBuyPack(k)) return;
     this.startCheckout({
       kind: 'pack', id: k.id, name: `${this.i18n.t(k.nameKey)} · ${k.credits} ${this.i18n.t('credits')}`,
-      amount: this.priceNum(k.price), priceLabel: k.price, credits: k.credits,
+      amount: this.cur.amount(k.id), priceLabel: this.cur.label(k.id), credits: k.credits,
     });
   }
 
@@ -308,7 +320,7 @@ export class ShopComponent implements OnInit {
     this.payError.set(null);
     const res = await this.payment.checkout({
       kind: it.kind, itemId: it.id, itemName: it.name, amount: it.amount,
-      currency: 'USD', provider: this.payProvider(),
+      currency: this.cur.currency(), provider: this.payProvider(),
     });
     if (res.mode === 'live' && res.url) {
       // Gerçek sağlayıcı: bekleyen alımı sakla ve ödeme sayfasına yönlendir
@@ -331,10 +343,6 @@ export class ShopComponent implements OnInit {
       this.quota.buyPack(it.id, it.credits);
       this.added.set(it.credits);
     }
-  }
-
-  private priceNum(price: string): number {
-    return Number(price.replace(/[^0-9.]/g, '')) || 0;
   }
 
   private savePending(it: CartItem): void {
