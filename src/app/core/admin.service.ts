@@ -8,7 +8,7 @@ export interface AdminOrder { id: number; userId: string; kind: string; itemId: 
 export interface AdminDesign { id: number; name: string; category: string; source: string; popular: boolean; rating: number; createdAt: string; }
 export interface AdminBlocked { id: number; email: string; phone: string; until: number; createdAt: string; }
 export interface AdminError { level: string; message: string; source: string; createdAt: string; }
-export interface AdminTicket { id: number; userId: string; name: string; email: string; message: string; status: string; createdAt: string; }
+export interface AdminTicket { id: number; userId: string; name: string; email: string; message: string; reply: string; status: string; repliedAt: number; createdAt: string; }
 export interface AdminSystem { db: boolean; ai: { provider?: string; model?: string }; payments: unknown; sms: string; mailer: boolean; maintenance: boolean; uptime: number; node: string; }
 
 @Injectable({ providedIn: 'root' })
@@ -38,5 +38,6 @@ export class AdminService {
 
   support() { return this.get<{ success: boolean; tickets: AdminTicket[]; summary: { total: number; open: number } }>('/api/admin/support'); }
   toggleTicket(id: number) { return firstValueFrom(this.http.post<{ success: boolean; status: string }>(`/api/admin/support/${id}/close`, {}).pipe(timeout(9000))); }
+  replyTicket(id: number, reply: string) { return firstValueFrom(this.http.post<{ success: boolean; status: string }>(`/api/admin/support/${id}/reply`, { reply }).pipe(timeout(9000))); }
   deleteTicket(id: number) { return firstValueFrom(this.http.delete<{ success: boolean }>(`/api/admin/support/${id}`).pipe(timeout(9000))); }
 }

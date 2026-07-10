@@ -402,6 +402,7 @@ Object.assign(EN, {
   auth_demo_otp: 'Demo code', auth_demo_link: 'Demo link',
   sup_title: 'Help & Support', sup_sub: 'Describe your issue and we\'ll get back to you.', sup_ph: 'Write your problem here…',
   sup_email_ph: 'Email (for our reply)', sup_send: 'Send', sup_sent: 'Your message was sent — thank you!',
+  sup_mine: 'Your messages', sup_answer: 'Reply', sup_waiting: 'Awaiting reply', sup_new: 'New message',
 });
 Object.assign(TR, {
   auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
@@ -416,6 +417,7 @@ Object.assign(TR, {
   auth_demo_otp: 'Demo kod', auth_demo_link: 'Demo bağlantı',
   sup_title: 'Yardım & Destek', sup_sub: 'Sorununu yaz, sana dönelim.', sup_ph: 'Sorununu buraya yaz…',
   sup_email_ph: 'E-posta (yanıt için)', sup_send: 'Gönder', sup_sent: 'Mesajın iletildi — teşekkürler!',
+  sup_mine: 'Mesajların', sup_answer: 'Yanıt', sup_waiting: 'Yanıt bekleniyor', sup_new: 'Yeni mesaj',
 });
 Object.assign(RU, {
   auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
@@ -430,6 +432,7 @@ Object.assign(RU, {
   auth_demo_otp: 'Демо-код', auth_demo_link: 'Демо-ссылка',
   sup_title: 'Помощь и поддержка', sup_sub: 'Опишите проблему — мы ответим.', sup_ph: 'Опишите проблему здесь…',
   sup_email_ph: 'Email (для ответа)', sup_send: 'Отправить', sup_sent: 'Сообщение отправлено — спасибо!',
+  sup_mine: 'Ваши сообщения', sup_answer: 'Ответ', sup_waiting: 'Ожидает ответа', sup_new: 'Новое сообщение',
 });
 Object.assign(AR, {
   auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
@@ -444,6 +447,7 @@ Object.assign(AR, {
   auth_demo_otp: 'رمز تجريبي', auth_demo_link: 'رابط تجريبي',
   sup_title: 'المساعدة والدعم', sup_sub: 'اكتبي مشكلتك وسنعود إليك.', sup_ph: 'اكتبي مشكلتك هنا…',
   sup_email_ph: 'البريد (للرد)', sup_send: 'إرسال', sup_sent: 'تم إرسال رسالتك — شكراً!',
+  sup_mine: 'رسائلك', sup_answer: 'الرد', sup_waiting: 'بانتظار الرد', sup_new: 'رسالة جديدة',
 });
 
 // ── Ayarlar: şifre değiştir / hesabı sil ──

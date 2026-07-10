@@ -156,7 +156,20 @@ function mount(app, ctx) {
     try {
       const t = await db.prisma.supportTicket.findUnique({ where: { id: Number(req.params.id) } });
       if (!t) return res.status(404).json({ success: false, error: 'Bulunamadı' });
-      const upd = await db.prisma.supportTicket.update({ where: { id: t.id }, data: { status: t.status === 'open' ? 'closed' : 'open' } });
+      const upd = await db.prisma.supportTicket.update({ where: { id: t.id }, data: { status: t.status === 'closed' ? (t.reply ? 'replied' : 'open') : 'closed' } });
+      res.json({ success: true, status: upd.status });
+    } catch (e) { fail(res, e); }
+  });
+  // Admin yanıtı — kullanıcı uygulama içinde görür
+  app.post('/api/admin/support/:id/reply', requireAdmin, async (req, res) => {
+    const reply = String((req.body || {}).reply || '').trim();
+    if (reply.length < 1) return res.status(400).json({ success: false, error: 'Yanıt boş olamaz', code: 'EMPTY' });
+    try {
+      const t = await db.prisma.supportTicket.findUnique({ where: { id: Number(req.params.id) } });
+      if (!t) return res.status(404).json({ success: false, error: 'Bulunamadı' });
+      const upd = await db.prisma.supportTicket.update({
+        where: { id: t.id }, data: { reply: reply.slice(0, 2000), status: 'replied', repliedAt: Date.now() },
+      });
       res.json({ success: true, status: upd.status });
     } catch (e) { fail(res, e); }
   });

@@ -306,6 +306,20 @@ app.post('/api/support', async (req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
+// Kullanıcının kendi destek mesajları + admin yanıtları (giriş gerekli)
+app.get('/api/support/mine', async (req, res) => {
+  if (!db.ready()) return dbNotReady(res);
+  const uid = auth.userIdFrom(req);
+  if (uid === 'guest') return res.json({ success: true, tickets: [] });
+  try {
+    const rows = await db.prisma.supportTicket.findMany({
+      where: { userId: String(uid) }, orderBy: { createdAt: 'desc' }, take: 50,
+    });
+    const tickets = rows.map((t) => ({ id: t.id, message: t.message, reply: t.reply, status: t.status, repliedAt: t.repliedAt, createdAt: t.createdAt }));
+    res.json({ success: true, tickets });
+  } catch (e) { dbError(res, e); }
+});
+
 app.get('/api/auth/me', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const uid = auth.userIdFrom(req);

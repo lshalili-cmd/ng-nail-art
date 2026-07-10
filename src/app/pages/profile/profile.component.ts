@@ -198,10 +198,28 @@ import { COUNTRIES } from '../../core/countries';
       <!-- Yardım / Destek penceresi -->
       @if (supportOpen()) {
         <div class="au-back" (click)="supportOpen.set(false)"></div>
-        <div class="au card">
+        <div class="au card sup-card">
           <h3 class="au-t">❓ {{ i18n.t('sup_title') }}</h3>
+
+          @if (auth.loggedIn() && myTickets().length) {
+            <p class="sup-lbl">{{ i18n.t('sup_mine') }}</p>
+            <div class="sup-list">
+              @for (t of myTickets(); track t.id) {
+                <div class="sup-item">
+                  <p class="sup-q">{{ t.message }}</p>
+                  @if (t.reply) {
+                    <p class="sup-a"><b>{{ i18n.t('sup_answer') }}:</b> {{ t.reply }}</p>
+                  } @else {
+                    <p class="sup-wait">⏳ {{ i18n.t('sup_waiting') }}</p>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           @if (supportSent()) {
             <p class="au-note">✅ {{ i18n.t('sup_sent') }}</p>
+            <button class="au-switch" (click)="newSupportMsg()">＋ {{ i18n.t('sup_new') }}</button>
             <button class="btn-primary au-go" (click)="supportOpen.set(false)">{{ i18n.t('pay_close') }}</button>
           } @else {
             <p class="au-note">{{ i18n.t('sup_sub') }}</p>
@@ -233,6 +251,15 @@ import { COUNTRIES } from '../../core/countries';
       border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none; }
     .au-in:focus { border-color: rgba(212,175,55,0.5); }
     .au-ta { resize: vertical; min-height: 96px; line-height: 1.5; font-family: inherit; }
+    .sup-card { max-height: 84vh; overflow-y: auto; }
+    .sup-lbl { margin: 2px 0 8px; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .sup-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .sup-item { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    .sup-q { margin: 0; font-size: 13px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+    .sup-a { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--gold-soft);
+      background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 8px 10px; white-space: pre-wrap; word-break: break-word; }
+    .sup-a b { color: var(--gold); }
+    .sup-wait { margin: 8px 0 0; font-size: 12px; color: var(--muted-2); }
     .au-err { margin: 4px 0 8px; font-size: 12px; color: #f0b8b8; text-align: center; }
     .au-go { width: 100%; margin-top: 6px; }
     .au-switch { width: 100%; margin-top: 12px; background: transparent; color: var(--gold-soft); font-size: 13px; padding: 6px; }
@@ -320,12 +347,23 @@ export class ProfileComponent implements OnInit {
   readonly supportBusy = signal<boolean>(false);
   readonly supportErr = signal<string | null>(null);
   readonly supportSent = signal<boolean>(false);
+  readonly myTickets = signal<{ id: number; message: string; reply: string; status: string }[]>([]);
 
   openSupport(): void {
     this.supportMsg.set(''); this.supportEmail.set(this.auth.user()?.email ?? '');
     this.supportErr.set(null); this.supportSent.set(false); this.supportBusy.set(false);
+    this.myTickets.set([]);
     this.supportOpen.set(true);
+    void this.loadMyTickets();
   }
+  private async loadMyTickets(): Promise<void> {
+    if (!this.auth.loggedIn()) return;
+    try {
+      const res = await firstValueFrom(this.http.get<{ success: boolean; tickets: { id: number; message: string; reply: string; status: string }[] }>('/api/support/mine').pipe(timeout(9000)));
+      if (res?.success) this.myTickets.set(res.tickets ?? []);
+    } catch { /* sessiz */ }
+  }
+  newSupportMsg(): void { this.supportSent.set(false); this.supportMsg.set(''); this.supportErr.set(null); }
   async sendSupport(): Promise<void> {
     this.supportErr.set(null);
     const msg = this.supportMsg().trim();
@@ -334,6 +372,7 @@ export class ProfileComponent implements OnInit {
     try {
       await firstValueFrom(this.http.post('/api/support', { message: msg, email: this.supportEmail().trim() }).pipe(timeout(9000)));
       this.supportSent.set(true);
+      void this.loadMyTickets();
     } catch {
       this.supportErr.set('Sunucuya ulaşılamadı (backend kapalı olabilir)');
     } finally { this.supportBusy.set(false); }

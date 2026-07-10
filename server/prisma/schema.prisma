@@ -124,7 +124,9 @@ model SupportTicket {
   name      String   @default("")        // ad soyad (varsa)
   email     String   @default("")        // yanıt için iletişim e-postası
   message   String                        // kullanıcının yazdığı sorun/mesaj
-  status    String   @default("open")    // open | closed
+  reply     String   @default("")        // admin yanıtı (uygulama içi gösterilir)
+  status    String   @default("open")    // open | replied | closed
+  repliedAt Float    @default(0)         // yanıt zamanı (ms)
   createdAt DateTime @default(now())
 
   @@index([createdAt])

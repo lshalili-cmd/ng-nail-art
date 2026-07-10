@@ -173,16 +173,28 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
                   <div class="tk-head">
                     <span class="tk-who"><b>{{ t.name || 'İsimsiz kullanıcı' }}</b> <small class="muted">{{ t.email || 'e-posta yok' }}</small></span>
                     <span class="tk-meta">
-                      <span class="badge" [class.ok]="t.status === 'closed'">{{ t.status === 'open' ? 'açık' : 'kapalı' }}</span>
+                      <span class="badge" [class.ok]="t.status === 'replied'" [class.cls]="t.status === 'closed'">{{ stLabel(t.status) }}</span>
                       <small class="muted">{{ t.createdAt | date:'short' }}</small>
                     </span>
                   </div>
                   <p class="tk-msg">{{ t.message }}</p>
-                  <div class="tk-act">
-                    @if (t.email) { <a class="mini" [href]="'mailto:' + t.email">E-posta ile yanıtla</a> }
-                    <button class="mini" (click)="toggleTicket(t)">{{ t.status === 'open' ? 'Çözüldü işaretle' : 'Yeniden aç' }}</button>
-                    <button class="mini danger" (click)="removeTicket(t)">Sil</button>
-                  </div>
+                  @if (t.reply) {
+                    <div class="tk-reply"><span class="tk-reply-lbl">Yanıtın:</span> {{ t.reply }}</div>
+                  }
+                  @if (replyId() === t.id) {
+                    <textarea class="in tk-ta" rows="3" [(ngModel)]="replyText" placeholder="Yanıtını buraya yaz… (kullanıcı uygulamada görecek)"></textarea>
+                    <div class="tk-act">
+                      <button class="btn sm" (click)="sendReply(t)">Yanıtı gönder</button>
+                      <button class="mini" (click)="replyId.set(0)">Vazgeç</button>
+                    </div>
+                  } @else {
+                    <div class="tk-act">
+                      <button class="mini gold" (click)="startReply(t)">{{ t.reply ? 'Yanıtı düzenle' : 'Yanıtla' }}</button>
+                      @if (t.email) { <a class="mini" [href]="'mailto:' + t.email">E-posta ile</a> }
+                      <button class="mini" (click)="toggleTicket(t)">{{ t.status === 'closed' ? 'Yeniden aç' : 'Kapat' }}</button>
+                      <button class="mini danger" (click)="removeTicket(t)">Sil</button>
+                    </div>
+                  }
                 </div>
               } @empty { <div class="tr"><span class="muted">Henüz destek mesajı yok</span></div> }
             </div>
@@ -303,8 +315,14 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
     .tk-who { font-size:13px; }
     .tk-meta { display:flex; align-items:center; gap:8px; }
     .tk-msg { margin:6px 0 10px; font-size:13px; line-height:1.55; color:var(--ink,#fff8e7); white-space:pre-wrap; word-break:break-word; }
-    .tk-act { display:flex; gap:6px; flex-wrap:wrap; }
+    .tk-act { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
     .tk-act a.mini { text-decoration:none; }
+    .mini.gold { border-color:var(--gold,#d4af37); color:var(--gold-soft,#e9d9a0); }
+    .badge.cls { opacity:.7; }
+    .tk-reply { margin:2px 0 10px; padding:8px 12px; border-radius:10px; background:#14180f; border:1px solid #2f3a1c;
+      font-size:13px; line-height:1.5; color:#dfeccb; white-space:pre-wrap; word-break:break-word; }
+    .tk-reply-lbl { color:var(--gold-soft,#e9d9a0); font-weight:700; font-size:11px; margin-right:6px; }
+    .tk-ta { width:100%; min-height:70px; resize:vertical; margin:4px 0 8px; line-height:1.5; }
     @media(max-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} .tr,.tr.o,.tr.d,.tr.b{grid-template-columns:1fr 1fr; row-gap:4px} }
   `],
 })
@@ -333,6 +351,7 @@ export class AdminComponent {
   readonly blocked = signal<AdminBlocked[]>([]);
   readonly errors = signal<AdminError[]>([]); readonly system = signal<AdminSystem | null>(null);
   readonly tickets = signal<AdminTicket[]>([]); readonly ticketSum = signal<{ total: number; open: number } | null>(null);
+  readonly replyId = signal(0); replyText = '';
 
   readonly editId = signal(0); ePlan = ''; eExtra = 0; eRole = 'user';
 
@@ -388,6 +407,13 @@ export class AdminComponent {
   loadSupport(): void { this.wrap(this.api.support(), (r) => { this.tickets.set(r.tickets); this.ticketSum.set(r.summary); }); }
   toggleTicket(t: AdminTicket): void { this.wrap(this.api.toggleTicket(t.id), () => this.loadSupport()); }
   removeTicket(t: AdminTicket): void { if (confirm('Bu destek mesajı silinsin mi?')) this.wrap(this.api.deleteTicket(t.id), () => this.loadSupport()); }
+  startReply(t: AdminTicket): void { this.replyId.set(t.id); this.replyText = t.reply || ''; }
+  sendReply(t: AdminTicket): void {
+    const r = this.replyText.trim();
+    if (!r) { this.err.set('Yanıt boş olamaz'); return; }
+    this.wrap(this.api.replyTicket(t.id, r), () => { this.replyId.set(0); this.replyText = ''; this.loadSupport(); });
+  }
+  stLabel(s: string): string { return s === 'replied' ? 'yanıtlandı' : s === 'closed' ? 'kapalı' : 'açık'; }
 
   edit(u: AdminUser): void { this.editId.set(u.id); this.ePlan = u.plan; this.eExtra = u.imagesExtra; this.eRole = u.role || 'user'; }
   saveUser(u: AdminUser): void {
