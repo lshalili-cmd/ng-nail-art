@@ -32,10 +32,11 @@ const DESIGNS = [
 ];
 
 const prompt = (d) =>
-  `Professional nail art photography, close-up of one elegant female hand with a full manicure. ` +
-  `Design: ${d.desc}. ALL FIVE NAILS IDENTICAL — same shape, same length, same identical design on every nail, ` +
-  `uniform, symmetrical, neat and consistent. One natural human hand, exactly five fingers, correct anatomy. ` +
-  `Salon-quality, studio lighting, clean soft background, ultra-high detail, photorealistic, no text, no watermark.`;
+  `Product photography of a set of five press-on nail tips showing a nail art design, ` +
+  `arranged in a neat row from small to large on a clean flat surface, top view flat lay. ` +
+  `Design: ${d.desc}. All tips identical style, uniform and symmetrical. ` +
+  `NO hand, NO fingers, NO skin — only the nail tips on the surface. ` +
+  `Studio lighting, soft neutral background, ultra-high detail, photorealistic, no text, no watermark.`;
 
 function tryRequire(n) { try { return require(n); } catch { return null; } }
 

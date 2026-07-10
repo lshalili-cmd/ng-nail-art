@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
@@ -18,7 +18,8 @@ import { downloadImage, shareImage } from '../../core/share';
       @if (design(); as d) {
         <div class="detail card">
           <div class="hero" [style.background]="d.grad">
-            @if (d.img) { <img [src]="d.img" alt="" /> }
+            <!-- Önce STATİK galeri görseli; yoksa/404 ise çizime düş -->
+            <img [src]="heroSrc(d)" (error)="heroFailed.set(true)" alt="" />
             <button class="heart" (click)="toggleFav()" [attr.aria-pressed]="fav.has(d.id)">
               {{ fav.has(d.id) ? '❤️' : '🤍' }}
             </button>
@@ -98,6 +99,13 @@ export class DesignDetailComponent {
       ?? null,
   );
 
+  readonly heroFailed = signal<boolean>(false);
+  /** Statik galeri görseli varsa onu, yüklenemezse çizim önizlemesini kullan. */
+  heroSrc(d: Design): string {
+    if (d.photo && !this.heroFailed()) return d.photo;
+    return d.img ?? '';
+  }
+
   toggleFav(): void {
     const d = this.design();
     if (d) this.fav.toggle(d);
@@ -111,13 +119,15 @@ export class DesignDetailComponent {
   }
 
   download(d: Design): void {
-    if (d.img) downloadImage(d.img, (d.name || 'design') + '.png');
+    const src = this.heroSrc(d);
+    if (src) downloadImage(src, (d.name || 'design') + '.jpg');
   }
 
   async share(d: Design): Promise<void> {
-    if (!d.img) return;
-    const name = (d.name || 'design') + '.png';
-    const ok = await shareImage(d.img, name, d.name);
-    if (!ok) downloadImage(d.img, name);
+    const src = this.heroSrc(d);
+    if (!src) return;
+    const name = (d.name || 'design') + '.jpg';
+    const ok = await shareImage(src, name, d.name);
+    if (!ok) downloadImage(src, name);
   }
 }
