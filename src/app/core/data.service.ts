@@ -66,16 +66,13 @@ export class DataService {
     { id: 8, name: 'Red Chrome', artist: 'Bold Studio', badge: 'trending', grad: G.red, category: 'luxury',
       shapes: ['stiletto', 'coffin', 'almond'], tones: ['fair', 'wheat', 'tan', 'dark_brown'], undertones: ['warm', 'cool'],
       seasons: ['winter', 'fall'], colors: ['red', 'chrome', 'dark', 'bold'], popular: true, rating: 4.6 },
-    { id: 9, name: 'Silver Frost', artist: 'Ice Studio', badge: 'premium', grad: G.chrome, category: 'minimal',
-      shapes: ['square', 'squoval', 'oval'], tones: ['very_fair', 'fair'], undertones: ['cool'],
-      seasons: ['winter'], colors: ['silver', 'white', 'chrome', 'ice'], popular: false, rating: 4.2 },
   ];
 
   constructor() {
     // id → çizim deseni
     const patterns: Record<number, string> = {
       1: 'chrome', 2: 'ombre', 3: 'galaxy', 4: 'french', 5: 'marble',
-      6: 'line', 7: 'glossy', 8: 'chrome', 9: 'chrome',
+      6: 'line', 7: 'glossy', 8: 'chrome',
     };
     // Her tasarım için:
     //  - photo: STATİK katalog görseli (public/designs/design-<id>.jpg). Bir kez üretilir,
