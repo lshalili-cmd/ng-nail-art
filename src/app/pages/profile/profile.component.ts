@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
@@ -9,6 +9,8 @@ import { ImageQuotaService } from '../../core/image-quota.service';
 import { AuthService, validPassword } from '../../core/auth.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
 import { COUNTRIES } from '../../core/countries';
+
+interface MyTicket { id: number; message: string; reply: string; status: string; repliedAt: number; }
 
 @Component({
   selector: 'app-profile',
@@ -120,6 +122,7 @@ import { COUNTRIES } from '../../core/countries';
           <button class="row" (click)="go(m.key)">
             <span class="mi">{{ m.icon }}</span>
             <span class="mt">{{ i18n.t(m.key) }}</span>
+            @if (m.key === 'help' && supportUnread() > 0) { <span class="row-badge">{{ supportUnread() }}</span> }
             <span class="ch">›</span>
           </button>
         }
@@ -327,9 +330,13 @@ import { COUNTRIES } from '../../core/countries';
     .mi { font-size: 18px; }
     .mt { flex: 1; font-size: 14px; color: var(--ink); }
     .ch { color: var(--muted-2); font-size: 20px; }
+    .row-badge { min-width: 20px; height: 20px; line-height: 20px; padding: 0 6px; border-radius: 10px;
+      background: #d13a4a; color: #fff; font-size: 12px; font-weight: 800; text-align: center; margin-inline-start: auto; }
+    .row-badge + .ch { margin-inline-start: 8px; }
   `],
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
+  private supportPollId: ReturnType<typeof setInterval> | null = null;
   readonly i18n = inject(I18nService);
   readonly fav = inject(FavoritesService);
   readonly plan = inject(PlanService);
@@ -347,20 +354,38 @@ export class ProfileComponent implements OnInit {
   readonly supportBusy = signal<boolean>(false);
   readonly supportErr = signal<string | null>(null);
   readonly supportSent = signal<boolean>(false);
-  readonly myTickets = signal<{ id: number; message: string; reply: string; status: string }[]>([]);
+  readonly myTickets = signal<MyTicket[]>([]);
+  /** Kullanıcının henüz görmediği admin yanıtı sayısı (menüde rozet). */
+  readonly supportUnread = signal<number>(0);
+  private readonly SEEN_KEY = 'ngnail-sup-seen';
 
   openSupport(): void {
     this.supportMsg.set(''); this.supportEmail.set(this.auth.user()?.email ?? '');
     this.supportErr.set(null); this.supportSent.set(false); this.supportBusy.set(false);
     this.myTickets.set([]);
     this.supportOpen.set(true);
-    void this.loadMyTickets();
+    void this.loadMyTickets(true);   // açınca: yanıtları "görüldü" işaretle
   }
-  private async loadMyTickets(): Promise<void> {
-    if (!this.auth.loggedIn()) return;
+  private lastSeen(): number { try { return Number(localStorage.getItem(this.SEEN_KEY) || 0); } catch { return 0; } }
+  private markSeen(tickets: MyTicket[]): void {
+    const max = tickets.reduce((m, t) => Math.max(m, t.repliedAt || 0), 0);
+    try { if (max) localStorage.setItem(this.SEEN_KEY, String(max)); } catch { /* geç */ }
+    this.supportUnread.set(0);
+  }
+  private async loadMyTickets(markRead = false): Promise<void> {
+    if (!this.auth.loggedIn()) { this.supportUnread.set(0); return; }
     try {
-      const res = await firstValueFrom(this.http.get<{ success: boolean; tickets: { id: number; message: string; reply: string; status: string }[] }>('/api/support/mine').pipe(timeout(9000)));
-      if (res?.success) this.myTickets.set(res.tickets ?? []);
+      const res = await firstValueFrom(this.http.get<{ success: boolean; tickets: MyTicket[] }>('/api/support/mine').pipe(timeout(9000)));
+      if (res?.success) {
+        const tickets = res.tickets ?? [];
+        this.myTickets.set(tickets);
+        if (markRead) { this.markSeen(tickets); }
+        else {
+          const seen = this.lastSeen();
+          const unread = tickets.filter((t) => t.status === 'replied' && (t.repliedAt || 0) > seen).length;
+          this.supportUnread.set(unread);
+        }
+      }
     } catch { /* sessiz */ }
   }
   newSupportMsg(): void { this.supportSent.set(false); this.supportMsg.set(''); this.supportErr.set(null); }
@@ -507,7 +532,11 @@ export class ProfileComponent implements OnInit {
     // Hesap silme onay bağlantısı: /profile?delete=TOKEN
     const d = this.route.snapshot.queryParamMap.get('delete');
     if (d) void this.confirmDeleteFlow(d);
+    // Admin yanıtı rozeti: yükle + canlı tut (15 sn)
+    void this.loadMyTickets();
+    this.supportPollId = setInterval(() => { if (!this.supportOpen()) void this.loadMyTickets(); }, 15000);
   }
+  ngOnDestroy(): void { if (this.supportPollId) clearInterval(this.supportPollId); }
 
   stepTitle(): string {
     return { login: 'login', register: 'register', otp: 'auth_otp_title', forgot: 'auth_forgot', reset: 'auth_reset_title' }[this.authStep()];

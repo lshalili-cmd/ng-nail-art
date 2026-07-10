@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
@@ -48,7 +48,10 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
       <!-- Sekmeler -->
       <nav class="tabs">
         @for (t of tabs; track t.key) {
-          <button class="tab" [class.on]="tab() === t.key" (click)="go(t.key)">{{ t.label }}</button>
+          <button class="tab" [class.on]="tab() === t.key" (click)="go(t.key)">
+            {{ t.label }}
+            @if (t.key === 'support' && openTickets() > 0) { <span class="tab-badge">{{ openTickets() }}</span> }
+          </button>
         }
       </nav>
 
@@ -271,6 +274,8 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
     .tabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:10px; }
     .tab { flex:0 0 auto; padding:8px 14px; border-radius:20px; border:1px solid var(--line,#2c2418); background:#000; color:var(--muted,#b8ad97); font-size:13px; cursor:pointer; }
     .tab.on { border-color:var(--gold,#d4af37); color:var(--gold-soft,#e9d9a0); background:linear-gradient(180deg,#221c0c,#151109); }
+    .tab-badge { display:inline-block; min-width:18px; height:18px; line-height:18px; padding:0 5px; margin-inline-start:6px;
+      border-radius:9px; background:#d13a4a; color:#fff; font-size:11px; font-weight:800; text-align:center; }
     .banner { background:#3a1720; border:1px solid #6b2130; color:#f2b8c0; padding:10px 12px; border-radius:10px; margin-bottom:10px; font-size:13px; }
     .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
     .grid.three { grid-template-columns:repeat(3,1fr); }
@@ -326,9 +331,12 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
     @media(max-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} .tr,.tr.o,.tr.d,.tr.b{grid-template-columns:1fr 1fr; row-gap:4px} }
   `],
 })
-export class AdminComponent {
+export class AdminComponent implements OnDestroy {
   readonly auth = inject(AuthService);
   private readonly api = inject(AdminService);
+  /** Yanıtsız (açık) mesaj sayısı — sekme rozetinde gösterilir. */
+  readonly openTickets = computed(() => this.ticketSum()?.open ?? 0);
+  private pollId: ReturnType<typeof setInterval> | null = null;
 
   readonly tabs: { key: Tab; label: string }[] = [
     { key: 'panel', label: 'Genel' }, { key: 'support', label: '📩 Mesajlar' },
@@ -356,8 +364,16 @@ export class AdminComponent {
   readonly editId = signal(0); ePlan = ''; eExtra = 0; eRole = 'user';
 
   constructor() {
-    if (this.auth.token() && !this.auth.user()) { this.auth.loadMe().then(() => { if (this.isAdmin()) this.loadPanel(); }); }
-    else if (this.isAdmin()) this.loadPanel();
+    if (this.auth.token() && !this.auth.user()) { this.auth.loadMe().then(() => { if (this.isAdmin()) { this.loadPanel(); this.refreshCount(); } }); }
+    else if (this.isAdmin()) { this.loadPanel(); this.refreshCount(); }
+    // Yeni mesaj rozetini canlı tutmak için periyodik yenileme (15 sn)
+    this.pollId = setInterval(() => { if (this.isAdmin()) this.refreshCount(); }, 15000);
+  }
+  ngOnDestroy(): void { if (this.pollId) clearInterval(this.pollId); }
+
+  /** Sadece açık mesaj sayısını (rozet için) sessizce günceller. */
+  private refreshCount(): void {
+    this.api.support().then((r) => { this.ticketSum.set(r.summary); }).catch(() => { /* sessiz */ });
   }
 
   async login(): Promise<void> {
