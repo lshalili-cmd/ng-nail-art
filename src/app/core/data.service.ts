@@ -89,21 +89,6 @@ export class DataService {
       d.img = renderNailThumb(d.colors, d.pattern);
     }
 
-    // nail-art projesinden gelen SHOWCASE görselleri → galeriye ek tasarımlar.
-    // Görseller public/images/showcase_*.png içinde.
-    const grads = [G.nude, G.rose, G.gold, G.emerald, G.chrome, G.pearl, G.galaxy];
-    let nid = 100;
-    const shapeSc = ['almond', 'coffin', 'oval', 'round', 'square', 'squoval', 'stiletto'];
-    shapeSc.forEach((sh, i) => {
-      const d: Design = {
-        id: nid++, name: sh.charAt(0).toUpperCase() + sh.slice(1), artist: 'Showcase',
-        grad: grads[i % grads.length], category: 'trendy', photo: `images/showcase_${sh}.png`, pattern: 'glossy',
-        shapes: [sh], tones: ['fair', 'wheat', 'tan'], undertones: ['neutral', 'warm'],
-        seasons: ['all'], colors: ['nude', 'gold'], popular: false, rating: 4.6,
-      };
-      d.img = renderNailThumb(d.colors, d.pattern);
-      this.all.push(d);
-    });
   }
 
   readonly trending: Design[] = this.all.filter((d) => d.badge === 'trending' || d.popular).slice(0, 5);
