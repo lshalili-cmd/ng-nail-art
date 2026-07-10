@@ -12,6 +12,7 @@ import { AnalysisStore } from '../../core/analysis-store';
 import { recommend, ScoredDesign } from '../../core/recommendation';
 import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
 import { NailSegService } from '../../core/nail-seg.service';
+import { ImageQuotaService } from '../../core/image-quota.service';
 
 type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
 type CaptureMode = 'full' | 'closeup';
@@ -51,11 +52,21 @@ type CaptureMode = 'full' | 'closeup';
       <!-- Aksiyonlar -->
       @switch (stage()) {
         @case ('idle') {
+          @if (quotaBlocked()) {
+            <div class="banner quota">
+              ⚠️ {{ i18n.t('quota_empty') }}
+              <div class="qacts">
+                <button class="btn-primary" (click)="goShop()">⬆️ {{ i18n.t('quota_upgrade') }}</button>
+                <button class="btn-ghost" (click)="goShop()">➕ {{ i18n.t('quota_buy_pack') }}</button>
+              </div>
+            </div>
+          }
           <div class="actions">
             <button class="btn-primary" (click)="startFull()">📸 {{ i18n.t('cam_start') }}</button>
-            <button class="btn-ghost" (click)="mode.set('full'); fileInput.click()">🖼️ {{ i18n.t('upload') }}</button>
+            <button class="btn-ghost" (click)="startUpload(fileInput)">🖼️ {{ i18n.t('upload') }}</button>
           </div>
           <p class="sub">{{ i18n.t('scan_sub') }}</p>
+          <p class="hint2">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }}</p>
           <p class="tip">💡 {{ i18n.t('capture_tip') }}</p>
         }
         @case ('camera') {
@@ -155,6 +166,10 @@ type CaptureMode = 'full' | 'closeup';
       background: rgba(212,175,55,0.08); border: 1px dashed rgba(212,175,55,0.35); border-radius: 12px; padding: 10px 12px; line-height: 1.5; }
     .banner { margin: 12px 0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
     .banner.err { background: rgba(178,58,58,0.14); border: 1px solid rgba(178,58,58,0.4); color: #f0b8b8; }
+    .banner.quota { background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.45); color: var(--gold-soft); }
+    .qacts { display: flex; gap: 8px; margin-top: 10px; }
+    .qacts > * { flex: 1; }
+    .hint2 { text-align: center; margin: 8px 0 0; font-size: 12px; color: var(--muted-2); }
     .attrs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
     .attr { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
     .swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); flex: 0 0 auto; }
@@ -183,6 +198,17 @@ export class ScanComponent implements OnDestroy {
   private readonly seg = inject(NailSegService);
   private readonly store = inject(AnalysisStore);
   private readonly router = inject(Router);
+  readonly quota = inject(ImageQuotaService);
+
+  /** Hak bitti uyarısı — tarama (el analizi + AI önerisi = 1 hak) başlatılamaz. */
+  readonly quotaBlocked = signal<boolean>(false);
+  /** Hak var mı? Yoksa uyarı göster ve engelle. (Tüketim üretimde olur, burada sadece kapı.) */
+  private ensureQuota(): boolean {
+    if (this.quota.remaining() < 1) { this.quotaBlocked.set(true); return false; }
+    this.quotaBlocked.set(false);
+    return true;
+  }
+  goShop(): void { void this.router.navigate(['/shop']); }
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly frame = viewChild.required<ElementRef<HTMLCanvasElement>>('frame');
@@ -241,18 +267,28 @@ export class ScanComponent implements OnDestroy {
 
   /** Tam el taraması için kamerayı aç. */
   startFull(): void {
+    if (!this.ensureQuota()) return;
     this.mode.set('full');
     void this.startCamera();
   }
 
+  /** Tam el taraması için dosya yükle (kapı: hak kontrolü). */
+  startUpload(input: HTMLInputElement): void {
+    if (!this.ensureQuota()) return;
+    this.mode.set('full');
+    input.click();
+  }
+
   /** Tek tırnak yakın çekimi için kamerayı aç. */
   startCloseup(): void {
+    if (!this.ensureQuota()) return;
     this.mode.set('closeup');
     void this.startCamera();
   }
 
   /** Yakın çekim için dosya seç. */
   pickCloseupFile(): void {
+    if (!this.ensureQuota()) return;
     this.mode.set('closeup');
     this.closeupInput().nativeElement.click();
   }

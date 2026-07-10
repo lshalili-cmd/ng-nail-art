@@ -2,8 +2,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { PlanService } from './plan.service';
 
 /** Plan başına aylık görsel üretim hakkı (financial-config.json ile uyumlu). */
+// BİRLEŞİK AI KULLANIM HAKKI (görsel üretimi = 1 hak). Tarama+AI önerisi 1 hak,
+// AI Stüdyo prompt+tasarım 1 hak — hepsi bu havuzdan. Bitince tüm AI durur.
 const PLAN_MONTHLY: Record<string, number> = {
-  free: 100,   // TEST/MVP: bol hak (yayına çıkarken tekrar 1'e düşürülebilir)
+  free: 3,     // TEST — "hak bitince dur" görülebilsin diye (prod'da 1)
   monthly: 30,
   yearly: 30,
   pro: 100,
