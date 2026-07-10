@@ -365,8 +365,12 @@ export class StudioComponent implements OnInit {
     const d = this.design();
     const color = d ? colorToHex(d.colors[0] ?? 'gold') : '#d4af37';
     const pattern = d ? this.patternFromSpec(d) : 'glossy';
-    // Üretilen tasarım görselini de taşı → AR onu canlı tırnağa bindirir.
-    this.tryon.set({ imageUrl: this.imageSrc(), color, pattern });
+    // AR el fotoğrafı DEĞİL, tasarımın DÜZ DOKU halini tırnağa bindirir.
+    const desc = d
+      ? [(d.colors || []).join(' '), d.style, d.finish, (d.patterns || []).join(' '), (d.effects || []).join(' ')]
+          .filter(Boolean).join(' ').trim()
+      : '';
+    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern });
     void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
   }
 

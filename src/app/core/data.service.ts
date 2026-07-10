@@ -83,7 +83,8 @@ export class DataService {
     //  - img: istemci tarafı çizilen tırnak önizlemesi (statik dosya gelene kadar yedek).
     for (const d of this.all) {
       d.pattern = patterns[d.id] ?? 'glossy';
-      d.photo = `designs/design-${d.id}.jpg`;
+      // Statik galeri görseli VARSA kullanılır; yoksa (dosya yoksa) design-card çizime düşer.
+      // 404 konsol gürültüsünü önlemek için photo'yu yalnızca gerçekten dosya koyunca aç.
       d.img = renderNailThumb(d.colors, d.pattern);
     }
   }
