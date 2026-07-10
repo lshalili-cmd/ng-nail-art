@@ -6,6 +6,7 @@ import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
 import { downloadImage, shareImage } from '../../core/share';
+import { TryonStore } from '../../core/tryon-store';
 
 interface Swatch { name: string; hex: string; }
 
@@ -86,6 +87,11 @@ export class ArComponent implements OnDestroy {
   readonly i18n = inject(I18nService);
   private readonly hands = inject(HandAnalysisService);
   private readonly route = inject(ActivatedRoute);
+  private readonly tryon = inject(TryonStore);
+
+  /** Üretilen tasarım görseli — tırnağa canlı bindirmek için. */
+  private designImg: HTMLImageElement | null = null;
+  readonly hasDesign = signal<boolean>(false);
 
   private readonly video = viewChild.required<ElementRef<HTMLVideoElement>>('video');
   private readonly overlay = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
@@ -104,6 +110,22 @@ export class ArComponent implements OnDestroy {
     if (c) this.color.set(c);
     const p = qp.get('pattern');
     if (p) this.pattern.set(p);
+    // Üretilen tasarım görselini yükle → canlı tırnağa bindirilecek
+    const t = this.tryon.current();
+    if (t?.imageUrl) {
+      if (t.color) this.color.set(t.color);
+      if (t.pattern) this.pattern.set(t.pattern);
+      this.loadDesignImage(t.imageUrl);
+    }
+  }
+
+  /** Tasarım görselini yükler. crossOrigin KOYMUYORUZ: canlı çizim her URL'de
+   *  (data: veya çapraz-köken) çalışsın diye. (Fotoğraf çekimi capture()'da korunuyor.) */
+  private loadDesignImage(url: string): void {
+    const img = new Image();
+    img.onload = () => { this.designImg = img; this.hasDesign.set(true); };
+    img.onerror = () => { this.designImg = null; this.hasDesign.set(false); };
+    img.src = url;
   }
 
   readonly swatches: Swatch[] = [
@@ -223,6 +245,25 @@ export class ArComponent implements OnDestroy {
         ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
         ctx.clip();
 
+        // ÜRETİLEN TASARIM GÖRSELİ → tırnağın üstüne canlı bindir
+        if (this.designImg) {
+          const img = this.designImg;
+          const s = Math.min(img.width, img.height) * 0.42;      // merkezden kare örnek
+          const sx = (img.width - s) / 2;
+          const sy = (img.height - s) * 0.4;                     // hafif yukarı (tırnak bölgesi)
+          ctx.globalAlpha = 1;
+          ctx.drawImage(img, sx, sy, s, s, -nl / 2, -nw / 2, nl, nw);
+          if (!matte) {                                          // ıslak parlaklık
+            ctx.globalAlpha = 0.32;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath();
+            ctx.ellipse(nl * 0.12, -nw * 0.16, nl * 0.18, nw * 0.16, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+          continue;                                              // desen aksanlarını atla
+        }
+
         if (pattern === 'french') {
           ctx.globalAlpha = 0.95;
           ctx.fillStyle = '#f5efe2';
@@ -271,7 +312,14 @@ export class ArComponent implements OnDestroy {
     // Gerçek yön (ayna yok)
     ctx.drawImage(v, 0, 0, out.width, out.height);
     ctx.drawImage(c, 0, 0, out.width, out.height);
-    this.photo.set(out.toDataURL('image/png'));
+    try {
+      this.photo.set(out.toDataURL('image/png'));
+    } catch (e) {
+      // Çapraz-köken tasarım görseli tuvali "kirletmiş" olabilir → fotoğraf okunamaz.
+      // Canlı önizleme çalışmaya devam eder; sadece kaydetme/çekim engellenir.
+      console.warn('[AR] fotoğraf çekilemedi (çapraz-köken görsel):', e);
+      this.error.set(this.i18n.t('err_camera'));
+    }
     this.stop();
   }
 
