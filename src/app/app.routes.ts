@@ -46,5 +46,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent),
     title: 'Yönetici — Miracle Nail Art AI',
   },
+  {
+    path: 'legal',
+    loadComponent: () => import('./pages/legal/legal.component').then((m) => m.LegalComponent),
+    title: 'Yasal — Miracle Nail Art AI',
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -403,6 +403,9 @@ Object.assign(EN, {
   sup_title: 'Help & Support', sup_sub: 'Describe your issue and we\'ll get back to you.', sup_ph: 'Write your problem here…',
   sup_email_ph: 'Email (for our reply)', sup_send: 'Send', sup_sent: 'Your message was sent — thank you!',
   sup_mine: 'Your messages', sup_answer: 'Reply', sup_waiting: 'Awaiting reply', sup_new: 'New message',
+  agree_text: 'I have read and accept the Privacy Policy, KVKK Notice and Terms of Use.',
+  agree_required: 'Please accept the terms to continue.',
+  leg_privacy: 'Privacy Policy', leg_kvkk: 'KVKK Notice', leg_terms: 'Terms of Use', legal: 'Privacy & Legal',
 });
 Object.assign(TR, {
   auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
@@ -418,6 +421,9 @@ Object.assign(TR, {
   sup_title: 'Yardım & Destek', sup_sub: 'Sorununu yaz, sana dönelim.', sup_ph: 'Sorununu buraya yaz…',
   sup_email_ph: 'E-posta (yanıt için)', sup_send: 'Gönder', sup_sent: 'Mesajın iletildi — teşekkürler!',
   sup_mine: 'Mesajların', sup_answer: 'Yanıt', sup_waiting: 'Yanıt bekleniyor', sup_new: 'Yeni mesaj',
+  agree_text: 'Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları\'nı okudum, kabul ediyorum.',
+  agree_required: 'Devam etmek için şartları kabul etmelisiniz.',
+  leg_privacy: 'Gizlilik Politikası', leg_kvkk: 'KVKK Aydınlatma', leg_terms: 'Kullanım Şartları', legal: 'Gizlilik ve Yasal',
 });
 Object.assign(RU, {
   auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
@@ -433,6 +439,9 @@ Object.assign(RU, {
   sup_title: 'Помощь и поддержка', sup_sub: 'Опишите проблему — мы ответим.', sup_ph: 'Опишите проблему здесь…',
   sup_email_ph: 'Email (для ответа)', sup_send: 'Отправить', sup_sent: 'Сообщение отправлено — спасибо!',
   sup_mine: 'Ваши сообщения', sup_answer: 'Ответ', sup_waiting: 'Ожидает ответа', sup_new: 'Новое сообщение',
+  agree_text: 'Я прочитал(а) и принимаю Политику конфиденциальности, Уведомление KVKK и Условия использования.',
+  agree_required: 'Чтобы продолжить, примите условия.',
+  leg_privacy: 'Политика конфиденциальности', leg_kvkk: 'Уведомление KVKK', leg_terms: 'Условия использования', legal: 'Конфиденциальность и право',
 });
 Object.assign(AR, {
   auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
@@ -448,6 +457,9 @@ Object.assign(AR, {
   sup_title: 'المساعدة والدعم', sup_sub: 'اكتبي مشكلتك وسنعود إليك.', sup_ph: 'اكتبي مشكلتك هنا…',
   sup_email_ph: 'البريد (للرد)', sup_send: 'إرسال', sup_sent: 'تم إرسال رسالتك — شكراً!',
   sup_mine: 'رسائلك', sup_answer: 'الرد', sup_waiting: 'بانتظار الرد', sup_new: 'رسالة جديدة',
+  agree_text: 'لقد قرأت وأوافق على سياسة الخصوصية وإشعار KVKK وشروط الاستخدام.',
+  agree_required: 'يرجى قبول الشروط للمتابعة.',
+  leg_privacy: 'سياسة الخصوصية', leg_kvkk: 'إشعار KVKK', leg_terms: 'شروط الاستخدام', legal: 'الخصوصية والقانون',
 });
 
 // ── Ayarlar: şifre değiştir / hesabı sil ──

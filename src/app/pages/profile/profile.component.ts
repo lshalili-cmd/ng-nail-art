@@ -56,6 +56,15 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
               </div>
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
+              <label class="au-agree">
+                <input type="checkbox" [checked]="agree()" (change)="agree.set($any($event.target).checked)" />
+                <span>{{ i18n.t('agree_text') }}</span>
+              </label>
+              <div class="au-links">
+                <a href="/legal?doc=privacy" target="_blank" rel="noopener">{{ i18n.t('leg_privacy') }}</a> ·
+                <a href="/legal?doc=kvkk" target="_blank" rel="noopener">{{ i18n.t('leg_kvkk') }}</a> ·
+                <a href="/legal?doc=terms" target="_blank" rel="noopener">{{ i18n.t('leg_terms') }}</a>
+              </div>
             }
             @case ('otp') {
               <p class="au-note">{{ i18n.t('auth_otp_sent') }} {{ maskedPhone() }}</p>
@@ -278,6 +287,10 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
     .au-row2 .au-in { margin-bottom: 10px; }
     .au-hint { margin: 2px 0 6px; font-size: 11.5px; color: var(--muted-2); }
     .au-hint.ok { color: var(--gold-soft); }
+    .au-agree { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 4px; font-size: 12px; color: var(--muted); line-height: 1.45; cursor: pointer; }
+    .au-agree input { margin-top: 2px; width: 16px; height: 16px; flex: 0 0 auto; accent-color: var(--gold); }
+    .au-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; font-size: 11.5px; }
+    .au-links a { color: var(--gold-soft); text-decoration: underline; }
     .au-note { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.5; text-align: center; }
     .au-otp { text-align: center; letter-spacing: 6px; font-size: 20px; font-weight: 700; }
     .au-forgot { display: block; margin: 2px 0 4px auto; background: transparent; color: var(--gold-soft); font-size: 12px; padding: 4px; }
@@ -411,6 +424,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       case 'my_fav': this.favOpen.set(true); break;
       case 'settings': this.openSettings(); break;
       case 'help': this.openSupport(); break;
+      case 'legal': void this.router.navigate(['/legal']); break;
       case 'logout': if (this.auth.loggedIn()) this.auth.logout(); else this.openAuth('login'); break;
     }
   }
@@ -520,6 +534,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return [...top, ...rest];
   })();
   readonly countryDial = signal<string>('+90');   // varsayılan Türkiye
+  readonly agree = signal<boolean>(false);         // kayıtta yasal onay
   readonly password = signal<string>('');
   readonly otp = signal<string>('');
   readonly demoInfo = signal<string | null>(null);
@@ -563,6 +578,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   closeAuth(): void { this.authOpen.set(false); this.clearAuth(); }
   private clearAuth(): void {
     this.firstName.set(''); this.lastName.set(''); this.phone.set(''); this.password.set(''); this.otp.set('');
+    this.agree.set(false);
     this.authErr.set(null); this.demoInfo.set(null);
   }
 
@@ -577,6 +593,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     } else if (step === 'register') {
       if (!this.firstName().trim() || !this.lastName().trim() || !email || !this.phone().trim()) { this.authErr.set(this.i18n.t('auth_fill_all')); return; }
       if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
+      if (!this.agree()) { this.authErr.set(this.i18n.t('agree_required')); return; }
       // Ülke kodu + yerel numara (baştaki 0'lar atılır) → tam uluslararası numara
       const localNum = this.phone().replace(/\D/g, '').replace(/^0+/, '');
       await this.run(() => this.auth.register({
@@ -654,6 +671,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     { icon: '💎', key: 'subscription' },
     { icon: '⚙️', key: 'settings' },
     { icon: '❓', key: 'help' },
+    { icon: '📄', key: 'legal' },
     { icon: '🚪', key: 'logout' },
   ];
 }
