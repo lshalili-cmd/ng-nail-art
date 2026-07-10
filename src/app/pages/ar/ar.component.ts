@@ -245,16 +245,21 @@ export class ArComponent implements OnDestroy {
         ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
         ctx.clip();
 
-        // ÜRETİLEN TASARIM GÖRSELİ → tırnağın üstüne canlı bindir
+        // ÜRETİLEN TASARIM GÖRSELİ → tırnağa BİRE BİR bindir (tam tasarım, kırpmadan)
         if (this.designImg) {
           const img = this.designImg;
-          const s = Math.min(img.width, img.height) * 0.78;      // görselin çoğunu kullan (üstten tırnak)
+          // Görselin merkezindeki kareyi al (üstten tek tırnak, ortada)
+          const s = Math.min(img.width, img.height) * 0.96;
           const sx = (img.width - s) / 2;
-          const sy = (img.height - s) / 2;                       // ortadan (tek tırnak merkezde)
+          const sy = (img.height - s) / 2;
           ctx.globalAlpha = 1;
-          ctx.drawImage(img, sx, sy, s, s, -nl / 2, -nw / 2, nl, nw);
+          // Görselin uzun eksenini tırnağın uzun eksenine hizala (90° döndür) ve tırnağı DOLDUR.
+          ctx.save();
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(img, sx, sy, s, s, -nw / 2, -nl / 2, nw, nl);
+          ctx.restore();
           if (!matte) {                                          // ıslak parlaklık
-            ctx.globalAlpha = 0.32;
+            ctx.globalAlpha = 0.30;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
             ctx.beginPath();
             ctx.ellipse(nl * 0.12, -nw * 0.16, nl * 0.18, nw * 0.16, 0, 0, Math.PI * 2);
