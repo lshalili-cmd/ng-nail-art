@@ -6,6 +6,7 @@ import { DataService, Design } from '../../core/data.service';
 import { FavoritesService } from '../../core/favorites.service';
 import { colorToHex } from '../../core/nail-art';
 import { downloadImage, shareImage } from '../../core/share';
+import { TryonStore } from '../../core/tryon-store';
 
 @Component({
   selector: 'app-design-detail',
@@ -90,6 +91,7 @@ export class DesignDetailComponent {
   private readonly data = inject(DataService);
   readonly fav = inject(FavoritesService);
   readonly i18n = inject(I18nService);
+  private readonly tryon = inject(TryonStore);
 
   private readonly id = Number(this.route.snapshot.paramMap.get('id'));
 
@@ -111,11 +113,12 @@ export class DesignDetailComponent {
     if (d) this.fav.toggle(d);
   }
 
-  /** Tasarımın rengini/desenini AR'a taşıyarak dene. */
+  /** GERÇEK galeri görselini AR'a taşıyarak dene (prosedürel şablon değil). */
   tryAr(d: Design): void {
-    void this.router.navigate(['/ar'], {
-      queryParams: { color: colorToHex(d.colors[0] ?? 'gold'), pattern: d.pattern ?? 'glossy' },
-    });
+    const color = colorToHex(d.colors[0] ?? 'gold');
+    const pattern = d.pattern ?? 'glossy';
+    this.tryon.set({ imageUrl: this.heroSrc(d), color, pattern });
+    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
   }
 
   download(d: Design): void {

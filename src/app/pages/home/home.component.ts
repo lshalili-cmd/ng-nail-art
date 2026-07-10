@@ -37,17 +37,10 @@ import { recommend } from '../../core/recommendation';
         }
       </div>
 
-      <!-- Seasonal banner -->
-      <section class="banner">
-        <p class="tag">☀️ {{ i18n.t('summer') }}</p>
-        <h3>{{ i18n.t('summer_sub') }}</h3>
-        <a class="section-link" routerLink="/explore">{{ i18n.t('see_all') }} →</a>
-      </section>
-
       <!-- AI picks -->
       <div class="section-head">
         <h2 class="section-title">💎 {{ personalized() ? i18n.t('for_you') : i18n.t('ai_picks') }}</h2>
-        <a class="section-link" routerLink="/scan">{{ personalized() ? i18n.t('see_all') : i18n.t('btn_scan') }}</a>
+        <a class="section-link" routerLink="/explore">{{ i18n.t('see_all') }}</a>
       </div>
       <div class="rail">
         @for (m of aiList(); track m.design.id) {
