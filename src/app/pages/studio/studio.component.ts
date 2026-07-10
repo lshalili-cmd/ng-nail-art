@@ -124,8 +124,7 @@ import { TryonStore } from '../../core/tryon-store';
             }
 
             <div class="actions">
-              <button class="btn-primary" (click)="genImage()" [disabled]="imgLoading()">🖼️ {{ i18n.t('studio_gen_image') }}</button>
-              <button class="btn-ghost" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
+              <button class="btn-primary" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
               <button class="btn-ghost" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
             </div>
           </div>
