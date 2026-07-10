@@ -6,6 +6,7 @@ import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { AuthService, validPassword } from '../../core/auth.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
+import { COUNTRIES } from '../../core/countries';
 
 @Component({
   selector: 'app-profile',
@@ -41,7 +42,14 @@ import { DesignCardComponent } from '../../shared/design-card.component';
                 <input class="au-in" [value]="lastName()" (input)="lastName.set($any($event.target).value)" [placeholder]="i18n.t('auth_last')" />
               </div>
               <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
-              <input class="au-in" type="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" autocomplete="tel" />
+              <div class="au-phone">
+                <select class="au-in au-cc" [value]="countryDial()" (change)="countryDial.set($any($event.target).value)">
+                  @for (c of countries; track c.iso) {
+                    <option [value]="c.dial">{{ c.flag }} {{ c.name }} ({{ c.dial }})</option>
+                  }
+                </select>
+                <input class="au-in au-ph" type="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" [placeholder]="i18n.t('auth_phone')" autocomplete="tel" />
+              </div>
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
             }
@@ -196,6 +204,9 @@ import { DesignCardComponent } from '../../shared/design-card.component';
     .set-opt .ch { margin-inline-start: auto; color: var(--muted-2); font-size: 20px; }
     .set-danger { background: linear-gradient(135deg, #b23a3a, #7a1f1f); color: #fff; }
     .au-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .au-phone { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; }
+    .au-cc { min-width: 0; }
+    .au-ph { min-width: 0; }
     .au-row2 .au-in { margin-bottom: 10px; }
     .au-hint { margin: 2px 0 6px; font-size: 11.5px; color: var(--muted-2); }
     .au-hint.ok { color: var(--gold-soft); }
@@ -347,6 +358,8 @@ export class ProfileComponent implements OnInit {
   readonly lastName = signal<string>('');
   readonly email = signal<string>('');
   readonly phone = signal<string>('');
+  readonly countries = COUNTRIES;
+  readonly countryDial = signal<string>('+90');   // varsayılan Türkiye
   readonly password = signal<string>('');
   readonly otp = signal<string>('');
   readonly demoInfo = signal<string | null>(null);
@@ -404,9 +417,11 @@ export class ProfileComponent implements OnInit {
     } else if (step === 'register') {
       if (!this.firstName().trim() || !this.lastName().trim() || !email || !this.phone().trim()) { this.authErr.set(this.i18n.t('auth_fill_all')); return; }
       if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
+      // Ülke kodu + yerel numara (baştaki 0'lar atılır) → tam uluslararası numara
+      const localNum = this.phone().replace(/\D/g, '').replace(/^0+/, '');
       await this.run(() => this.auth.register({
         firstName: this.firstName().trim(), lastName: this.lastName().trim(), email,
-        phone: this.phone().trim(), password: this.password(),
+        phone: this.countryDial() + localNum, password: this.password(),
       }));
     } else if (step === 'otp') {
       if (this.otp().trim().length < 4) { this.authErr.set(this.i18n.t('auth_fill')); return; }
