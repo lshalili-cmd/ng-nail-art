@@ -102,7 +102,7 @@ type CaptureMode = 'full' | 'closeup';
           <div class="shapes">
             @for (s of shapes; track s.key) {
               <button class="shape" [class.on]="shape() === s.key" (click)="shape.set(s.key)">
-                <span class="se">{{ s.emoji }}</span>
+                <img class="si" [src]="s.img" (error)="$any($event.target).style.display='none'" alt="" />
                 <span class="sl">{{ i18n.t('shp_' + s.key) }}</span>
               </button>
             }
@@ -170,6 +170,7 @@ type CaptureMode = 'full' | 'closeup';
       border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); }
     .shape.on { background: rgba(212,175,55,0.16); border-color: rgba(212,175,55,0.5); color: var(--gold-soft); }
     .se { font-size: 22px; }
+    .si { width: 42px; height: 42px; object-fit: contain; border-radius: 8px; }
     .sl { font-size: 10.5px; font-weight: 600; }
     .wide { width: 100%; margin-top: 12px; }
   `],
@@ -197,9 +198,13 @@ export class ScanComponent implements OnDestroy {
   private stream: MediaStream | null = null;
 
   readonly shapes = [
-    { key: 'oval', emoji: '🥚' }, { key: 'almond', emoji: '💧' }, { key: 'square', emoji: '⬛' },
-    { key: 'squoval', emoji: '🔲' }, { key: 'coffin', emoji: '⚰️' }, { key: 'stiletto', emoji: '🗡️' },
-    { key: 'round', emoji: '⚪' },
+    { key: 'oval', emoji: '🥚', img: 'images/shape_oval1.png' },
+    { key: 'almond', emoji: '💧', img: 'images/shape_almond1.png' },
+    { key: 'square', emoji: '⬛', img: 'images/shape_square1.png' },
+    { key: 'squoval', emoji: '🔲', img: 'images/shape_squoval1.png' },
+    { key: 'coffin', emoji: '⚰️', img: 'images/shape_coffin1.png' },
+    { key: 'stiletto', emoji: '🗡️', img: 'images/shape_stiletto1.png' },
+    { key: 'round', emoji: '⚪', img: 'images/shape_round1.png' },
   ];
 
   /** Analiz + seçili şekle göre gerçek öneriler (yoksa null). */

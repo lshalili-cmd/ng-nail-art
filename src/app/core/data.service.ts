@@ -85,9 +85,39 @@ export class DataService {
       d.pattern = patterns[d.id] ?? 'glossy';
       // GALERİ: statik görsel (public/designs/design-<id>.jpg) — kendi nail art görsellerin.
       // Dosya yoksa design-card otomatik çizime düşer.
-      d.photo = `designs/design-${d.id}.jpg`;
+      d.photo = d.photo ?? `designs/design-${d.id}.jpg`;
       d.img = renderNailThumb(d.colors, d.pattern);
     }
+
+    // nail-art projesinden gelen SHOWCASE görselleri → galeriye ek tasarımlar.
+    // Görseller public/images/showcase_*.png içinde.
+    const grads = [G.nude, G.rose, G.gold, G.emerald, G.chrome, G.pearl, G.galaxy];
+    let nid = 100;
+    const shapeSc = ['almond', 'coffin', 'oval', 'round', 'square', 'squoval', 'stiletto'];
+    shapeSc.forEach((sh, i) => {
+      const d: Design = {
+        id: nid++, name: sh.charAt(0).toUpperCase() + sh.slice(1), artist: 'Showcase',
+        grad: grads[i % grads.length], category: 'trendy', photo: `images/showcase_${sh}.png`, pattern: 'glossy',
+        shapes: [sh], tones: ['fair', 'wheat', 'tan'], undertones: ['neutral', 'warm'],
+        seasons: ['all'], colors: ['nude', 'gold'], popular: false, rating: 4.6,
+      };
+      d.img = renderNailThumb(d.colors, d.pattern);
+      this.all.push(d);
+    });
+    const seasonSc: [string, string[]][] = [
+      ['spring', ['pink', 'pastel']], ['summer', ['coral', 'bright']],
+      ['fall', ['brown', 'gold']], ['winter', ['blue', 'silver']],
+    ];
+    seasonSc.forEach(([se, cols], i) => {
+      const d: Design = {
+        id: nid++, name: se.charAt(0).toUpperCase() + se.slice(1) + ' Collection', artist: 'Seasonal',
+        grad: grads[(i + 2) % grads.length], category: 'trendy', photo: `images/showcase_${se}.png`, pattern: 'glossy',
+        shapes: ['almond', 'oval', 'coffin'], tones: ['fair', 'wheat'], undertones: ['neutral'],
+        seasons: [se], colors: cols, popular: false, rating: 4.5,
+      };
+      d.img = renderNailThumb(d.colors, d.pattern);
+      this.all.push(d);
+    });
   }
 
   readonly trending: Design[] = this.all.filter((d) => d.badge === 'trending' || d.popular).slice(0, 5);
