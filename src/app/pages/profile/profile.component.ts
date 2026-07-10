@@ -358,7 +358,13 @@ export class ProfileComponent implements OnInit {
   readonly lastName = signal<string>('');
   readonly email = signal<string>('');
   readonly phone = signal<string>('');
-  readonly countries = COUNTRIES;
+  // Türkiye + Azerbaycan üstte sabit, geri kalan alfabetik
+  readonly countries = (() => {
+    const pin = ['TR', 'AZ'];
+    const top = COUNTRIES.filter((c) => pin.includes(c.iso)).sort((a, b) => pin.indexOf(a.iso) - pin.indexOf(b.iso));
+    const rest = COUNTRIES.filter((c) => !pin.includes(c.iso)).sort((a, b) => a.name.localeCompare(b.name));
+    return [...top, ...rest];
+  })();
   readonly countryDial = signal<string>('+90');   // varsayılan Türkiye
   readonly password = signal<string>('');
   readonly otp = signal<string>('');
