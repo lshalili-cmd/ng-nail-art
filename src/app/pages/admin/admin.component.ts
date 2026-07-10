@@ -331,9 +331,9 @@ export class AdminComponent {
   private readonly api = inject(AdminService);
 
   readonly tabs: { key: Tab; label: string }[] = [
-    { key: 'panel', label: 'Genel' }, { key: 'users', label: 'Kullanıcılar' },
-    { key: 'orders', label: 'Siparişler' }, { key: 'designs', label: 'Tasarımlar' },
-    { key: 'blocked', label: 'Engeller' }, { key: 'support', label: 'Destek' }, { key: 'system', label: 'Sistem' },
+    { key: 'panel', label: 'Genel' }, { key: 'support', label: '📩 Mesajlar' },
+    { key: 'users', label: 'Kullanıcılar' }, { key: 'designs', label: 'Tasarımlar' },
+    { key: 'blocked', label: 'Engeller' }, { key: 'system', label: 'Sistem' },
   ];
 
   readonly tab = signal<Tab>('panel');
