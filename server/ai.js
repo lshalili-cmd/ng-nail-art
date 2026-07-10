@@ -142,12 +142,14 @@ async function generateImage(input, imgDir) {
   const { prompt, style, shape, colors, finish, tier } = input;
   // Anahtar yoksa hata verme — ÜCRETSİZ Pollinations'a düşülecek (aşağıdaki son 'else').
   const colorStr = (colors && colors.length) ? colors.join(', ') : '';
+  // ÜSTTEN ÇEKİM TEK TIRNAK — hem stüdyo önizlemesi hem AR bindirmesi için ideal:
+  // elsiz/parmaksız, tasarım kareyi doldurur; AR bunu tırnağa temiz bindirir.
   const artPrompt = [
-    `Professional nail art photography, close-up of a single elegant female hand with perfectly manicured ${shape || 'almond'}-shaped nails.`,
+    `Nail art design, top-down macro close-up of a single ${shape || 'almond'}-shaped nail filling the entire frame.`,
     `Design: ${(prompt || '').trim()}.`,
     colorStr ? `Colors: ${colorStr}.` : '',
     `Finish: ${finish || 'glossy'}. Style: ${style || 'luxury'}, salon-quality.`,
-    `Clean soft background, studio lighting, ultra-high detail, photorealistic, no text, no watermark.`,
+    `Isolated single nail, NO hand, NO finger, NO skin, plain soft background, studio lighting, ultra-high detail, photorealistic, no text, no watermark.`,
   ].filter(Boolean).join(' ');
 
   const rnd = Math.random().toString(36).slice(2, 7);

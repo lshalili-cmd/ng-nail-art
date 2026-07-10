@@ -110,21 +110,12 @@ export class ArComponent implements OnDestroy {
     if (c) this.color.set(c);
     const p = qp.get('pattern');
     if (p) this.pattern.set(p);
-    // Tasarımı canlı tırnağa bindir. El fotoğrafı DEĞİL, DÜZ DOKU kullan:
-    // tarifden (desc) Pollinations'tan üstten-çekim, elsiz, kareyi dolduran bir doku üret.
+    // GERÇEK üretilen tasarımı (üstten çekim tek tırnak, elsiz) canlı tırnağa bindir.
     const t = this.tryon.current();
     if (t) {
       if (t.color) this.color.set(t.color);
       if (t.pattern) this.pattern.set(t.pattern);
-      if (t.desc) {
-        const texPrompt = 'seamless glossy nail polish texture, ' + t.desc +
-          ', top-down macro close-up, filling the entire frame, no hand, no fingers, no skin, pattern swatch';
-        const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(texPrompt) +
-          '?width=512&height=512&nologo=true&model=flux';
-        this.loadDesignImage(url);   // yüklenene kadar renk+desen ile boyar (fallback)
-      } else if (t.imageUrl) {
-        this.loadDesignImage(t.imageUrl);
-      }
+      if (t.imageUrl) this.loadDesignImage(t.imageUrl);   // yüklenene kadar renkle boyar (fallback)
     }
   }
 
@@ -257,9 +248,9 @@ export class ArComponent implements OnDestroy {
         // ÜRETİLEN TASARIM GÖRSELİ → tırnağın üstüne canlı bindir
         if (this.designImg) {
           const img = this.designImg;
-          const s = Math.min(img.width, img.height) * 0.42;      // merkezden kare örnek
+          const s = Math.min(img.width, img.height) * 0.78;      // görselin çoğunu kullan (üstten tırnak)
           const sx = (img.width - s) / 2;
-          const sy = (img.height - s) * 0.4;                     // hafif yukarı (tırnak bölgesi)
+          const sy = (img.height - s) / 2;                       // ortadan (tek tırnak merkezde)
           ctx.globalAlpha = 1;
           ctx.drawImage(img, sx, sy, s, s, -nl / 2, -nw / 2, nl, nw);
           if (!matte) {                                          // ıslak parlaklık
