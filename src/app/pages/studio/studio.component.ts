@@ -127,6 +127,7 @@ import { TryonStore } from '../../core/tryon-store';
               <button class="btn-primary" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
               <button class="btn-ghost" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
             </div>
+            <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · her üretim 1 hak</p>
           </div>
         </div>
       }
