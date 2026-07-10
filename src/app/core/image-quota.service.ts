@@ -5,7 +5,7 @@ import { PlanService } from './plan.service';
 // BİRLEŞİK AI KULLANIM HAKKI (görsel üretimi = 1 hak). Tarama+AI önerisi 1 hak,
 // AI Stüdyo prompt+tasarım 1 hak — hepsi bu havuzdan. Bitince tüm AI durur.
 const PLAN_MONTHLY: Record<string, number> = {
-  free: 3,     // TEST — "hak bitince dur" görülebilsin diye (prod'da 1)
+  free: 50,    // TEST — rahat test için bol (prod'da 1). "Hak bitince dur"u görmek istersen düşür.
   monthly: 30,
   yearly: 30,
   pro: 100,
