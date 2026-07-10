@@ -84,19 +84,19 @@ export class AuthService {
     }
   }
 
-  /** Şifremi unuttum → e-posta ile sıfırlama bağlantısı (demo modda yanıtta döner). */
+  /** Şifremi unuttum → e-postaya 6 haneli KOD gönderilir (demo modda yanıtta döner). */
   async forgot(email: string): Promise<AuthResult> {
     try {
       const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/forgot', { email }).pipe(timeout(9000)));
-      return { ok: !!res?.success, demoLink: res?.demoLink };
+      return { ok: !!res?.success, demoOtp: res?.demoOtp };
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
-  /** Sıfırlama jetonuyla yeni şifre belirle. */
-  async reset(token: string, password: string): Promise<AuthResult> {
+  /** E-postaya gelen KOD + yeni şifre ile sıfırla. */
+  async reset(email: string, code: string, password: string): Promise<AuthResult> {
     try {
-      const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/reset', { token, password }).pipe(timeout(9000)));
-      return res?.success ? { ok: true } : { ok: false, error: 'Hata' };
+      const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/reset', { email, code, password }).pipe(timeout(9000)));
+      return res?.success ? { ok: true } : { ok: false, error: res?.error || 'Hata' };
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 

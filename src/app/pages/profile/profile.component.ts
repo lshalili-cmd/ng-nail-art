@@ -64,6 +64,7 @@ import { COUNTRIES } from '../../core/countries';
             }
             @case ('reset') {
               <p class="au-note">{{ i18n.t('auth_reset_sub') }}</p>
+              <input class="au-in au-otp" inputmode="numeric" maxlength="6" [value]="otp()" (input)="otp.set($any($event.target).value)" [placeholder]="i18n.t('auth_code_ph')" />
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_new_pw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="pwOk()">{{ pwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
             }
@@ -154,7 +155,14 @@ import { COUNTRIES } from '../../core/countries';
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw2()" (input)="newPw2.set($any($event.target).value)" [placeholder]="i18n.t('set_newpw2')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
               <p class="au-hint" [class.ok]="newPwOk()">{{ newPwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
               <button class="btn-primary au-go" (click)="changePw()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('set_change_btn') }}</button>
-              <button class="au-switch" (click)="forgotFromSettings()">{{ i18n.t('auth_forgot') }}</button>
+              <button class="au-switch" (click)="forgotFromSettings()" [disabled]="setBusy()">{{ i18n.t('auth_forgot') }}</button>
+            }
+            @case ('resetcode') {
+              <p class="au-note">{{ i18n.t('auth_reset_sub') }}</p>
+              <input class="au-in au-otp" inputmode="numeric" maxlength="6" [value]="setCode()" (input)="setCode.set($any($event.target).value)" [placeholder]="i18n.t('auth_code_ph')" />
+              <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="newPw()" (input)="newPw.set($any($event.target).value)" [placeholder]="i18n.t('auth_new_pw')" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
+              <p class="au-hint" [class.ok]="newPwOk()">{{ newPwOk() ? '✓ ' : '' }}{{ i18n.t('auth_pw_rule') }}</p>
+              <button class="btn-primary au-go" (click)="resetPwFromSettings()" [disabled]="setBusy()">{{ setBusy() ? '…' : i18n.t('auth_set_pw') }}</button>
             }
             @case ('delete') {
               <input class="au-in" type="email" [value]="delEmail()" (input)="delEmail.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" />
@@ -290,10 +298,11 @@ export class ProfileComponent implements OnInit {
 
   // Ayarlar penceresi durumu (şifre değiştir + hesabı sil)
   readonly settingsOpen = signal<boolean>(false);
-  readonly settingsStep = signal<'menu' | 'changepw' | 'delete' | 'deleted'>('menu');
+  readonly settingsStep = signal<'menu' | 'changepw' | 'delete' | 'deleted' | 'resetcode'>('menu');
   readonly showPw = signal<boolean>(false);
   readonly newPw = signal<string>('');
   readonly newPw2 = signal<string>('');
+  readonly setCode = signal<string>('');
   readonly delEmail = signal<string>('');
   readonly delPhone = signal<string>('');
   readonly delPw = signal<string>('');
@@ -305,7 +314,7 @@ export class ProfileComponent implements OnInit {
   private openSettings(): void {
     this.settingsStep.set('menu');
     this.setErr.set(null); this.setInfo.set(null);
-    this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delPw.set('');
+    this.newPw.set(''); this.newPw2.set(''); this.delEmail.set(''); this.delPhone.set(''); this.delPw.set(''); this.setCode.set('');
     this.settingsOpen.set(true);
   }
   settingsGo(s: 'menu' | 'changepw' | 'delete'): void {
@@ -323,11 +332,31 @@ export class ProfileComponent implements OnInit {
     else this.setErr.set(res.error ?? 'Hata');
   }
 
+  /** Ayarlardan şifremi unuttum → e-postaya KOD gönder, kod+yeni şifre adımına geç. */
   async forgotFromSettings(): Promise<void> {
     const email = this.auth.user()?.email;
     if (!email) { this.setErr.set(this.i18n.t('auth_fill')); return; }
+    this.setErr.set(null); this.setInfo.set(null); this.setBusy.set(true);
     const res = await this.auth.forgot(email);
-    this.setInfo.set(res.demoLink ? `${this.i18n.t('auth_demo_link')}: ${res.demoLink}` : this.i18n.t('auth_link_sent'));
+    this.setBusy.set(false);
+    if (!res.ok) { this.setErr.set(res.error ?? 'Hata'); return; }
+    this.setCode.set(''); this.newPw.set('');
+    this.settingsStep.set('resetcode');
+    this.setInfo.set(res.demoOtp ? `${this.i18n.t('auth_demo_otp')}: ${res.demoOtp}` : this.i18n.t('auth_link_sent'));
+  }
+
+  /** Ayarlardan gelen kod + yeni şifre ile sıfırla. */
+  async resetPwFromSettings(): Promise<void> {
+    const email = this.auth.user()?.email;
+    if (!email) { this.setErr.set(this.i18n.t('auth_fill')); return; }
+    this.setErr.set(null);
+    if (this.setCode().trim().length < 4) { this.setErr.set(this.i18n.t('auth_fill')); return; }
+    if (!this.newPwOk()) { this.setErr.set(this.i18n.t('auth_pw_rule')); return; }
+    this.setBusy.set(true);
+    const res = await this.auth.reset(email, this.setCode().trim(), this.newPw());
+    this.setBusy.set(false);
+    if (res.ok) { this.setInfo.set(this.i18n.t('auth_reset_done')); this.setCode.set(''); this.newPw.set(''); this.settingsStep.set('menu'); }
+    else this.setErr.set(res.error ?? 'Hata');
   }
 
   async deleteAcc(): Promise<void> {
@@ -371,14 +400,10 @@ export class ProfileComponent implements OnInit {
   readonly demoInfo = signal<string | null>(null);
   readonly authErr = signal<string | null>(null);
   readonly authBusy = signal<boolean>(false);
-  private resetToken = '';
 
   readonly pwOk = computed(() => validPassword(this.password()));
 
   ngOnInit(): void {
-    // Şifre sıfırlama bağlantısı: /profile?reset=TOKEN
-    const t = this.route.snapshot.queryParamMap.get('reset');
-    if (t) { this.resetToken = t; this.openAuth('reset'); }
     // Hesap silme onay bağlantısı: /profile?delete=TOKEN
     const d = this.route.snapshot.queryParamMap.get('delete');
     if (d) void this.confirmDeleteFlow(d);
@@ -436,8 +461,9 @@ export class ProfileComponent implements OnInit {
       if (!email) { this.authErr.set(this.i18n.t('auth_fill')); return; }
       await this.run(() => this.auth.forgot(email));
     } else if (step === 'reset') {
+      if (this.otp().trim().length < 4) { this.authErr.set(this.i18n.t('auth_fill')); return; }
       if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
-      await this.run(() => this.auth.reset(this.resetToken, this.password()));
+      await this.run(() => this.auth.reset(email, this.otp().trim(), this.password()));
     }
   }
 
@@ -457,8 +483,14 @@ export class ProfileComponent implements OnInit {
     }
     if (res.ok) {
       if (step === 'otp' || step === 'login') { this.closeAuth(); return; }        // giriş tamam
-      if (step === 'forgot') { this.demoInfo.set(res.demoLink ? `${this.i18n.t('auth_demo_link')}: ${res.demoLink}` : this.i18n.t('auth_link_sent')); return; }
-      if (step === 'reset') { this.demoInfo.set(this.i18n.t('auth_reset_done')); this.password.set(''); this.setStep('login'); this.demoInfo.set(this.i18n.t('auth_reset_done')); return; }
+      if (step === 'forgot') {
+        // Kod e-postaya gitti → kod + yeni şifre adımına geç
+        this.otp.set(''); this.password.set('');
+        this.setStep('reset');
+        this.demoInfo.set(res.demoOtp ? `${this.i18n.t('auth_demo_otp')}: ${res.demoOtp}` : this.i18n.t('auth_link_sent'));
+        return;
+      }
+      if (step === 'reset') { this.password.set(''); this.otp.set(''); this.setStep('login'); this.demoInfo.set(this.i18n.t('auth_reset_done')); return; }
     } else {
       this.authErr.set(res.error ?? 'Hata');
     }

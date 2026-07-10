@@ -190,37 +190,36 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
-// Şifremi unuttum → e-posta ile sıfırlama bağlantısı
+// Şifremi unuttum → e-postaya 6 haneli KOD gönderilir
 app.post('/api/auth/forgot', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
   try {
     const user = await db.prisma.user.findUnique({ where: { email } });
     if (user) {
-      const token = auth.genToken();
-      await db.prisma.user.update({ where: { id: user.id }, data: { resetToken: token, resetExpires: Date.now() + 60 * 60 * 1000 } });
-      const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
-      const link = `${baseUrl}/profile?reset=${token}`;
-      const sent = await mailer.sendResetLink(email, link);
-      return res.json({ success: true, demoLink: sent.mode === 'demo' ? link : undefined });
+      const code = auth.genOtp();
+      await db.prisma.user.update({ where: { id: user.id }, data: { resetToken: code, resetExpires: Date.now() + 60 * 60 * 1000 } });
+      const sent = await mailer.sendResetCode(email, code);
+      return res.json({ success: true, demoOtp: sent.mode === 'demo' ? code : undefined });
     }
     // Güvenlik: kullanıcı yoksa da aynı yanıt (e-posta sızdırma önlenir)
     res.json({ success: true });
   } catch (e) { dbError(res, e); }
 });
 
-// Sıfırlama jetonuyla yeni şifre belirle
+// Kod + yeni şifre ile sıfırla
 app.post('/api/auth/reset', async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
-  const token = String((req.body || {}).token || '');
+  const email = String((req.body || {}).email || '').toLowerCase();
+  const code = String((req.body || {}).code || '').trim();
   const password = String((req.body || {}).password || '');
   if (!auth.validPassword(password)) {
     return res.status(400).json({ success: false, error: 'Şifre tam 1 harf ve geri kalanı rakam olmalı (en az 6 karakter)', code: 'BAD_PASSWORD' });
   }
   try {
-    const user = await db.prisma.user.findFirst({ where: { resetToken: token } });
-    if (!user || !user.resetToken || Date.now() > user.resetExpires) {
-      return res.status(400).json({ success: false, error: 'Bağlantı geçersiz veya süresi dolmuş', code: 'BAD_RESET' });
+    const user = await db.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.resetToken || user.resetToken !== code || Date.now() > user.resetExpires) {
+      return res.status(400).json({ success: false, error: 'Kod geçersiz veya süresi dolmuş', code: 'BAD_RESET' });
     }
     await db.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await auth.hash(password), resetToken: null, resetExpires: 0 } });
     res.json({ success: true });

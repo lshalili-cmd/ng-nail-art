@@ -26,13 +26,15 @@ async function send(email, subject, html) {
   return { mode: 'demo' };
 }
 
-/** Şifre sıfırlama bağlantısı. */
-async function sendResetLink(email, link) {
-  const r = await send(email, 'Miracle Nail Art — Şifre sıfırlama',
-    `<p>Şifrenizi sıfırlamak için <a href="${link}">buraya tıklayın</a>. Bağlantı 1 saat geçerlidir.</p>
+/** Şifre sıfırlama KODU (6 haneli) — e-postayla gönderilir. */
+async function sendResetCode(email, code) {
+  const r = await send(email, 'Miracle Nail Art — Şifre sıfırlama kodu',
+    `<p>Şifre sıfırlama kodunuz:</p>
+     <p style="font-size:26px;font-weight:bold;letter-spacing:4px;color:#b8912e">${code}</p>
+     <p>Kod 1 saat geçerlidir. Bu kodu ve yeni şifrenizi uygulamada girin.</p>
      <p>Bu isteği siz yapmadıysanız yok sayın.</p>`);
-  if (r.mode === 'demo') console.log(`✉️  [DEMO EMAIL] ${email} → şifre sıfırlama: ${link}`);
-  return r.mode === 'demo' ? { mode: 'demo', link } : r;
+  if (r.mode === 'demo') console.log(`✉️  [DEMO EMAIL] ${email} → şifre sıfırlama kodu: ${code}`);
+  return r.mode === 'demo' ? { mode: 'demo', code } : r;
 }
 
 /** Doğrulama kodunu e-postayla gönderir (SMS resend yerine — 2. gönderim maile gider). */
@@ -54,4 +56,4 @@ async function sendDeleteLink(email, link) {
   return r.mode === 'demo' ? { mode: 'demo', link } : r;
 }
 
-module.exports = { ready, sendResetLink, sendOtpEmail, sendDeleteLink };
+module.exports = { ready, sendResetCode, sendOtpEmail, sendDeleteLink };
