@@ -8,7 +8,7 @@ export interface CheckoutInput {
   kind: 'plan' | 'pack'; itemId: string; itemName: string;
   amount: number; currency?: string; provider?: string;
 }
-export interface CheckoutResult { mode: 'live' | 'demo'; provider: string; url?: string; ref: string; }
+export interface CheckoutResult { mode: 'live' | 'demo' | 'error'; provider: string; url?: string; ref: string; error?: string; }
 
 /**
  * Çok sağlayıcılı ödeme istemcisi (iyzico / Stripe / PayTR).

@@ -62,8 +62,9 @@ async function createCheckout({ provider, kind, itemId, itemName, amount, curren
     if (chosen === 'iyzico') return await iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref });
     if (chosen === 'paytr') return await paytrCheckout({ itemName, amount, userId, baseUrl, ref });
   } catch (e) {
-    console.warn(`💳 ${chosen} başarısız, demo'ya düşülüyor:`, e.message);
-    return { mode: 'demo', provider: chosen, ref, error: e.message };
+    // Sağlayıcı YAPILANDIRILMIŞ ama çağrı başarısız → sahte demo YERİNE gerçek hatayı döndür (kullanıcı görsün)
+    console.warn(`💳 ${chosen} HATA:`, e.message);
+    return { mode: 'error', provider: chosen, ref, error: e.message };
   }
   return { mode: 'demo', provider: chosen, ref };
 }
@@ -119,6 +120,7 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseU
   const email = String(bi.email || '').trim() || 'musteri@miraclenailart.com';
   const gsm = String(bi.phone || '').trim() || '+905000000000';
   const contact = `${name} ${surname}`.trim();
+  console.log(`💳 iyzico istek → fiyat: ${price} ${currency || 'USD'} · ürün: ${itemName}`);
   const request = {
     locale: 'tr', conversationId: ref, price, paidPrice: price,
     currency: currency || 'USD', basketId: ref,
@@ -137,7 +139,10 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseU
   const result = await new Promise((resolve, reject) => {
     iyzipay.checkoutFormInitialize.create(request, (err, res) => (err ? reject(err) : resolve(res)));
   });
-  if (result.status !== 'success') throw new Error(result.errorMessage || 'iyzico init hatası');
+  if (result.status !== 'success') {
+    console.warn('💳 iyzico yanıtı:', JSON.stringify({ status: result.status, errorCode: result.errorCode, errorMessage: result.errorMessage }));
+    throw new Error(`iyzico: ${result.errorMessage || 'init hatası'}${result.errorCode ? ' (kod ' + result.errorCode + ')' : ''}`);
+  }
   return { mode: 'live', provider: 'iyzico', url: result.paymentPageUrl, ref: result.token || ref };
 }
 

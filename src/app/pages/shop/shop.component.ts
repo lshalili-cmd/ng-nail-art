@@ -322,6 +322,12 @@ export class ShopComponent implements OnInit {
       kind: it.kind, itemId: it.id, itemName: it.name, amount: it.amount,
       currency: this.cur.currency(), provider: this.payProvider(),
     });
+    if (res.mode === 'error') {
+      // Sağlayıcı bağlı ama işlem reddedildi → gerçek hatayı göster (sahte başarı yok)
+      this.payError.set(res.error || 'Ödeme başlatılamadı');
+      this.paying.set(false);
+      return;
+    }
     if (res.mode === 'live' && res.url) {
       // Gerçek sağlayıcı: bekleyen alımı sakla ve ödeme sayfasına yönlendir
       this.savePending(it);
