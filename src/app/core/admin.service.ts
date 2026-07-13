@@ -20,6 +20,7 @@ export class AdminService {
   users(q = '') { return this.get<{ success: boolean; users: AdminUser[] }>(`/api/admin/users${q ? '?q=' + encodeURIComponent(q) : ''}`); }
   updateUser(id: number, patch: Partial<AdminUser>) { return firstValueFrom(this.http.put<{ success: boolean; user: AdminUser }>(`/api/admin/users/${id}`, patch).pipe(timeout(9000))); }
   deleteUser(id: number) { return firstValueFrom(this.http.delete<{ success: boolean }>(`/api/admin/users/${id}`).pipe(timeout(9000))); }
+  resetUserLimits(id: number) { return firstValueFrom(this.http.post<{ success: boolean; user: AdminUser }>(`/api/admin/users/${id}/reset-limits`, {}).pipe(timeout(9000))); }
 
   orders() { return this.get<{ success: boolean; orders: AdminOrder[]; summary: { count: number; paid: number; revenue: number } }>('/api/admin/orders'); }
 

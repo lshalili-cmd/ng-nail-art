@@ -102,6 +102,17 @@ function mount(app, ctx) {
     if (req.adminUser && req.adminUser.id === id) return res.status(400).json({ success: false, error: 'Kendi hesabınızı silemezsiniz', code: 'SELF_DELETE' });
     try { await db.prisma.user.delete({ where: { id } }); res.json({ success: true }); } catch (e) { fail(res, e); }
   });
+  // Limit sıfırla — plan → free, aktif paket → yok, kota → sıfır (test/destek için)
+  app.post('/api/admin/users/:id/reset-limits', requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    try {
+      const u = await db.prisma.user.update({
+        where: { id },
+        data: { plan: 'free', planSince: 0, packId: null, packSince: 0, imagesUsed: 0, imagesExtra: 0 },
+      });
+      res.json({ success: true, user: auth.pub(u) });
+    } catch (e) { fail(res, e); }
+  });
 
   // --- Siparişler & gelir ---
   app.get('/api/admin/orders', requireAdmin, async (_req, res) => {

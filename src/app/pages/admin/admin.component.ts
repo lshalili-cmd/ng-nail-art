@@ -88,6 +88,7 @@ type Tab = 'panel' | 'users' | 'orders' | 'designs' | 'blocked' | 'support' | 's
                   <span><span class="badge" [class.adm]="u.role === 'admin'">{{ u.role || 'user' }}</span></span>
                   <span>{{ u.verified ? '✓' : '—' }}</span>
                   <span class="act">
+                    <button class="mini gold" (click)="resetLimits(u)" title="Plan → free, paket → yok, kota → sıfır">♻️ Limit sıfırla</button>
                     <button class="mini" (click)="edit(u)">Düzenle</button>
                     <button class="mini danger" (click)="removeUser(u)">Sil</button>
                   </span>
@@ -436,6 +437,11 @@ export class AdminComponent implements OnDestroy {
     this.wrap(this.api.updateUser(u.id, { plan: this.ePlan, imagesExtra: Number(this.eExtra), role: this.eRole }), () => { this.editId.set(0); this.loadUsers(); });
   }
   removeUser(u: AdminUser): void { if (confirm(`${u.email} silinsin mi?`)) this.wrap(this.api.deleteUser(u.id), () => this.loadUsers()); }
+  resetLimits(u: AdminUser): void {
+    if (confirm(`${u.email} için limit sıfırlansın mı?\n(Plan → free · aktif paket → yok · kota → sıfır)\n\nNot: O kullanıcı uygulamada çıkış yapıp tekrar giriş yapınca limit kalkar.`)) {
+      this.wrap(this.api.resetUserLimits(u.id), () => this.loadUsers());
+    }
+  }
 
   togglePopular(d: AdminDesign): void { this.wrap(this.api.togglePopular(d.id), () => this.loadDesigns()); }
   removeDesign(d: AdminDesign): void { if (confirm(`"${d.name}" silinsin mi?`)) this.wrap(this.api.deleteDesign(d.id), () => this.loadDesigns()); }
