@@ -1,0 +1,34 @@
+cd D:\leman\ngNailArt
+npm install
+npm start
+
+
+
+
+işlemı yaptıktan sonra  lint,browser uygulama testleri yapılsın   komut islemleri bıttıgı zaman check ınlerde tamamlansın.bu benım her komutumda yer alsın
+
+git commit işlemleri için 
+D:\leman\ngNailArt>powershell -ExecutionPolicy Bypass -File .\auto-git.ps1
+
+server tarafı uygulmayı çalıştırmak için 
+D:\leman\ngNailArt\server>npm start
+
+
+ana uygulama çaıştırmak içn 
+D:\leman\ngNailArt>npm start
+
+
+Local: http://localhost:4200/
+
+
+
+
+(iyzico + Stripe + PayTR) baglandı
+
+
+
+Açılan Yönetici Girişi ekranına:
+
+E-posta: admin@demo.com
+Şifre: Admin123
+"Giriş yap" de.

@@ -1,0 +1,31 @@
+Ödeme (iyzico / Stripe / PayTR)
+
+Ödeme katmanı çok sağlayıcılıdır ve anahtar yoksa DEMO modunda çalışır (gerçek tahsilat yok;
+satın alma akışı yine tamamlanır). Order tablosu eklendiğinden, yeni bir migrate gerekir:
+
+bashcd server
+npm run db:setup        # veya: npx prisma migrate dev --name orders
+
+Gerçek ödemeye geçmek için .env'e ilgili sağlayıcının anahtarlarını girin ve SDK'sını kurun
+(yalnızca kullanacağınızı):
+
+bashnpm i stripe            # Stripe
+npm i iyzipay           # iyzico
+# PayTR ek paket gerektirmez (HTTPS + HMAC ile çalışır)
+
+.env değişkenleri:
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+# iyzico (sandbox varsayılan)
+IYZICO_API_KEY=...
+IYZICO_SECRET=...
+IYZICO_URI=https://sandbox-api.iyzipay.com
+# PayTR
+PAYTR_MERCHANT_ID=...
+PAYTR_MERCHANT_KEY=...
+PAYTR_MERCHANT_SALT=...
+
+Anahtar girilen sağlayıcı otomatik "live" olur; frontend'deki Mağaza ödeme ekranında o sağlayıcı
+seçilince kullanıcı gerçek ödeme sayfasına yönlendirilir. Not: iyzico/PayTR geri-bildirim (callback)
+ve PayTR bildirim (notification) uçlarını canlıya almadan önce üretim ayarlarına göre gözden geçirin
