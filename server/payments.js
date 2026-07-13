@@ -46,7 +46,7 @@ function status() {
  * @returns { mode:'live'|'demo', provider, url?, ref } — live ise url'ye yönlendirilir,
  *          demo ise istemci /api/payments/confirm ile başarıyı simüle eder.
  */
-async function createCheckout({ provider, kind, itemId, itemName, amount, currency, userId, baseUrl }) {
+async function createCheckout({ provider, kind, itemId, itemName, amount, currency, userId, buyer, baseUrl }) {
   const c = configured();
   // İstenen sağlayıcı hazırsa onu, değilse ilk hazır olanı, o da yoksa demo'yu kullan
   const chosen = provider && c[provider] ? provider
@@ -59,7 +59,7 @@ async function createCheckout({ provider, kind, itemId, itemName, amount, curren
 
   try {
     if (chosen === 'stripe') return await stripeCheckout({ itemName, amount, currency, baseUrl, ref });
-    if (chosen === 'iyzico') return await iyzicoCheckout({ itemName, amount, currency, userId, baseUrl, ref });
+    if (chosen === 'iyzico') return await iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref });
     if (chosen === 'paytr') return await paytrCheckout({ itemName, amount, userId, baseUrl, ref });
   } catch (e) {
     console.warn(`💳 ${chosen} başarısız, demo'ya düşülüyor:`, e.message);
@@ -103,7 +103,7 @@ function iyziPrice(amount) {
 }
 
 // --- iyzico: Checkout Form Initialize ---
-async function iyzicoCheckout({ itemName, amount, currency, userId, baseUrl, ref }) {
+async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref }) {
   const Iyzipay = tryRequire('iyzipay');
   if (!Iyzipay) throw new Error('iyzipay paketi kurulu değil (npm i iyzipay)');
   const iyzipay = new Iyzipay({
@@ -112,17 +112,24 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, baseUrl, ref
     uri: process.env.IYZICO_URI || 'https://sandbox-api.iyzipay.com',
   });
   const price = iyziPrice(amount);
+  // Giriş yapmış kullanıcının bilgileri (yoksa misafir değerlerine düşer — iyzico boş alan kabul etmez)
+  const bi = buyer || {};
+  const name = String(bi.name || '').trim() || 'Musteri';
+  const surname = String(bi.surname || '').trim() || 'NailArt';
+  const email = String(bi.email || '').trim() || 'musteri@miraclenailart.com';
+  const gsm = String(bi.phone || '').trim() || '+905000000000';
+  const contact = `${name} ${surname}`.trim();
   const request = {
     locale: 'tr', conversationId: ref, price, paidPrice: price,
     currency: currency || 'USD', basketId: ref,
     paymentGroup: 'SUBSCRIPTION',
     callbackUrl: `${baseUrl}/shop?paid=1&provider=iyzico&ref=${ref}`,
     buyer: {
-      id: userId || 'guest', name: 'Guest', surname: 'User', identityNumber: '11111111111',
-      email: 'guest@example.com', registrationAddress: '-', city: 'Istanbul', country: 'Turkey',
+      id: String(userId || 'guest'), name, surname, gsmNumber: gsm, identityNumber: '11111111111',
+      email, registrationAddress: 'Istanbul, Turkiye', city: 'Istanbul', country: 'Turkey',
       ip: '85.34.78.112',
     },
-    billingAddress: { contactName: 'Guest User', city: 'Istanbul', country: 'Turkey', address: '-' },
+    billingAddress: { contactName: contact, city: 'Istanbul', country: 'Turkey', address: 'Istanbul, Turkiye' },
     basketItems: [{
       id: itemName, name: itemName, category1: 'Membership', itemType: 'VIRTUAL', price,
     }],

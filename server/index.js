@@ -422,11 +422,19 @@ app.post('/api/payments/checkout', async (req, res) => {
   }
   const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
   const userId = auth.userIdFrom(req);
+  // Giriş yapmış kullanıcının bilgilerini ödeme sağlayıcısına (iyzico) gönder
+  let buyer = null;
+  if (userId !== 'guest' && db.ready()) {
+    try {
+      const u = await db.prisma.user.findUnique({ where: { id: Number(userId) } });
+      if (u) buyer = { name: u.firstName, surname: u.lastName, email: u.email, phone: u.phone };
+    } catch { /* kullanıcı okunamazsa misafir bilgisiyle devam */ }
+  }
   try {
     const result = await payments.createCheckout({
       provider: b.provider, kind: b.kind || 'plan', itemId: b.itemId,
       itemName: b.itemName || b.itemId, amount: Number(b.amount),
-      currency: b.currency || 'USD', userId, baseUrl,
+      currency: b.currency || 'USD', userId, buyer, baseUrl,
     });
     // Siparişi kaydet (DB varsa; yoksa sessiz geç)
     if (db.ready()) {
