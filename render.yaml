@@ -1,0 +1,54 @@
+# Render.com yayına alma tanımı (Blueprint) — Miracle Nail Art
+# Tek servis: Express backend HEM /api'yi HEM derlenmiş Angular arayüzünü sunar.
+# Kullanım: Render'da "New +" > "Blueprint" > bu repoyu seç. Aşağıdaki envVars'tan
+# "sync: false" olanları (anahtarlar) Render panelinden elle girersin.
+#
+# NOT: Bu haliyle SQLite ile çalışır (hızlı MVP testi için). SQLite dosyası Render
+# ücretsiz planda KALICI DEĞİLDİR (her yeniden dağıtımda sıfırlanır; admin ve
+# tasarımlar açılışta yeniden oluşur). Gerçek/kalıcı veri için PostgreSQL'e geçiş:
+# DEPLOY-REHBERI.md içindeki "PostgreSQL" bölümüne bak.
+
+services:
+  - type: web
+    name: miracle-nailart
+    runtime: node
+    plan: free
+    # Ön yüzü derle + backend bağımlılıkları + veritabanı şemasını kur
+    buildCommand: npm install --include=dev && npm run build && cd server && npm install && npx prisma generate && npx prisma db push --accept-data-loss
+    startCommand: cd server && node index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        value: "3000"
+      # Oturum güvenliği — Render rastgele üretir
+      - key: JWT_SECRET
+        generateValue: true
+      # Veritabanı (SQLite; Postgres'e geçince bunu Neon/Render adresiyle değiştir)
+      - key: DATABASE_URL
+        value: "file:./prod.db"
+      # Ödeme (iyzico) — CANLI anahtarları Render panelinden elle gir
+      - key: IYZICO_URI
+        value: "https://sandbox-api.iyzipay.com"
+      - key: IYZICO_API_KEY
+        sync: false
+      - key: IYZICO_SECRET
+        sync: false
+      # Gerçek AI (Flux) — Replicate token'ı elle gir (opsiyonel; yoksa demo)
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      # SMS / e-posta (opsiyonel; yoksa demo modda çalışır)
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

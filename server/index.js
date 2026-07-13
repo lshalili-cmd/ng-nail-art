@@ -36,6 +36,17 @@ app.use('/images', express.static(path.join(__dirname, 'images'), {
   setHeaders: (res) => res.set('Cache-Control', 'no-cache'),
 }));
 
+// ÜRETİM: derlenmiş Angular arayüzünü aynı sunucudan sun (tek servis deploy).
+// dist yoksa (yerel geliştirme) atlanır; o zaman ön yüz ayrı `ng serve` ile çalışır.
+const CLIENT_DIR = path.join(__dirname, '..', 'dist', 'ng-nail-art', 'browser');
+const HAS_CLIENT = fs.existsSync(path.join(CLIENT_DIR, 'index.html'));
+if (HAS_CLIENT) {
+  app.use(express.static(CLIENT_DIR, {
+    setHeaders: (res, p) => { if (p.endsWith('index.html')) res.set('Cache-Control', 'no-cache'); },
+  }));
+  console.log('🖥️  Angular arayüzü sunuluyor (üretim modu): ' + CLIENT_DIR);
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, data: { status: 'healthy', time: new Date().toISOString() } });
 });
@@ -467,7 +478,13 @@ app.post('/api/payments/confirm', async (req, res) => {
 // Yönetici uçları (rol korumalı) — 404 yakalayıcıdan ÖNCE bağlanır
 admin.mount(app, { db, auth, ai, payments, sms, mailer });
 
-app.use((_req, res) => res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' }));
+// /api dışındaki GET istekleri → Angular index.html (SPA yönlendirme). /api → 404 JSON.
+app.use((req, res) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api') && HAS_CLIENT) {
+    return res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+  }
+  res.status(404).json({ success: false, error: 'Route not found', code: 'NOT_FOUND' });
+});
 
 function handleAiError(res, e) {
   console.error('❌ AI hatası:', e.message);
