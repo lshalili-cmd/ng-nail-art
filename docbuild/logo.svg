@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e6a8"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#a97e22"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#241a0c"/>
+      <stop offset="0.55" stop-color="#12100b"/>
+      <stop offset="1" stop-color="#0a0806"/>
+    </radialGradient>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e6a8"/>
+      <stop offset="0.5" stop-color="#caa233"/>
+      <stop offset="1" stop-color="#8a6a1e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tile -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <!-- ince altin cerceve -->
+  <rect x="40" y="40" width="432" height="432" rx="92" fill="none" stroke="url(#frame)" stroke-width="6"/>
+
+  <g fill="none" stroke="url(#gold)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- pirlanta (faceted diamond) -->
+    <path d="M196 150 L316 150 L346 186 L256 300 L166 186 Z"/>
+    <!-- diamond ic facetler -->
+    <path d="M166 186 L346 186"/>
+    <path d="M196 150 L226 186 L256 300"/>
+    <path d="M316 150 L286 186 L256 300"/>
+    <path d="M226 186 L286 186"/>
+
+    <!-- tirnak (almond nail line-art) -->
+    <path d="M214 326
+             C222 314 290 314 298 326
+             C322 366 300 430 256 460
+             C212 430 190 366 214 326 Z"/>
+    <!-- lunula (ay) -->
+    <path d="M224 338 C240 352 272 352 288 338"/>
+  </g>
+
+  <!-- pirlanta parilti -->
+  <circle cx="228" cy="176" r="7" fill="#fff8e7" opacity="0.9"/>
+</svg>

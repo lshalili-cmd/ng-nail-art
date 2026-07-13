@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:900px;height:1200px;overflow:hidden}
+  #stage{width:900px;height:1200px;position:relative}
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+// data.service.ts sırası — SADECE TIRNAK, EL/PARMAK YOK
+const DESIGNS = [
+  { id:1, base:'#c8a12e', kind:'chrome', accent:'#fff2c4', name:'Gold Chrome' },
+  { id:2, base:'#e79ec1', kind:'ombre', to:'#efdac6', name:'Pink Ombré' },
+  { id:3, base:'#241d47', kind:'galaxy', name:'Galaxy Dreams' },
+  { id:4, base:'#ecd8c4', kind:'french', name:'French Gold' },
+  { id:5, base:'#1f8f63', kind:'marble', name:'Emerald Marble' },
+  { id:6, base:'#e3caae', kind:'line', name:'Nude Gold Line' },
+  { id:7, base:'#f4ecdd', kind:'pearl', name:'Bridal Pearl' },
+  { id:8, base:'#c0342f', kind:'chrome', accent:'#ffcdc4', name:'Red Chrome' },
+  { id:9, base:'#cfd8e2', kind:'frost', name:'Silver Frost' },
+];
+const NS='http://www.w3.org/2000/svg';
+const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const shade=(hex,amt)=>{const n=parseInt(hex.slice(1),16);let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);};
+
+// 5 tırnak ucu — parmak/deri YOK. Ortadaki en uzun (set gibi fan).
+const TIPS=[
+  {x:185,y:640,nl:220,rot:-15},
+  {x:330,y:585,nl:262,rot:-7},
+  {x:470,y:560,nl:290,rot:0},
+  {x:610,y:585,nl:262,rot:7},
+  {x:755,y:640,nl:220,rot:15},
+];
+// stiletto/badem tırnak yolu (uç yukarı)
+function nailPath(nl,nw){const h=nl/2,w=nw/2;return `M0 ${-h} C ${w*0.9} ${-h*0.5} ${w} ${h*0.35} ${w*0.55} ${h*0.8} C ${w*0.3} ${h} ${-w*0.3} ${h} ${-w*0.55} ${h*0.8} C ${-w} ${h*0.35} ${-w*0.9} ${-h*0.5} 0 ${-h} Z`;}
+
+function render(d){
+  const stage=document.getElementById('stage');
+  const dark = d.kind==='galaxy';
+  stage.style.background = dark
+    ? 'radial-gradient(130% 100% at 50% 38%, #1a1430, #06040c 82%)'
+    : 'radial-gradient(130% 100% at 50% 34%, #fdfaf5, #ece1d2 82%)';
+  const svg=el('svg',{width:900,height:1200,viewBox:'0 0 900 1200'});
+  const defs=el('defs',{}); svg.appendChild(defs);
+
+  if(d.kind==='marble'){
+    const f=el('filter',{id:'marble',x:'-30%',y:'-30%',width:'160%',height:'160%'});
+    f.appendChild(el('feTurbulence',{type:'fractalNoise',baseFrequency:'0.010 0.022',numOctaves:'5',seed:'9',result:'n'}));
+    f.appendChild(el('feColorMatrix',{in:'n',type:'matrix',values:'0 0 0 0 0.86  0 0 0 0 0.72  0 0 0 0 0.30  0 0 0 1.15 0'}));
+    defs.appendChild(f);
+  }
+  if(d.kind==='galaxy'){
+    const f=el('filter',{id:'neb',x:'-30%',y:'-30%',width:'160%',height:'160%'});
+    f.appendChild(el('feTurbulence',{type:'fractalNoise',baseFrequency:'0.015 0.03',numOctaves:'5',seed:'14',result:'n'}));
+    f.appendChild(el('feColorMatrix',{in:'n',type:'matrix',values:'0 0 0 0 0.5  0 0 0 0 0.32  0 0 0 0 0.85  0 0 0 1.4 -0.25'}));
+    defs.appendChild(f);
+  }
+
+  TIPS.forEach((tp,idx)=>{
+    const nw=tp.nl*0.42;
+    const g=el('g',{transform:`translate(${tp.x} ${tp.y}) rotate(${tp.rot})`});
+    // yumuşak gölge (zemine oturma)
+    g.appendChild(el('ellipse',{cx:0,cy:tp.nl*0.5,rx:nw*0.75,ry:nw*0.28,fill:dark?'rgba(0,0,0,0.5)':'rgba(120,90,60,0.22)'}));
+
+    // taban dolgu
+    const pid=`g${idx}`; let fill=d.base;
+    if(d.kind==='ombre'){
+      const lg=el('linearGradient',{id:pid,x1:0,y1:0,x2:0,y2:1});
+      lg.appendChild(el('stop',{offset:0,'stop-color':d.base}));
+      lg.appendChild(el('stop',{offset:1,'stop-color':d.to}));
+      defs.appendChild(lg); fill=`url(#${pid})`;
+    } else if(d.kind==='chrome'||d.kind==='frost'){
+      const lg=el('linearGradient',{id:pid,x1:0,y1:0,x2:0.5,y2:1});
+      lg.appendChild(el('stop',{offset:0,'stop-color':shade(d.base,70)}));
+      lg.appendChild(el('stop',{offset:0.4,'stop-color':d.base}));
+      lg.appendChild(el('stop',{offset:0.55,'stop-color':shade(d.base,-40)}));
+      lg.appendChild(el('stop',{offset:0.78,'stop-color':shade(d.base,30)}));
+      lg.appendChild(el('stop',{offset:1,'stop-color':shade(d.base,-20)}));
+      defs.appendChild(lg); fill=`url(#${pid})`;
+    }
+    g.appendChild(el('path',{d:nailPath(tp.nl,nw),fill:fill}));
+
+    // desen — tırnak şekline kırp
+    const clip=el('clipPath',{id:`c${idx}`}); clip.appendChild(el('path',{d:nailPath(tp.nl,nw)})); defs.appendChild(clip);
+    const inner=el('g',{'clip-path':`url(#c${idx})`});
+    if(d.kind==='marble'){
+      inner.appendChild(el('rect',{x:-nw,y:-tp.nl,width:nw*2,height:tp.nl*2,filter:'url(#marble)',opacity:0.6}));
+      for(let v=0;v<4;v++) inner.appendChild(el('path',{d:`M ${-nw*0.6} ${-tp.nl*0.4+v*tp.nl*0.24} q ${nw*0.5} ${-24} ${nw} ${20} t ${nw*0.7} ${-8}`,stroke:'#f3daa0',fill:'none','stroke-width':2.4,opacity:0.85}));
+    }
+    if(d.kind==='galaxy'){
+      inner.appendChild(el('rect',{x:-nw,y:-tp.nl,width:nw*2,height:tp.nl*2,filter:'url(#neb)',opacity:0.95}));
+      for(let s=0;s<34;s++){const sx=(-0.5+(s*53%100)/100)*nw;const sy=(-0.5+(s*37%100)/100)*tp.nl;inner.appendChild(el('circle',{cx:sx,cy:sy,r:(s%5===0?2:1),fill:'#fff',opacity:0.9}));}
+    }
+    if(d.kind==='french'){
+      inner.appendChild(el('path',{d:`M ${-nw} ${-tp.nl*0.16} Q 0 ${-tp.nl*0.46} ${nw} ${-tp.nl*0.16} L ${nw} ${-tp.nl} L ${-nw} ${-tp.nl} Z`,fill:'#fdf8ee'}));
+      inner.appendChild(el('path',{d:`M ${-nw} ${-tp.nl*0.16} Q 0 ${-tp.nl*0.46} ${nw} ${-tp.nl*0.16}`,stroke:'#caa63a',fill:'none','stroke-width':3.5}));
+    }
+    if(d.kind==='line') inner.appendChild(el('line',{x1:-nw*0.15,y1:-tp.nl*0.42,x2:nw*0.4,y2:tp.nl*0.42,stroke:'#caa63a','stroke-width':4}));
+    if(d.kind==='pearl'){
+      const rg=el('radialGradient',{id:`pl${idx}`,cx:'42%',cy:'28%',r:'80%'});
+      rg.appendChild(el('stop',{offset:0,'stop-color':'#ffffff','stop-opacity':0.95}));
+      rg.appendChild(el('stop',{offset:0.45,'stop-color':'#f2e6f4','stop-opacity':0.35}));
+      rg.appendChild(el('stop',{offset:0.75,'stop-color':'#dcecf2','stop-opacity':0.3}));
+      rg.appendChild(el('stop',{offset:1,'stop-color':'#f6ead9','stop-opacity':0.25}));
+      defs.appendChild(rg);
+      inner.appendChild(el('rect',{x:-nw,y:-tp.nl,width:nw*2,height:tp.nl*2,fill:`url(#pl${idx})`}));
+    }
+    if(d.kind==='chrome'){
+      for(let s=0;s<16;s++){const gx=(-0.5+(s*61%100)/100)*nw;const gy=(-0.5+(s*29%100)/100)*tp.nl;inner.appendChild(el('circle',{cx:gx,cy:gy,r:1.4,fill:'#fff',opacity:0.7}));}
+    }
+    if(d.accent) inner.appendChild(el('ellipse',{cx:-nw*0.2,cy:-tp.nl*0.24,rx:nw*0.32,ry:tp.nl*0.14,fill:d.accent,opacity:0.55}));
+    // ıslak parlaklık şeridi
+    inner.appendChild(el('ellipse',{cx:nw*0.2,cy:-tp.nl*0.18,rx:nw*0.22,ry:tp.nl*0.16,fill:'#fff',opacity:0.38}));
+    inner.appendChild(el('ellipse',{cx:-nw*0.28,cy:tp.nl*0.1,rx:nw*0.14,ry:tp.nl*0.26,fill:'#fff',opacity:0.14}));
+    g.appendChild(inner);
+    // ince kenar + tırnak dibi hilali
+    g.appendChild(el('path',{d:nailPath(tp.nl,nw),fill:'none',stroke:'rgba(255,255,255,0.3)','stroke-width':1.2}));
+    g.appendChild(el('path',{d:`M ${-nw*0.5} ${tp.nl*0.42} Q 0 ${tp.nl*0.3} ${nw*0.5} ${tp.nl*0.42}`,stroke:'rgba(255,255,255,0.35)',fill:'none','stroke-width':2}));
+    svg.appendChild(g);
+  });
+  stage.innerHTML=''; stage.appendChild(svg);
+}
+const i=parseInt(new URLSearchParams(location.search).get('i')||'0',10);
+window.__ready=false; render(DESIGNS[i]); window.__ready=true;
+</script>
+</body></html>

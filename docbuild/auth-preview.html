@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giriş / Kayıt — önizleme</title>
+<style>
+  :root{
+    --bg:#0c0a08; --surface:#141019; --surface-2:#16130f; --line:#2c2418;
+    --gold:#d4af37; --gold-soft:#e9d9a0; --gold-deep:#b8912e; --ink:#fff8e7; --muted:#b8ad97; --muted-2:#8a8172;
+    --serif:"Georgia","Times New Roman",serif; --sans:"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(900px 500px at 50% -8%,#1a1410,var(--bg) 60%);color:var(--ink);font-family:var(--sans);
+    min-height:100vh;display:flex;gap:40px;align-items:flex-start;justify-content:center;flex-wrap:wrap;padding:40px 20px}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .label{color:var(--gold-soft);letter-spacing:.16em;text-transform:uppercase;font-size:12px}
+  /* auth card (uygulamadaki .au) */
+  .au{width:360px;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 18px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .au-logo{display:block;width:76px;height:76px;margin:2px auto 10px;border-radius:20px;overflow:hidden}
+  .au-logo svg{width:100%;height:100%;display:block}
+  .au-t{margin:0 0 16px;font-size:20px;text-align:center;font-family:var(--serif)}
+  .au-in{width:100%;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;font:inherit;font-size:14px;margin-bottom:10px;outline:none}
+  .au-in::placeholder{color:var(--muted-2)}
+  .au-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pw-wrap{position:relative}
+  .pw-wrap .au-in{padding-inline-end:46px;margin-bottom:10px}
+  .eye{position:absolute;right:8px;top:9px;background:none;border:none;cursor:pointer;font-size:17px;padding:6px;color:var(--muted-2)}
+  .au-hint{margin:2px 0 6px;font-size:11.5px;color:var(--muted-2)}
+  .au-hint.ok{color:var(--gold-soft)}
+  .au-forgot{display:block;margin:2px 0 4px auto;background:transparent;border:none;color:var(--gold-soft);font-size:12px;padding:4px;cursor:pointer}
+  .btn{width:100%;padding:12px;border:none;border-radius:24px;font-weight:700;font-size:14px;cursor:pointer;
+    background:linear-gradient(135deg,#f3e5a8,#d4af37 45%,#b8912e);color:#1a1405;margin-top:6px;box-shadow:0 8px 22px rgba(212,175,55,.28)}
+  .au-switch{width:100%;margin-top:12px;background:transparent;border:none;color:var(--gold-soft);font-size:13px;padding:6px;cursor:pointer}
+  h1.big{width:100%;text-align:center;font-family:var(--serif);font-size:26px;margin-bottom:6px;
+    background:linear-gradient(100deg,#fff,var(--gold-soft) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .note{width:100%;text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px}
+</style>
+</head>
+<body>
+  <div style="width:100%">
+    <h1 class="big">Miracle Nail Art — Giriş & Kayıt Ekranları</h1>
+    <p class="note">Uygulamadaki gerçek tasarıma göre önizleme (yeni logo, göz butonu, şifremi unuttum dahil)</p>
+  </div>
+
+  <!-- GİRİŞ -->
+  <div class="col">
+    <div class="label">Giriş</div>
+    <div class="au">
+      <div class="au-logo" id="logo1"></div>
+      <h3 class="au-t">Giriş Yap</h3>
+      <input class="au-in" type="email" placeholder="E-posta" value="leman@ornek.com">
+      <div class="pw-wrap">
+        <input class="au-in" type="password" placeholder="Şifre" value="a12345">
+        <button class="eye">🙈</button>
+      </div>
+      <button class="au-forgot">Şifremi unuttum</button>
+      <button class="btn">Giriş yap</button>
+      <button class="au-switch">Hesabın yok mu? Kayıt ol</button>
+    </div>
+  </div>
+
+  <!-- KAYIT -->
+  <div class="col">
+    <div class="label">Kayıt</div>
+    <div class="au">
+      <div class="au-logo" id="logo2"></div>
+      <h3 class="au-t">Kayıt Ol</h3>
+      <div class="au-row2">
+        <input class="au-in" placeholder="İsim" value="Leman">
+        <input class="au-in" placeholder="Soyisim" value="Şalili">
+      </div>
+      <input class="au-in" type="email" placeholder="E-posta" value="leman@ornek.com">
+      <input class="au-in" type="tel" placeholder="Telefon" value="0555 111 22 33">
+      <div class="pw-wrap">
+        <input class="au-in" type="text" placeholder="Şifre" value="a12345">
+        <button class="eye">👁️</button>
+      </div>
+      <p class="au-hint ok">✓ Şifre: tam 1 harf + gerisi rakam (en az 6).</p>
+      <button class="btn">Kayıt Ol</button>
+      <button class="au-switch">Zaten üye misin? Giriş yap</button>
+    </div>
+  </div>
+
+  <script>
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">   <defs>     <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">       <stop offset="0" stop-color="#f6e6a8"/>       <stop offset="0.5" stop-color="#d4af37"/>       <stop offset="1" stop-color="#a97e22"/>     </linearGradient>     <radialGradient id="bg" cx="50%" cy="38%" r="70%">       <stop offset="0" stop-color="#241a0c"/>       <stop offset="0.55" stop-color="#12100b"/>       <stop offset="1" stop-color="#0a0806"/>     </radialGradient>     <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">       <stop offset="0" stop-color="#f6e6a8"/>       <stop offset="0.5" stop-color="#caa233"/>       <stop offset="1" stop-color="#8a6a1e"/>     </linearGradient>   </defs>    <!-- tile -->   <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>   <!-- ince altin cerceve -->   <rect x="40" y="40" width="432" height="432" rx="92" fill="none" stroke="url(#frame)" stroke-width="6"/>    <g fill="none" stroke="url(#gold)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">     <!-- pirlanta (faceted diamond) -->     <path d="M196 150 L316 150 L346 186 L256 300 L166 186 Z"/>     <!-- diamond ic facetler -->     <path d="M166 186 L346 186"/>     <path d="M196 150 L226 186 L256 300"/>     <path d="M316 150 L286 186 L256 300"/>     <path d="M226 186 L286 186"/>      <!-- tirnak (almond nail line-art) -->     <path d="M214 326              C222 314 290 314 298 326              C322 366 300 430 256 460              C212 430 190 366 214 326 Z"/>     <!-- lunula (ay) -->     <path d="M224 338 C240 352 272 352 288 338"/>   </g>    <!-- pirlanta parilti -->   <circle cx="228" cy="176" r="7" fill="#fff8e7" opacity="0.9"/> </svg> `;
+    document.getElementById('logo1').innerHTML = svg;
+    document.getElementById('logo2').innerHTML = svg;
+  </script>
+</body>
+</html>

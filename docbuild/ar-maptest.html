@@ -1,0 +1,47 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+body{margin:0;background:#3a2a3a}canvas{display:block}
+</style></head><body>
+<canvas id="c" width="900" height="360"></canvas>
+<script>
+// yön-belli test görseli: üst=TIP(kırmızı,ok yukarı), alt=BASE(mavi)
+function testImg(){
+  const t=document.createElement('canvas');t.width=200;t.height=200;const x=t.getContext('2d');
+  x.fillStyle='#c0392b';x.fillRect(0,0,200,100);      // üst yarı kırmızı = TIP
+  x.fillStyle='#2c6fbb';x.fillRect(0,100,200,100);    // alt yarı mavi = BASE
+  x.fillStyle='#fff';x.font='bold 34px sans-serif';x.textAlign='center';
+  x.fillText('TIP',100,55); x.fillText('BASE',100,165);
+  // yukarı ok
+  x.strokeStyle='#fff';x.lineWidth=8;x.beginPath();x.moveTo(100,150);x.lineTo(100,60);x.stroke();
+  x.beginPath();x.moveTo(100,50);x.lineTo(80,80);x.lineTo(120,80);x.closePath();x.fillStyle='#fff';x.fill();
+  const im=new Image();im.src=t.toDataURL();return im;
+}
+const img=testImg();
+const ctx=document.getElementById('c').getContext('2d');
+
+// bir tırnak çiz: merkez (cx,cy), açı ang (parmak yönü), uzunluk nl
+function drawNail(cx,cy,ang,nl,mode,label){
+  const nw=nl*0.62;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);
+  // parmak yönünü göster (yeşil ok, +x = uç)
+  ctx.strokeStyle='#3f6';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(nl*0.7,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(nl*0.72,0);ctx.lineTo(nl*0.6,-8);ctx.lineTo(nl*0.6,8);ctx.fill();
+  // tırnak elips + clip
+  ctx.beginPath();ctx.ellipse(0,0,nl/2,nw/2,0,0,Math.PI*2);ctx.fillStyle='#eee';ctx.fill();
+  ctx.beginPath();ctx.ellipse(0,0,nl/2,nw/2,0,0,Math.PI*2);ctx.clip();
+  const s=Math.min(img.width,img.height);const sx=(img.width-s)/2,sy=(img.height-s)/2;
+  if(mode==='A'){ ctx.drawImage(img,sx,sy,s,s,-nl/2,-nw/2,nl,nw); }
+  if(mode==='B'){ ctx.save();ctx.rotate(Math.PI/2);ctx.drawImage(img,sx,sy,s,s,-nw/2,-nl/2,nw,nl);ctx.restore(); }
+  if(mode==='C'){ ctx.save();ctx.rotate(-Math.PI/2);ctx.drawImage(img,sx,sy,s,s,-nw/2,-nl/2,nw,nl);ctx.restore(); }
+  ctx.restore();
+  ctx.fillStyle='#fff';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText(label,cx,cy+nl*0.5+34);
+}
+img.onload=()=>{
+  ctx.clearRect(0,0,900,360);
+  // parmak yukarı-sağa doğru (ang ~ -35°). Yeşil ok = uç. TIP kırmızı, uç yönünde olmalı.
+  const ang=-35*Math.PI/180;
+  drawNail(180,180,ang,190,'A','A: rotasyon yok');
+  drawNail(460,180,ang,190,'B','B: +90');
+  drawNail(740,180,ang,190,'C: -90','C: -90');
+  window.__done=true;
+};
+</script></body></html>

@@ -1,139 +1,104 @@
-# Miracle Nail Art AI — ngNailArt
+# Miracle Nail Art AI (ngNailArt)
 
-AI destekli **tırnak tasarımı, el/tırnak analizi ve AR deneme** platformu. Angular 18 tek sayfa uygulaması (ön yüz) + Express/Prisma servisi (arka yüz). Mobil-öncelikli, PWA-hazır, siyah + altın lüks tema, 4 dil (TR / EN / RU / AR + otomatik RTL).
+Yapay zekâ destekli tırnak tasarımı uygulaması. Kullanıcı elini kamerayla taratır, analiz sonucuna göre
+kendisine özel tırnak tasarımı üretilir, tasarımı **AR ile canlı** kendi tırnağında dener, beğenir,
+kaydeder ve satın alabilir.
 
-> Güncel durum: uygulama uçtan uca çalışır durumda — kayıt/giriş (telefon OTP), üyelik planları ve görsel kotası, çoklu ödeme sağlayıcısı (demo), AI görsel üretimi (anahtar yoksa demo), favoriler, el analizi ve cihazlar arası veri senkronu. Dış servis anahtarı olmadan da hiçbir ekran kırılmaz; ilgili özellik otomatik **demo moduna** düşer.
-
----
-
-## Hızlı başlangıç (önerilen — tek tık)
-
-Windows'ta, proje klasöründe iki "ajan" hazırdır:
-
-- **`run.bat` — Bekçi.** Çift tıkla. Arka yüzü (port 3000) ve ön yüzü (port 4200) başlatır, **sürekli izler ve biri çökerse saniyeler içinde yeniden başlatır.** Tarayıcı hazır olunca otomatik açılır. Kod her kaydedildiğinde otomatik derlenir ve tarayıcı yenilenir (`--poll`), varsa GitHub'a otomatik push edilir (`auto-git.ps1`).
-- **`test.bat` — Test ajanı.** Bir güncelleme yapmadan önce ve sonra çift tıkla. `ng build` (derleme) + `vitest` (birim testler) çalıştırır, sonucu `test-reports/` klasörüne yazar ve **bir önceki çalışmayla karşılaştırıp** "derleme bozuldu mu / test düştü mü" diye rapor verir.
-
-İlk kez kuruluyorsa, arka yüz için bir defalık veritabanı hazırlığı gerekir (aşağıya bakın).
-
-## Elle çalıştırma (klasik yol)
-
-Gereksinim: **Node 18+**.
-
-Ön yüz:
-
-```bash
-cd ngNailArt
-npm install
-npm run dev          # ng serve --poll --live-reload, http://localhost:4200
-```
-
-Arka yüz (ayrı bir terminalde):
-
-```bash
-cd ngNailArt/server
-npm install
-npx prisma migrate dev --name init   # ilk sefer: SQLite şemasını oluşturur
-npm start                            # http://localhost:3000
-```
-
-> Windows PowerShell "npm.ps1 imzalı değil" hatası verirse `npm` yerine `npm.cmd`, `npx` yerine `npx.cmd` kullanın (veya bir kez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`).
-
-Ön yüz `/api` ve `/images` isteklerini `proxy.conf.json` ile arka yüze (`localhost:3000`) yönlendirir; bu yüzden geliştirmede yalnızca `http://localhost:4200` açılır.
-
-Üretim derlemesi:
-
-```bash
-npm run build        # çıktı: dist/ng-nail-art
-```
+Güncelleme: 10 Temmuz 2026
 
 ---
-
-## Özellikler
-
-- **Ana ekranlar (rotalar):** Ana Sayfa (`/`), Keşfet (`/explore`), Tara (`/scan`), Stüdyo (`/studio`), AR (`/ar`), Mağaza (`/shop`), Profil (`/profile`), Tasarım Detayı (`/design/:id`).
-- **AI görsel üretimi:** Stüdyo'da prompt/stil ile tırnak tasarımı üretimi. Sağlayıcı anahtarı yoksa prosedürel **demo görsel** döner; ekran asla boş kalmaz.
-- **El & tırnak analizi:** Cilt tonu (CIELAB/ITA), alt ton, parmak uzunluğu ve **tırnak şekli** sınıflandırması (PCA + genişlik profili; tek tırnak yakın çekim dedektörü dahil).
-- **Üyelik & görsel kotası:** Ücretsiz / Aylık / Yıllık / Pro / Pro Yıllık planlar. Her plan aylık görsel hakkı verir; üretimde hak düşer, bitince "Paketi Yükselt / Ek Paket Al" uyarısı çıkar. Yükseltme kuralı: aktif plan süresi (30/365 gün) dolmadan aynı plan tekrar alınamaz; yalnızca yükseltilebilir veya ek paket alınabilir.
-- **Kimlik doğrulama:** Kayıt (isim, soyisim, benzersiz e-posta **ve** telefon, şifre = tam 1 harf + rakamlar) → **telefon OTP** doğrulaması. Giriş, şifremi unuttum (e-posta bağlantısı), şifre değiştir, hesabı sil. Silinen hesap için **40 gün** aynı e-posta/telefon ile tekrar kayıt engeli.
-- **Cihazlar arası senkron:** Giriş yapınca plan ve görsel kotası veritabanından yüklenir; değişiklikler otomatik kaydedilir. Aynı hesapla başka cihazda aynı durum görünür.
-- **Favoriler**, **çoklu dil** (TR/EN/RU/AR, seçim kalıcı), **PWA** (yüklenebilir, çevrimdışı kabuk).
-- **Çoklu ödeme sağlayıcısı:** iyzico (TR), Stripe (global), PayTR — hepsi soyutlanmış; anahtar yoksa demo tahsilat akışı.
 
 ## Teknoloji
 
-**Ön yüz:** Angular 18 (standalone bileşenler, sinyaller, `@if`/`@for`/`@switch`), TypeScript 5.5 strict, HttpClient + fonksiyonel `authInterceptor`, sinyal tabanlı i18n, PWA (manifest + service worker). 
+**Ön yüz:** Angular 18 (standalone bileşenler, signals, yeni kontrol akışı `@if/@for`), TypeScript strict,
+mobil-öncelikli. PWA (manifest + service worker), APK'ya hazır (Capacitor / PWABuilder).
 
-**Arka yüz:** Node/Express, Prisma ORM + SQLite (geliştirme), JWT (`jsonwebtoken`) + bcrypt (`bcryptjs`), OTP/şifre-sıfırlama jetonları. AI/ödeme/SMS/e-posta için "gevşek yükleme + demo yedek" deseni (anahtar yoksa 503 yerine demo).
+**Arka uç:** Node.js + Express, Prisma ORM. Geliştirmede **SQLite**; yayına çıkışta **PostgreSQL**
+(Prisma ile tek satır değişiklik). Kimlik: JWT + bcrypt.
 
-**Testler:** Vitest (birim), Playwright (uçtan uca).
+**Yapay zekâ / görsel:**
+- **El analizi:** MediaPipe (tarayıcıda, cihaz-üstü) — tırnak şekli, parmak yapısı, ten tonu. Ücretsiz, anahtarsız.
+- **Kullanıcı tasarım üretimi:** **Flux 1.1 Pro** (Replicate) — üstten çekim, izole tek tırnak tasarımı üretir.
+  Anahtar yoksa demo/prosedürel önizlemeye düşer.
+- **AR deneme:** MediaPipe el takibi + üretilen tasarımın canlı tırnağa bindirilmesi.
+- **Galeri (vitrin):** Statik görseller (`public/designs/`, `public/images/`) — çalışma anında AI çağrısı yok.
 
-## Klasör yapısı
+**Diller:** Türkçe, İngilizce, Rusça, Arapça (RTL). Varsayılan İngilizce.
+
+---
+
+## Ekranlar (rotalar)
+
+| Rota | Ekran | Not |
+|---|---|---|
+| `/` | Ana Sayfa | Trend + AI seçimleri |
+| `/explore` | Keşfet | Galeri (statik görseller) |
+| `/scan` | Tara | MediaPipe el analizi → otomatik Stüdyo |
+| `/studio` | AI Stüdyo | Prompt → Flux ile tasarım üretimi |
+| `/ar` | AR Deneme | Tasarımı canlı tırnağa bindirme |
+| `/shop` | Mağaza | Planlar + görsel paketleri |
+| `/profile` | Profil | Hesap, favoriler, dil |
+| `/design/:id` | Tasarım Detay | Görsel + bilgiler |
+| `/admin` | Admin Panel | Kullanıcılar, gelir, içerik, hata müdahalesi, bakım modu |
+
+İlk açılışta tam ekran **açılış (splash) ekranı** gelir (3 sn, çok dilli slogan).
+
+---
+
+## Ana akış
+
+1. **Tara:** Kullanıcı elini kameraya gösterir (veya fotoğraf yükler). MediaPipe tırnak şeklini/ten tonunu çıkarır.
+2. **Otomatik üretim:** Analiz biter bitmez Stüdyo'ya geçilir; el verisine göre tasarım **otomatik** üretilir (Flux).
+3. **AR dene:** "AR'da Dene" ile tasarım canlı tırnağa bindirilir.
+4. **Kaydet / mağaza:** Favori, satın alma, paketler.
+
+---
+
+## Kurulum ve çalıştırma (yerel)
+
+Tek komut (her şeyi başlatır ve ayakta tutar):
 
 ```
-ngNailArt/
-  run.bat / run.ps1          # BEKÇI: her zaman ayakta tutan izleyici
-  test.bat / test-agent.ps1  # TEST AJANI: build + test + karşılaştırmalı rapor
-  dev.bat / dev.ps1          # tek başına dev sunucusu (bekçinin kullandığı çekirdek)
-  auto-git.ps1               # ~90 sn'de bir otomatik commit+push
-  proxy.conf.json            # /api, /images -> localhost:3000
-  src/app/
-    app.routes.ts            # lazy-loaded rotalar
-    pages/                   # home, explore, scan, studio, ar, shop, profile, design-detail
-    core/
-      auth.service.ts        # kayıt/giriş/OTP/şifre/silme + authInterceptor
-      plan.service.ts        # plan süresi (30/365 gün) ve durumu
-      image-quota.service.ts # görsel hakkı ve ek paket
-      sync.service.ts        # giriş/değişiklikte DB ile senkron
-      i18n.service.ts        # TR/EN/RU/AR + RTL, kalıcı seçim
-      nail-shape-detect.ts   # tırnak şekli (PCA + genişlik profili)
-      skin-tone.ts           # CIELAB/ITA cilt tonu
-      recommendation.ts      # öneri puanlama
-      ai.service.ts / payment.service.ts / favorites.service.ts ...
-  server/
-    index.js                 # Express + tüm /api uçları
-    auth.js  sms.js  mailer.js  payments.js  ai.js  db.js
-    prisma/schema.prisma      # Design, Favorite, ScanAnalysis, Order, User, BlockedSignup
+run.bat   (çift tık)  → backend (3000) + ön yüz (4200) + otomatik-git birlikte; biri kapanırsa yeniden başlar
 ```
 
-## Arka yüz API (özet)
-
-Sağlık/AI: `GET /api/health`, `GET /api/ai/status`, `POST /api/ai/chat`, `POST /api/ai/generate-image`.
-Tasarım/favori/analiz: `GET|POST /api/designs`, `GET|POST /api/favorites`, `DELETE /api/favorites/:designId`, `POST /api/analysis`, `GET /api/analysis/latest`.
-Kimlik: `POST /api/auth/register | verify-otp | resend-otp | login | forgot | reset | change-password | delete-account`, `GET /api/auth/me`, `PUT /api/auth/state`.
-Ödeme: `GET /api/payments/status`, `POST /api/payments/checkout | confirm`.
-
-## Ortam değişkenleri (isteğe bağlı)
-
-Hiçbiri zorunlu değildir; yoksa ilgili özellik demo moduna düşer. `server/.env`:
-
-- **AI:** OpenAI / Gemini / Replicate anahtarları (yoksa demo görsel).
-- **Ödeme:** iyzico / Stripe / PayTR anahtarları (yoksa demo tahsilat).
-- **SMS (OTP):** Twilio veya Netgsm (yoksa OTP yanıtta/konsolda döner).
-- **E-posta:** SMTP (yoksa şifre-sıfırlama bağlantısı yanıtta döner).
-- `DATABASE_URL` (SQLite dosya yolu), `JWT_SECRET`.
-
-## Testler
-
-```bash
-npm test                # birim testler (vitest, src/**/*.spec.ts)
-npm run test:watch      # izleme modu
-npm run e2e:install     # ilk sefer: Playwright Chromium
-npm run e2e             # uçtan uca duman testleri
+Elle:
+```
+cd server && npm install && npm start      # arka uç, http://localhost:3000
+npm install && npm start                    # ön yüz, http://localhost:4200
 ```
 
-Birim testler saf mantığı kapsar: cilt tonu (`skin-tone`), öneri puanlama (`recommendation`), tırnak şekli (`nail-shape-detect`). `.spec.ts` dosyaları `ng build`'e dahil değildir (`tsconfig.app.json` yalnızca `main.ts` grafiğini derler), bu yüzden dev sunucusunu/derlemeyi etkilemez.
+Ön yüz `/api` ve `/images` isteklerini `proxy.conf.json` ile 3000'e yönlendirir.
 
-Gündelik kullanımda **`test.bat`** (test ajanı) bunların üstüne derleme kontrolü + önceki çalışmayla karşılaştırma ekler.
+### Ortam değişkenleri (server/.env)
+- `DATABASE_URL` — SQLite (yerel) / PostgreSQL (yayın)
+- `JWT_SECRET` — kimlik jetonu gizli anahtarı
+- `REPLICATE_API_TOKEN` — **Flux 1.1 Pro** (kullanıcı tasarım üretimi). Yoksa demo modu.
+- (Opsiyonel) `TWILIO_*` (SMS OTP), `SMTP_*` (şifre e-postası), `IYZICO/STRIPE/PAYTR` (ödeme).
+  Anahtar yoksa ilgili özellik **demo modunda** çalışır.
 
-## Yol haritası (kalan)
+---
 
-- **Canlı yayına alma (deploy):** ön yüz + arka yüz + veritabanını herkese açık bir adrese taşımak (bilgisayar kapalıyken de erişim).
-- Üretim veritabanı olarak SQLite → Postgres geçişi (deploy ile birlikte).
-- Gerçek AI/ödeme/SMS anahtarlarının canlı ortamda bağlanması.
+## Galeri görselleri
 
-## İlgili belgeler
+Keşfet/Ana Sayfa görselleri statik dosyalardır: `public/designs/design-1.jpg … design-8.jpg`
+(kullanıcının kendi nail art görselleri). Dosya yoksa istemci-tarafı çizim önizlemesine düşülür.
 
-- `ADR.md` — mimari kararlar ve gerekçeleri.
-- `IMPLEMENTASYON.md` — özellik implementasyon dökümü.
-- `OTOMATIK-GUNCELLEME.md` — otomatik derleme/yenileme/push akışı.
-- `CLAUDE.md` — proje çalışma kuralları.
+---
+
+## Admin
+
+`/admin` — ayrı giriş, `role="admin"`. Sekmeler: Panel, Kullanıcılar, Siparişler & Gelir,
+Tasarımlar & İçerik, Engellenenler, Sistem (canlı hata kaydı + bakım modu).
+Demo admin: `server/scripts/create-admin.js` → `admin@demo.com / Admin123`.
+
+---
+
+## Yayına çıkış (özet)
+
+1. `schema.prisma` provider → `postgresql`, `prisma db push`.
+2. Backend Angular derlemesini de sunar; `render.yaml`.
+3. `JWT_SECRET`, `DATABASE_URL`, `REPLICATE_API_TOKEN` ortam değişkenleri.
+4. Canlı adres → PWABuilder ile APK/AAB.
+
+Detaylı mimari kararlar için `ADR.md`.

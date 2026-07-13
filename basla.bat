@@ -13,15 +13,17 @@ echo.
 
 REM Onceki takili node sureclerini temizle (port cakismasini onler)
 taskkill /F /IM node.exe >nul 2>&1
+timeout /t 1 >nul
 
-REM 1) BACKEND (port 3000) — kendi penceresinde, acik kalir (cmd /k)
-start "ngNailArt BACKEND (3000)" cmd /k "cd /d "%~dp0server" && npm start"
+REM 1) BACKEND (port 3000) — server klasorunde, kendi penceresinde acik kalir.
+REM    Calisma klasoru "start /D" ile verilir (ic ice tirnak sorunu olmaz).
+start "ngNailArt BACKEND (3000)" /D "%~dp0server" cmd /k npm start
 
 REM Backend'e birkac saniye baslama payi ver
-timeout /t 4 >nul
+timeout /t 5 >nul
 
-REM 2) ONYUZ (port 4200) — kendi penceresinde, acik kalir (cmd /k)
-start "ngNailArt ONYUZ (4200)" cmd /k "cd /d "%~dp0" && npm start"
+REM 2) ONYUZ (port 4200) — ana klasorde, kendi penceresinde acik kalir.
+start "ngNailArt ONYUZ (4200)" /D "%~dp0" cmd /k npm start
 
 echo Iki pencere acildi.
 echo   - BACKEND penceresinde:  Server http://localhost:3000  ve  hazir: iyzico

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 20mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: #1c1c1e; font-size: 12px; line-height: 1.55; margin: 0; }
+  .cover { text-align: center; padding: 10px 0 18px; border-bottom: 3px solid #d4af37; margin-bottom: 22px; }
+  .cover .kicker { letter-spacing: 3px; font-size: 11px; color: #b8912e; text-transform: uppercase; font-weight: 700; }
+  .cover h1 { font-size: 27px; margin: 8px 0 4px; color: #1a1206; }
+  .cover .sub { font-size: 13px; color: #6b6b70; margin: 0; }
+  .cover .date { font-size: 11px; color: #9a9aa0; margin-top: 8px; }
+  h2 { font-size: 16px; color: #1a1206; border-left: 4px solid #d4af37; padding-left: 10px; margin: 26px 0 10px; }
+  h3 { font-size: 13px; margin: 16px 0 6px; color: #3a2f10; }
+  p { margin: 6px 0; }
+  .lead { background: #fbf6e7; border: 1px solid #ecd9a0; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 6px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e6e6ea; vertical-align: top; }
+  th { background: #1a1206; color: #f4e6bf; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td.mod { font-weight: 600; width: 34%; }
+  td.st { width: 20%; white-space: nowrap; font-weight: 700; }
+  .ok { color: #1f8a4c; }
+  .part { color: #b8860b; }
+  .no { color: #c0392b; }
+  tr:nth-child(even) td { background: #faf9f6; }
+  .prio { border: 1px solid #e6e6ea; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+  .prio .n { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; background: #d4af37; color: #1a1206; font-weight: 700; font-size: 12px; margin-right: 8px; }
+  .prio .t { font-weight: 700; font-size: 13px; }
+  .prio .tag { float: right; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  .tag.must { background: #fdecea; color: #c0392b; }
+  .tag.soon { background: #fff4d6; color: #b8860b; }
+  .prio ul { margin: 8px 0 2px; padding-left: 20px; }
+  .prio li { margin: 3px 0; }
+  code { background: #f2f0ea; border: 1px solid #e2dfd4; border-radius: 4px; padding: 1px 5px; font-family: "Consolas", monospace; font-size: 11px; }
+  .note { font-size: 11px; color: #6b6b70; margin-top: 4px; }
+  .foot { margin-top: 26px; padding-top: 10px; border-top: 1px solid #e6e6ea; font-size: 10.5px; color: #9a9aa0; text-align: center; }
+  .legend { font-size: 11px; color: #6b6b70; margin: 4px 0 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="kicker">Miracle Nail Art AI</div>
+  <h1>MVP Hazırlık &amp; Kontrol Listesi</h1>
+  <p class="sub">Uygulamanın gerçek MVP olarak yayına çıkması için durum ve yapılacaklar</p>
+  <p class="date">Sürüm: MVP-Durum · 10 Temmuz 2026</p>
+</div>
+
+<p class="lead"><b>Özet:</b> Uygulama şu an <b>demo modunda uçtan uca çalışıyor</b> — kayıt, giriş, el analizi, tasarım stüdyosu, AR canlı deneme, galeri, profil ve ayarların tamamı işliyor. Gerçek bir MVP için tek çekirdek eksik var: <b>yapay zeka görsel üretiminin (Flux 1.1 Pro) gerçek anahtarla bağlanması</b> ve uygulamanın <b>internete (yayına) alınması</b>. Bunlar tamamlandığında kullanıcılar gerçek AI tasarımları üretip AR'da deneyebilir. SMS, e-posta ve ödeme başta demo/manuel kalabilir.</p>
+
+<h2>1. Modül Durumu</h2>
+<p class="legend"><span class="ok">✅ Hazır</span> = çalışıyor &nbsp;·&nbsp; <span class="part">🟡 Demo/Kısmi</span> = çalışıyor ama gerçek anahtar/servis gerekiyor &nbsp;·&nbsp; <span class="no">⛔ Eksik</span> = henüz yapılmadı</p>
+<table>
+  <tr><th>Modül</th><th>Durum</th><th>Not</th></tr>
+  <tr><td class="mod">Kayıt (199 ülke kodu)</td><td class="st ok">✅ Hazır</td><td>Ad, soyad, e-posta, ülke kodu + telefon, şifre. Tüm ülkeler seçilebilir.</td></tr>
+  <tr><td class="mod">Giriş / oturum (JWT)</td><td class="st ok">✅ Hazır</td><td>Token tabanlı, cihazlar arası oturum korunur.</td></tr>
+  <tr><td class="mod">OTP doğrulama</td><td class="st part">🟡 Demo</td><td>İlk kod SMS (1 kez), tekrar gönderim e-posta. Gerçek SMS için Twilio anahtarı gerekir; şimdi kod ekranda görünür.</td></tr>
+  <tr><td class="mod">Şifremi unuttum (kod ile)</td><td class="st ok">✅ Hazır</td><td>E-postaya kod → kod + yeni şifre. Hem girişte hem ayarlarda. (Gerçek e-posta için SMTP.)</td></tr>
+  <tr><td class="mod">Hesap silme (onaylı)</td><td class="st ok">✅ Hazır</td><td>Kimlik doğrula → e-posta onay linki → kalıcı sil + 40 gün tekrar kayıt engeli.</td></tr>
+  <tr><td class="mod">El analizi (MediaPipe)</td><td class="st ok">✅ Hazır</td><td>Cihazda çalışır, <b>ücretsiz</b>, anahtar gerekmez. Maliyet yok.</td></tr>
+  <tr><td class="mod">AI tasarım üretimi (Flux 1.1 Pro)</td><td class="st no">⛔ Bağlı değil</td><td><b>MVP'nin çekirdeği.</b> Şu an demo/prosedürel görsel üretiyor. Gerçek AI için Replicate anahtarı gerekir (~$0.04/görsel).</td></tr>
+  <tr><td class="mod">AR canlı deneme</td><td class="st ok">✅ Hazır</td><td>Kamera + el takibi ile tasarım tırnağa yerleşir.</td></tr>
+  <tr><td class="mod">Galeri (gerçek görseller)</td><td class="st ok">✅ Hazır</td><td>Kendi nail art görsellerinizle dolu.</td></tr>
+  <tr><td class="mod">Kota sistemi</td><td class="st ok">✅ Hazır</td><td>1 hak = 1 üretilen tasarım (el analizi+öneri, veya stüdyo prompt+tasarım). Tarama ücretsiz.</td></tr>
+  <tr><td class="mod">Ödeme / abonelik</td><td class="st part">🟡 Demo</td><td>Paketler görünür ama gerçek tahsilat yok. iyzico/Stripe entegrasyonu gerekir.</td></tr>
+  <tr><td class="mod">Veritabanı</td><td class="st part">🟡 Yerel</td><td>SQLite (tek dosya). Yayın için PostgreSQL'e geçilmeli.</td></tr>
+  <tr><td class="mod">E-posta gönderimi (SMTP)</td><td class="st part">🟡 Demo</td><td>Kod/link ekranda görünür. Gerçek gönderim için SMTP hesabı.</td></tr>
+  <tr><td class="mod">Yayına alma (hosting + domain)</td><td class="st no">⛔ Eksik</td><td>Uygulama yalnızca yerel bilgisayarda çalışıyor. Kullanıcıların erişmesi için sunucu gerekir.</td></tr>
+  <tr><td class="mod">KVKK / Gizlilik / Şartlar</td><td class="st no">⛔ Eksik</td><td>Yasal metinler yazılmalı (kişisel veri işlendiği için zorunlu).</td></tr>
+  <tr><td class="mod">Mobil APK (Android)</td><td class="st part">🟡 Hazırlık var</td><td>Capacitor yapılandırması ve hazırlık dokümanı mevcut; derleme yapılmadı.</td></tr>
+</table>
+
+<h2>2. Gerçek MVP İçin Minimum Yapılacaklar</h2>
+<p>Öncelik sırasıyla. İlk ikisi <b>zorunlu</b>; kullanıcı gerçek değeri (AI tasarım) ancak bunlarla görür.</p>
+
+<div class="prio">
+  <span class="tag must">ZORUNLU</span>
+  <div><span class="n">1</span><span class="t">Flux 1.1 Pro'yu bağla (gerçek AI görsel)</span></div>
+  <ul>
+    <li><a>replicate.com</a> hesabı aç → API token al (<code>r8_...</code>)</li>
+    <li><code>server/.env</code> içine: <code>REPLICATE_API_TOKEN=r8_...</code></li>
+    <li>Sunucu klasöründe: <code>npm i replicate</code> → backend'i yeniden başlat</li>
+    <li>Backend zaten kullanıcı üretimini Flux'a yönlendiriyor; anahtar girilince demo yerine gerçek tasarım gelir.</li>
+  </ul>
+  <p class="note">Maliyet: görsel başına ~$0.04. Kota sistemi bu maliyeti zaten kontrol ediyor (1 hak = 1 üretim).</p>
+</div>
+
+<div class="prio">
+  <span class="tag must">ZORUNLU</span>
+  <div><span class="n">2</span><span class="t">Uygulamayı yayına al (internetten erişim)</span></div>
+  <ul>
+    <li>Hosting: <b>Render</b> veya <b>Railway</b> (Node + Angular birlikte).</li>
+    <li>Veritabanı: <b>PostgreSQL</b> (Render/Railway ücretsiz katman ile). Prisma sağlayıcısı <code>sqlite</code> → <code>postgresql</code> yapılır.</li>
+    <li>Domain: örn. <code>miraclenailart.com</code> (~$10–15/yıl).</li>
+    <li>Ortam değişkenleri (anahtarlar) hosting paneline girilir; <code>JWT_SECRET</code> uzun rastgele bir değere ayarlanır.</li>
+  </ul>
+  <p class="note">Bu adımdan sonra uygulama telefonundan/tarayıcıdan herkese açık çalışır.</p>
+</div>
+
+<div class="prio">
+  <span class="tag soon">SONRA</span>
+  <div><span class="n">3</span><span class="t">Gerçek SMS, e-posta ve ödeme</span></div>
+  <ul>
+    <li><b>SMS (OTP):</b> Twilio veya Netgsm → <code>TWILIO_*</code> anahtarları.</li>
+    <li><b>E-posta:</b> SMTP (Gmail/SendGrid) → <code>SMTP_*</code> anahtarları (şifre kodu/silme onayı gerçek kutuya düşer).</li>
+    <li><b>Ödeme:</b> iyzico (Türkiye) veya Stripe → gerçek abonelik tahsilatı.</li>
+  </ul>
+  <p class="note">MVP'de bunlar demo kalabilir; ilk kullanıcı testleri için şart değil.</p>
+</div>
+
+<div class="prio">
+  <span class="tag soon">SONRA</span>
+  <div><span class="n">4</span><span class="t">Yasal metinler (KVKK / Gizlilik / Kullanım Şartları)</span></div>
+  <ul>
+    <li>Kişisel veri (e-posta, telefon, el görüntüsü) işlendiği için gizlilik politikası ve KVKK aydınlatma metni gerekir.</li>
+    <li>Uygulama içine bir "Gizlilik" sayfası olarak eklenir.</li>
+  </ul>
+</div>
+
+<h2>3. Anahtar Kontrol Listesi (.env)</h2>
+<p>Gerçek moda geçmek için <code>server/.env</code> dosyasına girilecek anahtarlar:</p>
+<table>
+  <tr><th>Anahtar</th><th>Ne için</th><th>MVP'de zorunlu mu?</th></tr>
+  <tr><td class="mod"><code>REPLICATE_API_TOKEN</code></td><td>Flux 1.1 Pro — gerçek AI tasarım</td><td class="st no">Evet</td></tr>
+  <tr><td class="mod"><code>JWT_SECRET</code></td><td>Oturum güvenliği (uzun rastgele)</td><td class="st no">Evet</td></tr>
+  <tr><td class="mod"><code>DATABASE_URL</code></td><td>PostgreSQL (yayında)</td><td class="st no">Evet (yayında)</td></tr>
+  <tr><td class="mod"><code>TWILIO_*</code></td><td>Gerçek SMS OTP</td><td class="st part">Hayır (demo olur)</td></tr>
+  <tr><td class="mod"><code>SMTP_*</code></td><td>Gerçek e-posta (kod/link)</td><td class="st part">Hayır (demo olur)</td></tr>
+</table>
+
+<p class="foot">Miracle Nail Art AI — MVP Hazırlık &amp; Kontrol Listesi · Maliyet ayrıntıları için "Finansal Analiz v5" belgesine bakın · Bu belge uygulamanın 10 Temmuz 2026 tarihli durumunu yansıtır.</p>
+
+</body>
+</html>

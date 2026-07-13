@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:900px;height:1200px;overflow:hidden}
+  #stage{width:900px;height:1200px;position:relative}
+</style></head>
+<body>
+<div id="stage"></div>
+<script>
+// data.service.ts ile birebir sıra
+const DESIGNS = [
+  { id:1, base:'#caa63a', kind:'chrome', accent:'#fff3cf', name:'Gold Chrome' },
+  { id:2, base:'#e6a4c4', kind:'ombre', to:'#e8d5c0', name:'Pink Ombré' },
+  { id:3, base:'#2a2350', kind:'galaxy', name:'Galaxy Dreams' },
+  { id:4, base:'#e7d3bf', kind:'french', name:'French Gold' },
+  { id:5, base:'#1f8f63', kind:'marble', name:'Emerald Marble' },
+  { id:6, base:'#e2c9ad', kind:'line', name:'Nude Gold Line' },
+  { id:7, base:'#f3ead9', kind:'pearl', name:'Bridal Pearl' },
+  { id:8, base:'#c23b3b', kind:'chrome', accent:'#ffd9d0', name:'Red Chrome' },
+  { id:9, base:'#cdd6e0', kind:'frost', name:'Silver Frost' },
+];
+
+const NS='http://www.w3.org/2000/svg';
+function el(n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+
+// beş parmak (uçlar yukarı, el aşağıda): merkez x, uç y, tırnak boyu, açı, parmak eni
+const FINGERS=[
+  {x:258,tip:520,nl:150,rot:-13,fw:104},
+  {x:373,tip:432,nl:186,rot:-6,fw:116},
+  {x:478,tip:398,nl:208,rot:0,fw:124},
+  {x:585,tip:432,nl:186,rot:6,fw:116},
+  {x:700,tip:520,nl:150,rot:13,fw:104},
+];
+
+function nailPath(nl,nw){
+  const h=nl/2,w=nw/2;
+  return `M0 ${-h} C ${w} ${-h*0.62} ${w} ${h*0.55} 0 ${h} C ${-w} ${h*0.55} ${-w} ${-h*0.62} 0 ${-h} Z`;
+}
+
+function render(d){
+  const stage=document.getElementById('stage');
+  // arka plan
+  const bgLight = !['galaxy'].includes(d.kind);
+  stage.style.background = bgLight
+    ? 'radial-gradient(120% 90% at 50% 32%, #fbf7f1, #e7ddd0 78%)'
+    : 'radial-gradient(120% 90% at 50% 32%, #141024, #05040a 80%)';
+
+  const svg=el('svg',{width:900,height:1200,viewBox:'0 0 900 1200'});
+  const defs=el('defs',{}); svg.appendChild(defs);
+
+  // ten tonu degrade (parmaklar için)
+  const sg=el('linearGradient',{id:'skin',x1:0,y1:0,x2:0.5,y2:1});
+  sg.appendChild(el('stop',{offset:0,'stop-color':'#f2d6bd'}));
+  sg.appendChild(el('stop',{offset:0.5,'stop-color':'#e7c2a0'}));
+  sg.appendChild(el('stop',{offset:1,'stop-color':'#d8ac86'}));
+  defs.appendChild(sg);
+
+  // marble/galaxy için turbulence filtreleri
+  if(d.kind==='marble'){
+    const f=el('filter',{id:'marble',x:'-20%',y:'-20%',width:'140%',height:'140%'});
+    f.appendChild(el('feTurbulence',{type:'fractalNoise',baseFrequency:'0.012 0.03',numOctaves:'4',seed:'7',result:'n'}));
+    f.appendChild(el('feColorMatrix',{in:'n',type:'matrix',values:'0 0 0 0 0.82  0 0 0 0 0.66  0 0 0 0 0.25  0 0 0 1.1 0'}));
+    defs.appendChild(f);
+  }
+  if(d.kind==='galaxy'){
+    const f=el('filter',{id:'neb',x:'-20%',y:'-20%',width:'140%',height:'140%'});
+    f.appendChild(el('feTurbulence',{type:'fractalNoise',baseFrequency:'0.02 0.035',numOctaves:'5',seed:'11',result:'n'}));
+    f.appendChild(el('feColorMatrix',{in:'n',type:'matrix',values:'0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0 0.75  0 0 0 1.3 -0.2'}));
+    defs.appendChild(f);
+  }
+
+  FINGERS.forEach((fg,idx)=>{
+    const nw=fg.nl*0.62;
+    const g=el('g',{transform:`translate(${fg.x} ${fg.tip}) rotate(${fg.rot})`});
+
+    // PARMAK (ten) — uç yukarıda kubbe, aşağı doğru uzanır
+    g.appendChild(el('rect',{x:-fg.fw/2,y:0,width:fg.fw,height:820,rx:fg.fw/2,ry:fg.fw/2,fill:'url(#skin)'}));
+    // parmak sol/sağ hafif gölge-ışık
+    g.appendChild(el('rect',{x:-fg.fw/2,y:0,width:fg.fw*0.28,height:820,rx:fg.fw*0.2,fill:'rgba(0,0,0,0.06)'}));
+    g.appendChild(el('rect',{x:fg.fw*0.12,y:0,width:fg.fw*0.3,height:820,rx:fg.fw*0.2,fill:'rgba(255,255,255,0.14)'}));
+
+    // tırnağı parmağın ucuna otur — merkez uçtan nl*0.5 aşağıda
+    const innerY=fg.nl*0.5+6;
+    const gn=el('g',{transform:`translate(0 ${innerY})`});
+
+    // tırnak taban
+    const pid=`grad${idx}`;
+    let fill='#ccc';
+    if(d.kind==='ombre'){
+      const lg=el('linearGradient',{id:pid,x1:0,y1:0,x2:0,y2:1});
+      lg.appendChild(el('stop',{offset:0,'stop-color':d.base}));
+      lg.appendChild(el('stop',{offset:1,'stop-color':d.to}));
+      defs.appendChild(lg); fill=`url(#${pid})`;
+    } else if(d.kind==='chrome'||d.kind==='frost'){
+      const lg=el('linearGradient',{id:pid,x1:0,y1:0,x2:0.4,y2:1});
+      const b=d.base;
+      lg.appendChild(el('stop',{offset:0,'stop-color':shade(b,55)}));
+      lg.appendChild(el('stop',{offset:0.45,'stop-color':b}));
+      lg.appendChild(el('stop',{offset:0.55,'stop-color':shade(b,-30)}));
+      lg.appendChild(el('stop',{offset:1,'stop-color':shade(b,40)}));
+      defs.appendChild(lg); fill=`url(#${pid})`;
+    } else { fill=d.base; }
+
+    // tırnak altı yumuşak gölge (parmağa oturma hissi)
+    gn.appendChild(el('ellipse',{cx:0,cy:fg.nl*0.42,rx:nw*0.6,ry:fg.nl*0.12,fill:'rgba(0,0,0,0.12)'}));
+    const nail=el('path',{d:nailPath(fg.nl,nw),fill:fill});
+    gn.appendChild(nail);
+
+    // desen katmanları — tırnak şekline kırp
+    const clip=el('clipPath',{id:`c${idx}`});
+    clip.appendChild(el('path',{d:nailPath(fg.nl,nw)}));
+    defs.appendChild(clip);
+    const inner=el('g',{'clip-path':`url(#c${idx})`});
+
+    if(d.kind==='marble'){
+      inner.appendChild(el('rect',{x:-nw,y:-fg.nl,width:nw*2,height:fg.nl*2,filter:'url(#marble)',opacity:0.55}));
+      // altın damarlar
+      for(let v=0;v<3;v++){
+        inner.appendChild(el('path',{d:`M ${-nw*0.5} ${-fg.nl*0.3+v*fg.nl*0.28} q ${nw*0.4} ${-20} ${nw*0.9} ${18} t ${nw*0.6} ${-6}`,stroke:'#f2d98a',fill:'none','stroke-width':2,opacity:0.85}));
+      }
+    }
+    if(d.kind==='galaxy'){
+      inner.appendChild(el('rect',{x:-nw,y:-fg.nl,width:nw*2,height:fg.nl*2,filter:'url(#neb)',opacity:0.9}));
+      for(let s=0;s<26;s++){
+        const sx=(-0.45+ (s*53%90)/100)*nw;
+        const sy=(-0.48+ (s*37%96)/100)*fg.nl;
+        inner.appendChild(el('circle',{cx:sx,cy:sy,r:(s%4===0?1.8:0.9),fill:'#fff',opacity:0.9}));
+      }
+    }
+    if(d.kind==='french'){
+      inner.appendChild(el('path',{d:`M ${-nw} ${-fg.nl*0.28} Q 0 ${-fg.nl*0.52} ${nw} ${-fg.nl*0.28} L ${nw} ${-fg.nl} L ${-nw} ${-fg.nl} Z`,fill:'#fbf6ec'}));
+      inner.appendChild(el('path',{d:`M ${-nw} ${-fg.nl*0.28} Q 0 ${-fg.nl*0.52} ${nw} ${-fg.nl*0.28}`,stroke:'#caa63a',fill:'none','stroke-width':3}));
+    }
+    if(d.kind==='line'){
+      inner.appendChild(el('line',{x1:-nw*0.1,y1:-fg.nl*0.45,x2:nw*0.35,y2:fg.nl*0.45,stroke:'#caa63a','stroke-width':3.5}));
+    }
+    if(d.kind==='pearl'){
+      const rg=el('radialGradient',{id:`pl${idx}`,cx:'40%',cy:'32%',r:'75%'});
+      rg.appendChild(el('stop',{offset:0,'stop-color':'#ffffff','stop-opacity':0.9}));
+      rg.appendChild(el('stop',{offset:0.5,'stop-color':'#f0e6f2','stop-opacity':0.3}));
+      rg.appendChild(el('stop',{offset:1,'stop-color':'#dfe9f0','stop-opacity':0.15}));
+      defs.appendChild(rg);
+      inner.appendChild(el('rect',{x:-nw,y:-fg.nl,width:nw*2,height:fg.nl*2,fill:`url(#pl${idx})`}));
+    }
+    if(d.accent){ // chrome ek parlaklık
+      inner.appendChild(el('ellipse',{cx:-nw*0.18,cy:-fg.nl*0.22,rx:nw*0.28,ry:fg.nl*0.16,fill:d.accent,opacity:0.5}));
+    }
+    // ıslak parlaklık — her tırnakta
+    inner.appendChild(el('ellipse',{cx:nw*0.16,cy:-fg.nl*0.2,rx:nw*0.2,ry:fg.nl*0.14,fill:'#ffffff',opacity:0.35}));
+    inner.appendChild(el('ellipse',{cx:-nw*0.22,cy:fg.nl*0.16,rx:nw*0.12,ry:fg.nl*0.22,fill:'#ffffff',opacity:0.12}));
+    gn.appendChild(inner);
+
+    // ince kenar
+    gn.appendChild(el('path',{d:nailPath(fg.nl,nw),fill:'none',stroke:'rgba(255,255,255,0.25)','stroke-width':1}));
+    g.appendChild(gn);
+    svg.appendChild(g);
+  });
+
+  stage.innerHTML='';
+  stage.appendChild(svg);
+}
+
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)+amt, g=((n>>8)&255)+amt, b=(n&255)+amt;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+
+const i=parseInt(new URLSearchParams(location.search).get('i')||'0',10);
+window.__ready=false;
+render(DESIGNS[i]);
+window.__ready=true;
+</script>
+</body></html>

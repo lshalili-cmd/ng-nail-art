@@ -101,25 +101,35 @@ type CaptureMode = 'full' | 'closeup';
             </div>
           }
 
-          @if (manualMode()) {
+          <!-- El analizi sonrası dört özellik de her zaman görünür ve elle ayarlanabilir:
+               ten rengi, cilt alt tonu, tırnak yapısı (parmak). Tırnak şekli aşağıda. -->
+          @if (analysis()) {
             <p class="manual-note">✏️ {{ i18n.t('manual_note') }}</p>
-          }
 
-          <!-- Manuel ten tonu seçimi (otomatik çıksa da elle değiştirilebilir) -->
-          <div class="section-head"><h2 class="section-title">🎨 {{ i18n.t('skin_tone') }}</h2></div>
-          <div class="tones">
-            @for (t of toneOptions; track t.key) {
-              <button class="tone" [class.on]="analysis()?.toneKey === t.key" (click)="setTone(t)">
-                <span class="tsw" [style.background]="t.hex"></span>
-                <span class="tl">{{ i18n.t('tone_' + t.key) }}</span>
-              </button>
-            }
-          </div>
-          <div class="unders">
-            @for (u of undertones; track u) {
-              <button class="under" [class.on]="analysis()?.undertone === u" (click)="setUndertone(u)">{{ i18n.t('ut_' + u) }}</button>
-            }
-          </div>
+            <div class="section-head"><h2 class="section-title">🎨 {{ i18n.t('skin_tone') }}</h2></div>
+            <div class="tones">
+              @for (t of toneOptions; track t.key) {
+                <button class="tone" [class.on]="analysis()?.toneKey === t.key" (click)="setTone(t)">
+                  <span class="tsw" [style.background]="t.hex"></span>
+                  <span class="tl">{{ i18n.t('tone_' + t.key) }}</span>
+                </button>
+              }
+            </div>
+
+            <div class="section-head"><h2 class="section-title">🌡️ {{ i18n.t('result_undertone') }}</h2></div>
+            <div class="unders">
+              @for (u of undertones; track u) {
+                <button class="under" [class.on]="analysis()?.undertone === u" (click)="setUndertone(u)">{{ i18n.t('ut_' + u) }}</button>
+              }
+            </div>
+
+            <div class="section-head"><h2 class="section-title">🖐️ {{ i18n.t('finger_shape') }}</h2></div>
+            <div class="unders">
+              @for (fl of fingerOptions; track fl) {
+                <button class="under" [class.on]="analysis()?.fingerLength === fl" (click)="setFinger(fl)">{{ i18n.t('fl_' + fl) }}</button>
+              }
+            </div>
+          }
 
           <!-- Tırnak şekli: manuel seçim asıl kaynak; otomatik yalnızca yaklaşık öneri -->
           <div class="section-head">
@@ -217,6 +227,8 @@ type CaptureMode = 'full' | 'closeup';
     .under { padding: 9px 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
       color: var(--muted); font-size: 12.5px; cursor: pointer; }
     .under.on { border-color: rgba(212,175,55,0.6); color: var(--gold-soft); background: rgba(212,175,55,0.12); }
+    .fix-btn { margin: 6px 0 2px; background: transparent; border: 1px dashed var(--line); color: var(--muted);
+      border-radius: 10px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; }
     .se { font-size: 22px; }
     .si { width: 42px; height: 42px; object-fit: contain; border-radius: 8px; }
     .sl { font-size: 10.5px; font-weight: 600; }
@@ -282,6 +294,11 @@ export class ScanComponent implements OnDestroy {
   setUndertone(u: Undertone): void {
     const a = this.analysis() ?? this.fallbackAnalysis();
     this.analysis.set({ ...a, undertone: u });
+  }
+  readonly fingerOptions: FingerLength[] = ['short', 'medium', 'long'];
+  setFinger(fl: FingerLength): void {
+    const a = this.analysis() ?? this.fallbackAnalysis();
+    this.analysis.set({ ...a, fingerLength: fl });
   }
   /** Otomatik analiz başarısız → kareyi göster, manuel seçim moduyla sonuç ekranına geç. */
   private manualResults(work: HTMLCanvasElement): void {
@@ -538,18 +555,15 @@ export class ScanComponent implements OnDestroy {
     const shape = result.nailShape ?? this.suggestShape(result.fingerLength);
     this.shape.set(shape);
     this.stage.set('results');
+    // ÖNEMLİ: Analiz başarılı olsa bile SONUÇ EKRANINDA KAL. Kullanıcı dört özelliği
+    // (tırnak şekli, ten rengi, alt ton, parmak yapısı) görür ve yanlışsa elle düzeltir.
+    // Stüdyo'ya geçiş, kullanıcı "🎨 AI öner" butonuna basınca olur (otomatik zıplama YOK).
+    // Paylaşılan depo zaten constructor'daki effect ile analysis()/shape değişince güncelleniyor.
     // Analizi veritabanına da kaydet (sessiz-başarısız; backend kapalıysa atlar)
     void this.backend.saveAnalysis({
       toneKey: result.toneKey, undertone: result.undertone,
       fingerLength: result.fingerLength, nailShape: result.nailShape, hex: result.hex,
     });
-    // ESAS AKIŞ: analiz biter bitmez el verisiyle OTOMATİK tasarım üretimine geç.
-    // Paylaşılan depoyu kesin doldur (Stüdyo bunu okuyup kendiliğinden görsel üretir).
-    this.store.set({
-      toneKey: result.toneKey, undertone: result.undertone,
-      fingerLength: result.fingerLength, nailShape: shape, lab: result.lab,
-    });
-    void this.router.navigate(['/studio']);
   }
 
   /** Tespit edilen noktaları kare üzerine çizer (örnekleme sonrası). */

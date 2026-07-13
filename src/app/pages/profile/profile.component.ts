@@ -36,6 +36,14 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
       @if (authOpen()) {
         <div class="au-back" (click)="closeAuth()"></div>
         <div class="au card">
+          <div class="au-head">
+            <button class="au-x" (click)="closeAuth()" aria-label="Geri">‹</button>
+            <div class="au-langs">
+              @for (l of locales; track l.code) {
+                <button class="au-lang" [class.on]="i18n.locale() === l.code" (click)="i18n.setLocale(l.code)" [attr.aria-label]="l.label">{{ l.flag }}</button>
+              }
+            </div>
+          </div>
           <img class="au-logo" src="/icon-192.png" alt="Miracle Nail Art" />
           <h3 class="au-t">{{ i18n.t(stepTitle()) }}</h3>
 
@@ -260,6 +268,13 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
     .au-back { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
     .au { position: fixed; z-index: 1101; inset-inline: 24px; top: 50%; transform: translateY(-50%);
       margin: 0 auto; max-width: 380px; padding: 22px 18px; }
+    .au-head { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 2px; }
+    .au-x { width: 34px; height: 34px; border-radius: 50%; font-size: 24px; line-height: 1; color: var(--ink);
+      background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+    .au-langs { display: flex; gap: 4px; }
+    .au-lang { width: 30px; height: 30px; border-radius: 8px; font-size: 16px; line-height: 1;
+      background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; opacity: 0.55; }
+    .au-lang.on { opacity: 1; border-color: rgba(212,175,55,0.5); background: rgba(212,175,55,0.12); }
     .au-logo { display: block; width: 76px; height: 76px; margin: 2px auto 10px; border-radius: 20px; }
     .au-t { margin: 0 0 16px; font-size: 20px; text-align: center; }
     .au-in { width: 100%; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
