@@ -90,6 +90,18 @@ async function stripeCheckout({ itemName, amount, currency, baseUrl, ref }) {
   return { mode: 'live', provider: 'stripe', url: session.url, ref: session.id };
 }
 
+/**
+ * iyzico fiyat formatı: SONDA SIFIR OLMAMALI (ör. "349.00" → "349.0", "6.00" → "6.0"),
+ * aksi halde iyzico "Geçersiz imza" döner. Ondalık yoksa ".0" eklenir.
+ */
+function iyziPrice(amount) {
+  let p = parseFloat(amount);
+  if (!isFinite(p)) p = 0;
+  let s = p.toString();          // 349 → "349", 7.85 → "7.85", 70.65 → "70.65"
+  if (s.indexOf('.') === -1) s += '.0';   // tam sayı → "349.0"
+  return s;
+}
+
 // --- iyzico: Checkout Form Initialize ---
 async function iyzicoCheckout({ itemName, amount, currency, userId, baseUrl, ref }) {
   const Iyzipay = tryRequire('iyzipay');
@@ -99,7 +111,7 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, baseUrl, ref
     secretKey: process.env.IYZICO_SECRET,
     uri: process.env.IYZICO_URI || 'https://sandbox-api.iyzipay.com',
   });
-  const price = Number(amount).toFixed(2);
+  const price = iyziPrice(amount);
   const request = {
     locale: 'tr', conversationId: ref, price, paidPrice: price,
     currency: currency || 'USD', basketId: ref,
