@@ -103,47 +103,75 @@ function iyziPrice(amount) {
   return s;
 }
 
-// --- iyzico: Checkout Form Initialize ---
+// --- iyzico: Checkout Form Initialize (SDK YOK — doğrudan v2 HmacSHA256 imza) ---
+// SDK'nın "Geçersiz imza" hatasını atlamak için iyzico'ya doğrudan istek atarız.
+// v2 imza, gönderilen gövdenin BİREBİR kendisini imzalar; böylece fiyat formatı ve
+// Türkçe karakter kaynaklı imza uyuşmazlıkları tamamen ortadan kalkar.
 async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref }) {
-  const Iyzipay = tryRequire('iyzipay');
-  if (!Iyzipay) throw new Error('iyzipay paketi kurulu değil (npm i iyzipay)');
-  const iyzipay = new Iyzipay({
-    apiKey: process.env.IYZICO_API_KEY,
-    secretKey: process.env.IYZICO_SECRET,
-    uri: process.env.IYZICO_URI || 'https://sandbox-api.iyzipay.com',
-  });
+  const apiKey = String(process.env.IYZICO_API_KEY || '').trim();
+  const secretKey = String(process.env.IYZICO_SECRET || '').trim();
+  const base = String(process.env.IYZICO_URI || 'https://sandbox-api.iyzipay.com').trim().replace(/\/+$/, '');
+  if (!apiKey || !secretKey) throw new Error('iyzico anahtarları eksik');
+
   const price = iyziPrice(amount);
-  // Giriş yapmış kullanıcının bilgileri (yoksa misafir değerlerine düşer — iyzico boş alan kabul etmez)
   const bi = buyer || {};
-  const name = String(bi.name || '').trim() || 'Musteri';
-  const surname = String(bi.surname || '').trim() || 'NailArt';
-  const email = String(bi.email || '').trim() || 'musteri@miraclenailart.com';
-  const gsm = String(bi.phone || '').trim() || '+905000000000';
+  const val = (s, fb) => { const t = String(s == null ? '' : s).trim(); return t || fb; };
+  const name = val(bi.name, 'Musteri');
+  const surname = val(bi.surname, 'NailArt');
+  const email = val(bi.email, 'musteri@miraclenailart.com');
+  const gsm = val(bi.phone, '+905000000000');
   const contact = `${name} ${surname}`.trim();
-  console.log(`💳 iyzico istek → fiyat: ${price} ${currency || 'USD'} · ürün: ${itemName}`);
+
   const request = {
     locale: 'tr', conversationId: ref, price, paidPrice: price,
-    currency: currency || 'USD', basketId: ref,
-    paymentGroup: 'SUBSCRIPTION',
+    currency: currency || 'TRY', basketId: ref, paymentGroup: 'SUBSCRIPTION',
     callbackUrl: `${baseUrl}/shop?paid=1&provider=iyzico&ref=${ref}`,
     buyer: {
-      id: String(userId || 'guest'), name, surname, gsmNumber: gsm, identityNumber: '11111111111',
-      email, registrationAddress: 'Istanbul, Turkiye', city: 'Istanbul', country: 'Turkey',
-      ip: '85.34.78.112',
+      id: String(userId || 'guest'), name, surname, gsmNumber: gsm, email,
+      identityNumber: '11111111111', registrationAddress: 'Istanbul, Turkiye',
+      ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey',
     },
+    shippingAddress: { contactName: contact, city: 'Istanbul', country: 'Turkey', address: 'Istanbul, Turkiye' },
     billingAddress: { contactName: contact, city: 'Istanbul', country: 'Turkey', address: 'Istanbul, Turkiye' },
-    basketItems: [{
-      id: itemName, name: itemName, category1: 'Membership', itemType: 'VIRTUAL', price,
-    }],
+    basketItems: [{ id: 'item1', name: itemName, category1: 'Membership', itemType: 'VIRTUAL', price }],
   };
-  const result = await new Promise((resolve, reject) => {
-    iyzipay.checkoutFormInitialize.create(request, (err, res) => (err ? reject(err) : resolve(res)));
+
+  const uriPath = '/payment/iyzipos/checkoutform/initialize/auth/ecom';
+  const body = JSON.stringify(request);
+  const rnd = String(Date.now()) + crypto.randomBytes(4).toString('hex');
+  const signature = crypto.createHmac('sha256', secretKey).update(rnd + uriPath + body, 'utf8').digest('hex');
+  const authorization = 'IYZWSv2 ' + Buffer.from(
+    ['apiKey:' + apiKey, 'randomKey:' + rnd, 'signature:' + signature].join('&'),
+  ).toString('base64');
+
+  console.log(`💳 iyzico(v2) istek → fiyat: ${price} ${currency || 'TRY'} · ürün: ${itemName}`);
+
+  const resText = await httpsJson(base + uriPath, body, {
+    'Authorization': authorization,
+    'x-iyzi-rnd': rnd,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   });
+  let result;
+  try { result = JSON.parse(resText); } catch { throw new Error('iyzico yanıtı okunamadı: ' + String(resText).slice(0, 120)); }
   if (result.status !== 'success') {
     console.warn('💳 iyzico yanıtı:', JSON.stringify({ status: result.status, errorCode: result.errorCode, errorMessage: result.errorMessage }));
     throw new Error(`iyzico: ${result.errorMessage || 'init hatası'}${result.errorCode ? ' (kod ' + result.errorCode + ')' : ''}`);
   }
   return { mode: 'live', provider: 'iyzico', url: result.paymentPageUrl, ref: result.token || ref };
+}
+
+/** JSON gövdeli POST (özel başlıklarla). Dönüş: yanıt gövdesi (metin). */
+function httpsJson(url, body, headers) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const req = https.request({
+      hostname: u.hostname, path: u.pathname + (u.search || ''), method: 'POST',
+      headers: Object.assign({ 'Content-Length': Buffer.byteLength(body) }, headers),
+    }, (res) => { let b = ''; res.on('data', (c) => (b += c)); res.on('end', () => resolve(b)); });
+    req.on('error', reject);
+    req.write(body); req.end();
+  });
 }
 
 // --- PayTR: get-token (iFrame) ---
