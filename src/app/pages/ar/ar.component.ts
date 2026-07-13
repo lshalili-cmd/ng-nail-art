@@ -149,7 +149,8 @@ export class ArComponent implements OnDestroy {
     this.starting.set(true);
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } }, audio: false,
+        // Arka kamerayı tercih et (tırnağa bakmak için); arka yoksa otomatik öne düşer.
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 720 }, height: { ideal: 960 } }, audio: false,
       });
       const v = this.video().nativeElement;
       v.srcObject = this.stream;

@@ -162,7 +162,7 @@ Object.assign(EN, {
   cam_start: 'Open Camera', cam_capture: 'Analyze', cam_cancel: 'Cancel',
   cam_hint: 'Fit your hand inside the frame', no_hand: 'No hand detected — try again',
   err_camera: 'Could not access the camera', err_model: 'AI model could not load (check your connection)',
-  choose_shape: 'Nail shape', result_undertone: 'Undertone', result_hand: 'Hand',
+  choose_shape: 'Nail shape', manual_note: 'Automatic analysis unavailable — pick your skin tone and nail shape manually below.', result_undertone: 'Undertone', result_hand: 'Hand',
   shape_hint: 'Pick your shape below — this is what we use. The auto guess is only approximate; a close-up scans one nail far more accurately.',
   approx: 'approx.',
   closeup_detect: 'Close-up detect',
@@ -182,7 +182,7 @@ Object.assign(TR, {
   cam_start: 'Kamerayı Aç', cam_capture: 'Analiz Et', cam_cancel: 'İptal',
   cam_hint: 'Elinizi çerçeveye yerleştirin', no_hand: 'El algılanamadı — tekrar deneyin',
   err_camera: 'Kameraya erişilemedi', err_model: 'AI modeli yüklenemedi (bağlantınızı kontrol edin)',
-  choose_shape: 'Tırnak şekli', result_undertone: 'Alt Ton', result_hand: 'El',
+  choose_shape: 'Tırnak şekli', manual_note: 'Otomatik analiz yapılamadı — ten tonunu ve tırnak şeklini aşağıdan elle seç.', result_undertone: 'Alt Ton', result_hand: 'El',
   shape_hint: 'Şekli aşağıdan sen seç — kullanılan bu. Otomatik tahmin yalnızca yaklaşıktır; tek tırnak yakın çekimi çok daha isabetli sonuç verir.',
   approx: 'yaklaşık',
   closeup_detect: 'Yakın çekimle algıla',
@@ -307,7 +307,7 @@ Object.assign(AR, { badge_trending: 'رائج', badge_new: 'جديد', badge_pre
 Object.assign(RU, {
   cam_start: 'Открыть камеру', cam_capture: 'Анализ', cam_cancel: 'Отмена',
   cam_hint: 'Поместите руку в рамку', err_camera: 'Нет доступа к камере', err_model: 'Не удалось загрузить AI-модель (проверьте связь)',
-  choose_shape: 'Форма ногтя', result_undertone: 'Подтон', result_hand: 'Рука',
+  choose_shape: 'Форма ногтя', manual_note: 'Автоанализ недоступен — выберите тон кожи и форму ногтя вручную ниже.', result_undertone: 'Подтон', result_hand: 'Рука',
   shape_hint: 'Выберите форму ниже — используется она. Авто-оценка приблизительна; макросъёмка одного ногтя точнее.',
   approx: 'прибл.', closeup_detect: 'Определить (макро)', closeup_upload: 'Загрузить макро',
   closeup_guide: 'Заполните кадр одним ногтем — резкость и хороший свет.',
@@ -333,7 +333,7 @@ Object.assign(RU, {
 Object.assign(AR, {
   cam_start: 'افتحي الكاميرا', cam_capture: 'تحليل', cam_cancel: 'إلغاء',
   cam_hint: 'ضعي يدك داخل الإطار', err_camera: 'تعذّر الوصول للكاميرا', err_model: 'تعذّر تحميل نموذج الذكاء (تحققي من الاتصال)',
-  choose_shape: 'شكل الظفر', result_undertone: 'درجة اللون', result_hand: 'اليد',
+  choose_shape: 'شكل الظفر', manual_note: 'تعذّر التحليل التلقائي — اختاري درجة لون البشرة وشكل الظفر يدويًا أدناه.', result_undertone: 'درجة اللون', result_hand: 'اليد',
   shape_hint: 'اختاري الشكل بالأسفل — هو المستخدم. التقدير التلقائي تقريبي؛ لقطة مقرّبة لظفر واحد أدق.',
   approx: 'تقريبي', closeup_detect: 'كشف مقرّب', closeup_upload: 'رفع لقطة مقرّبة',
   closeup_guide: 'املئي الإطار بظفر واحد — تركيز حاد وإضاءة جيدة.',
@@ -406,7 +406,7 @@ Object.assign(EN, {
   agree_text: 'I have read and accept the Privacy Policy, KVKK Notice and Terms of Use.',
   agree_required: 'Please accept the terms to continue.',
   leg_privacy: 'Privacy Policy', leg_kvkk: 'KVKK Notice', leg_terms: 'Terms of Use', legal: 'Privacy & Legal',
-  currency: 'Currency',
+  currency: 'Currency', auth_remember: 'Remember me',
 });
 Object.assign(TR, {
   auth_first: 'Ad', auth_last: 'Soyad', auth_phone: 'Telefon numarası', auth_fill_all: 'Tüm alanları doldurun',
@@ -425,7 +425,7 @@ Object.assign(TR, {
   agree_text: 'Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları\'nı okudum, kabul ediyorum.',
   agree_required: 'Devam etmek için şartları kabul etmelisiniz.',
   leg_privacy: 'Gizlilik Politikası', leg_kvkk: 'KVKK Aydınlatma', leg_terms: 'Kullanım Şartları', legal: 'Gizlilik ve Yasal',
-  currency: 'Para birimi',
+  currency: 'Para birimi', auth_remember: 'Beni hatırla',
 });
 Object.assign(RU, {
   auth_first: 'Имя', auth_last: 'Фамилия', auth_phone: 'Номер телефона', auth_fill_all: 'Заполните все поля',
@@ -444,7 +444,7 @@ Object.assign(RU, {
   agree_text: 'Я прочитал(а) и принимаю Политику конфиденциальности, Уведомление KVKK и Условия использования.',
   agree_required: 'Чтобы продолжить, примите условия.',
   leg_privacy: 'Политика конфиденциальности', leg_kvkk: 'Уведомление KVKK', leg_terms: 'Условия использования', legal: 'Конфиденциальность и право',
-  currency: 'Валюта',
+  currency: 'Валюта', auth_remember: 'Запомнить меня',
 });
 Object.assign(AR, {
   auth_first: 'الاسم', auth_last: 'اللقب', auth_phone: 'رقم الهاتف', auth_fill_all: 'املئي جميع الحقول',
@@ -463,7 +463,7 @@ Object.assign(AR, {
   agree_text: 'لقد قرأت وأوافق على سياسة الخصوصية وإشعار KVKK وشروط الاستخدام.',
   agree_required: 'يرجى قبول الشروط للمتابعة.',
   leg_privacy: 'سياسة الخصوصية', leg_kvkk: 'إشعار KVKK', leg_terms: 'شروط الاستخدام', legal: 'الخصوصية والقانون',
-  currency: 'العملة',
+  currency: 'العملة', auth_remember: 'تذكرني',
 });
 
 // ── Ayarlar: şifre değiştir / hesabı sil ──

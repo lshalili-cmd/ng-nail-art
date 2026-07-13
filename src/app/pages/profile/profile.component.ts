@@ -84,7 +84,10 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
             @default {
               <input class="au-in" type="email" [value]="email()" (input)="email.set($any($event.target).value)" [placeholder]="i18n.t('auth_email')" autocomplete="email" />
               <div class="au-pw"><input class="au-in" [type]="showPw() ? 'text' : 'password'" [value]="password()" (input)="password.set($any($event.target).value)" [placeholder]="i18n.t('auth_password')" autocomplete="current-password" /><button type="button" class="au-eye" (click)="showPw.set(!showPw())">{{ showPw() ? '👁️' : '🙈' }}</button></div>
-              <button class="au-forgot" (click)="setStep('forgot')">{{ i18n.t('auth_forgot') }}</button>
+              <div class="au-row-between">
+                <label class="au-remember"><input type="checkbox" [checked]="remember()" (change)="remember.set($any($event.target).checked)" /><span>{{ i18n.t('auth_remember') }}</span></label>
+                <button class="au-forgot" (click)="setStep('forgot')">{{ i18n.t('auth_forgot') }}</button>
+              </div>
             }
           }
 
@@ -294,6 +297,10 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
     .au-note { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.5; text-align: center; }
     .au-otp { text-align: center; letter-spacing: 6px; font-size: 20px; font-weight: 700; }
     .au-forgot { display: block; margin: 2px 0 4px auto; background: transparent; color: var(--gold-soft); font-size: 12px; padding: 4px; }
+    .au-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 4px; }
+    .au-remember { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+    .au-remember input { width: 15px; height: 15px; accent-color: var(--gold); }
+    .au-row-between .au-forgot { margin: 0; }
     .au-pw { position: relative; margin-bottom: 10px; }
     .au-pw .au-in { margin-bottom: 0; padding-inline-end: 46px; }
     .au-eye { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%);
@@ -536,6 +543,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly countryDial = signal<string>('+90');   // varsayılan Türkiye
   readonly agree = signal<boolean>(false);         // kayıtta yasal onay
   readonly password = signal<string>('');
+  readonly remember = signal<boolean>(true);   // "beni hatırla" — varsayılan açık
   readonly otp = signal<string>('');
   readonly demoInfo = signal<string | null>(null);
   readonly authErr = signal<string | null>(null);
@@ -589,7 +597,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     if (step === 'login') {
       if (!email || !this.password()) { this.authErr.set(this.i18n.t('auth_fill')); return; }
-      await this.run(() => this.auth.login(email, this.password()));
+      await this.run(() => this.auth.login(email, this.password(), this.remember()));
     } else if (step === 'register') {
       if (!this.firstName().trim() || !this.lastName().trim() || !email || !this.phone().trim()) { this.authErr.set(this.i18n.t('auth_fill_all')); return; }
       if (!this.pwOk()) { this.authErr.set(this.i18n.t('auth_pw_rule')); return; }
@@ -602,7 +610,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }));
     } else if (step === 'otp') {
       if (this.otp().trim().length < 4) { this.authErr.set(this.i18n.t('auth_fill')); return; }
-      await this.run(() => this.auth.verifyOtp(email, this.otp().trim()));
+      await this.run(() => this.auth.verifyOtp(email, this.otp().trim(), this.remember()));
     } else if (step === 'forgot') {
       if (!email) { this.authErr.set(this.i18n.t('auth_fill')); return; }
       await this.run(() => this.auth.forgot(email));

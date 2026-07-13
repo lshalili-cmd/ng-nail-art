@@ -56,10 +56,10 @@ export class AuthService {
   }
 
   /** OTP doğrula → başarılıysa giriş yapılır. */
-  async verifyOtp(email: string, code: string): Promise<AuthResult> {
+  async verifyOtp(email: string, code: string, remember = true): Promise<AuthResult> {
     try {
       const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/verify-otp', { email, code }).pipe(timeout(9000)));
-      if (res?.success && res.token && res.user) { this.setToken(res.token); this.user.set(res.user); return { ok: true }; }
+      if (res?.success && res.token && res.user) { this.setToken(res.token, remember); this.user.set(res.user); return { ok: true }; }
       return { ok: false, error: 'Hata' };
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
@@ -72,10 +72,10 @@ export class AuthService {
     } catch (e) { return { ok: false, error: this.errMsg(e) }; }
   }
 
-  async login(email: string, password: string): Promise<AuthResult> {
+  async login(email: string, password: string, remember = true): Promise<AuthResult> {
     try {
       const res = await firstValueFrom(this.http.post<AuthResp>('/api/auth/login', { email, password }).pipe(timeout(9000)));
-      if (res?.success && res.token && res.user) { this.setToken(res.token); this.user.set(res.user); return { ok: true }; }
+      if (res?.success && res.token && res.user) { this.setToken(res.token, remember); this.user.set(res.user); return { ok: true }; }
       return { ok: false, error: 'Hata' };
     } catch (e) {
       const err = e as { error?: AuthResp };
@@ -145,11 +145,19 @@ export class AuthService {
     const err = e as { error?: { error?: string } };
     return err?.error?.error || 'Sunucuya ulaşılamadı (backend kapalı olabilir)';
   }
-  private setToken(t: string | null): void {
+  private setToken(t: string | null, remember = true): void {
     this.token.set(t);
-    try { if (t) localStorage.setItem(this.KEY, t); else localStorage.removeItem(this.KEY); } catch { /* geç */ }
+    try {
+      if (t) {
+        // "Beni hatırla" işaretliyse kalıcı (localStorage), değilse tarayıcı kapanınca silinir (sessionStorage)
+        (remember ? localStorage : sessionStorage).setItem(this.KEY, t);
+        (remember ? sessionStorage : localStorage).removeItem(this.KEY);
+      } else {
+        localStorage.removeItem(this.KEY); sessionStorage.removeItem(this.KEY);
+      }
+    } catch { /* geç */ }
   }
   private loadToken(): string | null {
-    try { return localStorage.getItem(this.KEY); } catch { return null; }
+    try { return localStorage.getItem(this.KEY) || sessionStorage.getItem(this.KEY); } catch { return null; }
   }
 }

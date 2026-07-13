@@ -7,6 +7,7 @@ import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
 import { DataService, Design } from '../../core/data.service';
 import { HandAnalysisService, HandAnalysis, FingerLength } from '../../core/hand-analysis.service';
+import { ToneKey, Undertone } from '../../core/skin-tone';
 import { BackendService } from '../../core/api.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { recommend, ScoredDesign } from '../../core/recommendation';
@@ -100,6 +101,26 @@ type CaptureMode = 'full' | 'closeup';
             </div>
           }
 
+          @if (manualMode()) {
+            <p class="manual-note">✏️ {{ i18n.t('manual_note') }}</p>
+          }
+
+          <!-- Manuel ten tonu seçimi (otomatik çıksa da elle değiştirilebilir) -->
+          <div class="section-head"><h2 class="section-title">🎨 {{ i18n.t('skin_tone') }}</h2></div>
+          <div class="tones">
+            @for (t of toneOptions; track t.key) {
+              <button class="tone" [class.on]="analysis()?.toneKey === t.key" (click)="setTone(t)">
+                <span class="tsw" [style.background]="t.hex"></span>
+                <span class="tl">{{ i18n.t('tone_' + t.key) }}</span>
+              </button>
+            }
+          </div>
+          <div class="unders">
+            @for (u of undertones; track u) {
+              <button class="under" [class.on]="analysis()?.undertone === u" (click)="setUndertone(u)">{{ i18n.t('ut_' + u) }}</button>
+            }
+          </div>
+
           <!-- Tırnak şekli: manuel seçim asıl kaynak; otomatik yalnızca yaklaşık öneri -->
           <div class="section-head">
             <h2 class="section-title">{{ i18n.t('choose_shape') }}</h2>
@@ -184,6 +205,18 @@ type CaptureMode = 'full' | 'closeup';
     .shape { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px;
       border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); }
     .shape.on { background: rgba(212,175,55,0.16); border-color: rgba(212,175,55,0.5); color: var(--gold-soft); }
+    .manual-note { margin: 4px 0 2px; font-size: 12.5px; color: var(--gold-soft);
+      background: rgba(212,175,55,0.1); border: 1px dashed rgba(212,175,55,0.4); border-radius: 10px; padding: 8px 10px; }
+    .tones { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .tone { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px;
+      border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); font-size: 10.5px; cursor: pointer; }
+    .tone.on { border-color: rgba(212,175,55,0.6); color: var(--gold-soft); background: rgba(212,175,55,0.12); }
+    .tsw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); }
+    .tl { line-height: 1.2; text-align: center; }
+    .unders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .under { padding: 9px 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
+      color: var(--muted); font-size: 12.5px; cursor: pointer; }
+    .under.on { border-color: rgba(212,175,55,0.6); color: var(--gold-soft); background: rgba(212,175,55,0.12); }
     .se { font-size: 22px; }
     .si { width: 42px; height: 42px; object-fit: contain; border-radius: 8px; }
     .sl { font-size: 10.5px; font-weight: 600; }
@@ -220,8 +253,48 @@ export class ScanComponent implements OnDestroy {
   readonly analysis = signal<HandAnalysis | null>(null);
   readonly closeup = signal<CloseupResult | null>(null);
   readonly shape = signal<string>('almond');
+  /** Otomatik analiz yapılamadıysa (MediaPipe yüklenemedi/el bulunamadı) manuel seçim modu. */
+  readonly manualMode = signal<boolean>(false);
 
   private stream: MediaStream | null = null;
+
+  /** Manuel ten tonu seçenekleri (temsili renk örnekleriyle). */
+  readonly toneOptions: { key: ToneKey; hex: string }[] = [
+    { key: 'very_fair', hex: '#f3d9c4' }, { key: 'fair', hex: '#ecc9a8' },
+    { key: 'light_wheat', hex: '#e0b48c' }, { key: 'wheat', hex: '#cf9e73' },
+    { key: 'tan', hex: '#b9825a' }, { key: 'dark_tan', hex: '#9c6643' },
+    { key: 'dark_brown', hex: '#7a4b2e' }, { key: 'very_dark', hex: '#5a3620' },
+  ];
+  readonly undertones: Undertone[] = ['warm', 'cool', 'neutral'];
+
+  /** Otomatik analiz yoksa manuel seçim için nötr varsayılan. */
+  private fallbackAnalysis(): HandAnalysis {
+    return {
+      handDetected: false, landmarks: null, handedness: null, rgb: null, hex: '#cf9e73',
+      lab: null, toneKey: 'wheat', ita: null, undertone: 'neutral', fingerLength: 'medium',
+      nailShape: null, shapeConfidence: 0, confidence: 0,
+    } as HandAnalysis;
+  }
+  setTone(t: { key: ToneKey; hex: string }): void {
+    const a = this.analysis() ?? this.fallbackAnalysis();
+    this.analysis.set({ ...a, toneKey: t.key, hex: t.hex });
+  }
+  setUndertone(u: Undertone): void {
+    const a = this.analysis() ?? this.fallbackAnalysis();
+    this.analysis.set({ ...a, undertone: u });
+  }
+  /** Otomatik analiz başarısız → kareyi göster, manuel seçim moduyla sonuç ekranına geç. */
+  private manualResults(work: HTMLCanvasElement): void {
+    this.analysis.set(this.fallbackAnalysis());
+    this.manualMode.set(true);
+    this.error.set(null);
+    try {
+      const disp = this.frame().nativeElement;
+      disp.width = work.width; disp.height = work.height;
+      disp.getContext('2d')?.drawImage(work, 0, 0);
+    } catch { /* kare çizilemezse geç */ }
+    this.stage.set('results');
+  }
 
   readonly shapes = [
     { key: 'oval', emoji: '🥚', img: 'images/shape_oval1.png' },
@@ -443,17 +516,17 @@ export class ScanComponent implements OnDestroy {
     try {
       await this.hands.init();
     } catch (e) {
-      console.error('[Scan] MediaPipe modeli yüklenemedi:', e);
-      this.error.set(this.i18n.t('err_model'));
-      this.stage.set('idle');
+      console.error('[Scan] MediaPipe modeli yüklenemedi — manuel seçime geçiliyor:', e);
+      this.manualResults(work);   // takılıp kalma: sonuç ekranına geç, manuel seç
       return;
     }
     const result = this.hands.analyze(work);
     if (!result.handDetected) {
-      this.error.set(this.i18n.t('no_hand'));
-      this.stage.set('idle');
+      console.warn('[Scan] El bulunamadı — manuel seçime geçiliyor.');
+      this.manualResults(work);
       return;
     }
+    this.manualMode.set(false);
     // Görünür tuvale kareyi + tespit noktalarını çiz
     const disp = this.frame().nativeElement;
     disp.width = work.width;
