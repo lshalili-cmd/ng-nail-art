@@ -7,7 +7,7 @@ export interface Design {
   artist: string;
   badge?: 'trending' | 'new' | 'premium';
   grad: string;          // CSS gradient (görsel yüklenemezse yedek)
-  photo?: string;        // STATİK katalog görseli (public/designs/*.jpg) — bir kez üretilir, bedava
+  photo?: string;        // STATİK katalog görseli (public/designs/design-<id>.jpg)
   img?: string;          // istemci tarafı çizilen tırnak önizlemesi (data URL) — statik yoksa yedek
   pattern?: string;      // çizim deseni: french | ombre | marble | galaxy | chrome | line | glossy
   category: string;
@@ -27,7 +27,7 @@ export interface Artist {
   grad: string;
 }
 
-// Lüks degrade placeholder'lar — gerçek AI görselleri entegrasyonda gelecek
+// Lüks degrade placeholder'lar — gerçek fotoğraf yüklenemezse yedek olarak kullanılır
 const G = {
   gold: 'linear-gradient(135deg,#f3e5a8,#b8912e)',
   rose: 'linear-gradient(135deg,#e6a4c4,#8a4d67)',
@@ -39,57 +39,82 @@ const G = {
   pearl: 'linear-gradient(135deg,#fbf3e6,#cdbfa6)',
 };
 
+// ---------------------------------------------------------------------------
+// KATALOG: public/designs/design-1.jpg ... design-121.jpg (senin gerçek görsellerin)
+// Kod, klasördeki TÜM görselleri otomatik kataloglar. Yeni görsel eklersen
+// TOTAL_DESIGNS sayısını artırman yeter (design-<id>.jpg isimlendirmesiyle).
+// ---------------------------------------------------------------------------
+const TOTAL_DESIGNS = 121;
+
+const ADJ = ['Gold', 'Rose', 'Chrome', 'Galaxy', 'Emerald', 'Nude', 'Bridal', 'Ruby', 'Coral',
+  'Midnight', 'Pearl', 'Velvet', 'Sunset', 'Ocean', 'Blossom', 'Amber', 'Ivory', 'Sapphire',
+  'Mint', 'Lavender', 'Bronze', 'Crystal', 'Onyx', 'Champagne', 'Berry', 'Peach', 'Slate',
+  'Marble', 'Neon', 'Blush', 'Cherry', 'Frost', 'Dusk', 'Aurora', 'Cocoa', 'Latte', 'Plum',
+  'Teal', 'Scarlet', 'Lilac'];
+const NOUN = ['Chrome', 'Ombré', 'Marble', 'Glow', 'Shine', 'French', 'Glitter', 'Matte', 'Gloss',
+  'Line', 'Tip', 'Dream', 'Luxe', 'Touch', 'Art', 'Wave', 'Veil', 'Bloom', 'Mist', 'Halo'];
+const ARTISTS = ['Luna Design', 'Rose Studio', 'Nova Nails', 'Élite Art', 'Jade Studio', 'Minimal Co',
+  'Wedding Art', 'Bold Studio', 'Aura Lab', 'Muse Nails', 'Velvet Room', 'Studio Noir', 'Gilded Bar',
+  'Bloom Atelier', 'Chic Studio', 'Maison Nail', 'Opal & Co', 'Belle Studio'];
+const TONE_KEYS = ['very_fair', 'fair', 'light_wheat', 'wheat', 'tan', 'dark_tan', 'dark_brown', 'very_dark'];
+const UNDER = ['warm', 'cool', 'neutral'];
+const SHAPES = ['oval', 'almond', 'square', 'squoval', 'coffin', 'stiletto', 'round'];
+const SEASONS = ['spring', 'summer', 'fall', 'winter', 'all'];
+const CATS = ['luxury', 'trendy', 'bridal', 'minimal', 'classic', 'bold'];
+const BADGES: (Design['badge'])[] = ['trending', 'new', 'premium', undefined];
+const PAL = [
+  { grad: G.gold, colors: ['gold', 'warm', 'metallic'], pattern: 'chrome' },
+  { grad: G.rose, colors: ['pink', 'rose', 'pastel'], pattern: 'ombre' },
+  { grad: G.galaxy, colors: ['blue', 'purple', 'glitter'], pattern: 'galaxy' },
+  { grad: G.pearl, colors: ['nude', 'cream', 'white'], pattern: 'french' },
+  { grad: G.emerald, colors: ['green', 'emerald', 'dark'], pattern: 'marble' },
+  { grad: G.nude, colors: ['nude', 'gold', 'warm'], pattern: 'line' },
+  { grad: G.chrome, colors: ['chrome', 'silver', 'metallic'], pattern: 'chrome' },
+  { grad: G.red, colors: ['red', 'bold', 'dark'], pattern: 'glossy' },
+];
+
+/** design-<id>.jpg için çeşitlilikli katalog kaydı üretir (öneri motoru için etiketli). */
+function genDesign(id: number): Design {
+  const i = id - 1;
+  const pal = PAL[i % PAL.length];
+  const s = i % SHAPES.length;
+  const t = i % TONE_KEYS.length;
+  return {
+    id,
+    name: `${ADJ[i % ADJ.length]} ${NOUN[(i * 7 + 3) % NOUN.length]}`,
+    artist: ARTISTS[i % ARTISTS.length],
+    badge: BADGES[i % 4],
+    grad: pal.grad,
+    pattern: pal.pattern,
+    category: CATS[i % CATS.length],
+    shapes: [SHAPES[s], SHAPES[(s + 2) % SHAPES.length], SHAPES[(s + 4) % SHAPES.length]],
+    tones: [TONE_KEYS[t], TONE_KEYS[(t + 1) % 8], TONE_KEYS[(t + 2) % 8]],
+    undertones: [UNDER[i % 3]],
+    seasons: [SEASONS[i % SEASONS.length]],
+    colors: pal.colors,
+    popular: i % 3 === 0,
+    rating: Math.round((4.2 + ((i * 7) % 8) / 10) * 10) / 10,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataService {
-  private readonly all: Design[] = [
-    { id: 1, name: 'Gold Chrome', artist: 'Luna Design', badge: 'trending', grad: G.gold, category: 'luxury',
-      shapes: ['almond', 'coffin', 'stiletto'], tones: ['tan', 'dark_tan', 'wheat'], undertones: ['warm'],
-      seasons: ['fall', 'winter'], colors: ['gold', 'chrome', 'warm', 'metallic'], popular: true, rating: 4.8 },
-    { id: 2, name: 'Pink Ombré', artist: 'Rose Studio', badge: 'new', grad: G.rose, category: 'trendy',
-      shapes: ['oval', 'almond', 'squoval'], tones: ['very_fair', 'fair', 'light_wheat'], undertones: ['cool', 'neutral'],
-      seasons: ['spring', 'summer'], colors: ['pink', 'rose', 'pastel'], popular: true, rating: 4.6 },
-    { id: 3, name: 'Galaxy Dreams', artist: 'Nova Nails', badge: 'premium', grad: G.galaxy, category: 'trendy',
-      shapes: ['coffin', 'stiletto', 'almond'], tones: ['fair', 'light_wheat', 'tan'], undertones: ['cool'],
-      seasons: ['winter'], colors: ['blue', 'purple', 'dark', 'glitter'], popular: false, rating: 4.4 },
-    { id: 4, name: 'French Gold', artist: 'Élite Art', badge: 'trending', grad: G.pearl, category: 'bridal',
-      shapes: ['oval', 'almond', 'squoval', 'round'], tones: ['very_fair', 'fair', 'wheat'], undertones: ['neutral', 'warm'],
-      seasons: ['all'], colors: ['nude', 'white', 'gold', 'cream'], popular: true, rating: 4.9 },
-    { id: 5, name: 'Emerald Marble', artist: 'Jade Studio', badge: 'new', grad: G.emerald, category: 'luxury',
-      shapes: ['squoval', 'square', 'oval'], tones: ['tan', 'dark_tan', 'dark_brown'], undertones: ['cool', 'warm'],
-      seasons: ['fall', 'winter'], colors: ['green', 'emerald', 'dark'], popular: false, rating: 4.3 },
-    { id: 6, name: 'Nude Gold Line', artist: 'Minimal Co', badge: 'premium', grad: G.nude, category: 'minimal',
-      shapes: ['oval', 'almond', 'squoval'], tones: ['light_wheat', 'wheat', 'tan'], undertones: ['neutral', 'warm'],
-      seasons: ['all'], colors: ['nude', 'gold', 'cream', 'warm'], popular: true, rating: 4.7 },
-    { id: 7, name: 'Bridal Pearl', artist: 'Wedding Art', badge: 'new', grad: G.pearl, category: 'bridal',
-      shapes: ['almond', 'oval', 'coffin'], tones: ['very_fair', 'fair', 'light_wheat'], undertones: ['cool', 'neutral'],
-      seasons: ['spring', 'all'], colors: ['white', 'pearl', 'pastel', 'silver'], popular: false, rating: 4.5 },
-    { id: 8, name: 'Red Chrome', artist: 'Bold Studio', badge: 'trending', grad: G.red, category: 'luxury',
-      shapes: ['stiletto', 'coffin', 'almond'], tones: ['fair', 'wheat', 'tan', 'dark_brown'], undertones: ['warm', 'cool'],
-      seasons: ['winter', 'fall'], colors: ['red', 'chrome', 'dark', 'bold'], popular: true, rating: 4.6 },
-  ];
+  private readonly all: Design[] =
+    Array.from({ length: TOTAL_DESIGNS }, (_unused, k) => genDesign(k + 1));
 
   constructor() {
-    // id → çizim deseni
-    const patterns: Record<number, string> = {
-      1: 'chrome', 2: 'ombre', 3: 'galaxy', 4: 'french', 5: 'marble',
-      6: 'line', 7: 'glossy', 8: 'chrome',
-    };
-    // Her tasarım için:
-    //  - photo: STATİK katalog görseli (public/designs/design-<id>.jpg). Bir kez üretilir,
-    //    çalışma anında AI çağrısı YOK, maliyet YOK. Dosya yoksa img'e düşülür (design-card).
-    //  - img: istemci tarafı çizilen tırnak önizlemesi (statik dosya gelene kadar yedek).
+    // Her tasarım için gerçek fotoğraf (public/designs/design-<id>.jpg) + yedek çizim.
     for (const d of this.all) {
-      d.pattern = patterns[d.id] ?? 'glossy';
-      // GALERİ: statik görsel (public/designs/design-<id>.jpg) — kendi nail art görsellerin.
-      // Dosya yoksa design-card otomatik çizime düşer.
-      d.photo = d.photo ?? `designs/design-${d.id}.jpg`;
-      d.img = renderNailThumb(d.colors, d.pattern);
+      d.photo = `designs/design-${d.id}.jpg`;
+      d.img = renderNailThumb(d.colors, d.pattern ?? 'glossy');
     }
-
   }
 
-  readonly trending: Design[] = this.all.filter((d) => d.badge === 'trending' || d.popular).slice(0, 5);
-  readonly aiPicks: Design[] = this.all.slice(5);
+  // "Trend Olanlar" — badge/trend + popüler ilk 12
+  readonly trending: Design[] = this.all.filter((d) => d.badge === 'trending' || d.popular).slice(0, 12);
+  // "Yapay Zeka Seçimleri" — geri kalan tüm katalog
+  readonly aiPicks: Design[] = this.all.slice(6);
+  // Keşfet — tüm katalog (121)
   readonly explore: Design[] = this.all;
 
   readonly artists: Artist[] = [
