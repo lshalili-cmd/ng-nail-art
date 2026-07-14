@@ -36,6 +36,25 @@ app.use('/images', express.static(path.join(__dirname, 'images'), {
   setHeaders: (res) => res.set('Cache-Control', 'no-cache'),
 }));
 
+// KATALOG GÖRSELLERİ: public/designs klasöründen sun. UZANTI-TOLERANSLI —
+// istek design-1.jpg olsa bile dosya .png/.jpeg/.webp ise onu bulup sunar.
+// (Kullanıcının görselleri PNG ama adları .jpg olabilir; bu yüzden esnek arıyoruz.)
+const DESIGNS_DIR = path.join(__dirname, '..', 'public', 'designs');
+app.get('/designs/:file', (req, res, next) => {
+  const safe = path.basename(req.params.file || '');           // yol gezme koruması
+  const base = safe.replace(/\.[^.]+$/, '');                    // "design-1.jpg" -> "design-1"
+  const candidates = [safe, base + '.jpg', base + '.png', base + '.jpeg', base + '.webp',
+    base + '.JPG', base + '.PNG', base + '.jpg.png', base + '.png.jpg'];
+  for (const name of candidates) {
+    const p = path.join(DESIGNS_DIR, name);
+    if (name && fs.existsSync(p) && fs.statSync(p).isFile()) {
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.sendFile(p);
+    }
+  }
+  return next(); // bulunamazsa normal akışa bırak
+});
+
 // ÜRETİM: derlenmiş Angular arayüzünü aynı sunucudan sun (tek servis deploy).
 // dist yoksa (yerel geliştirme) atlanır; o zaman ön yüz ayrı `ng serve` ile çalışır.
 const CLIENT_DIR = path.join(__dirname, '..', 'dist', 'ng-nail-art', 'browser');
