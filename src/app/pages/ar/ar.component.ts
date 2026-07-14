@@ -8,7 +8,6 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
 import { downloadImage, shareImage } from '../../core/share';
 import { TryonStore } from '../../core/tryon-store';
 
-interface Swatch { name: string; hex: string; }
 
 @Component({
   selector: 'app-ar',
@@ -34,15 +33,6 @@ interface Swatch { name: string; hex: string; }
           <div class="hint"><span class="ic spin">⏳</span><p>{{ i18n.t('ar_starting') }}</p></div>
         }
         @if (photo(); as p) { <img class="shot" [src]="p" alt="AR" /> }
-      </div>
-
-      <!-- Renk seçimi -->
-      <p class="lbl">{{ i18n.t('ar_color') }}</p>
-      <div class="swatches">
-        @for (s of swatches; track s.hex) {
-          <button class="sw" [class.on]="color() === s.hex" [style.background]="s.hex"
-                  [title]="s.name" (click)="color.set(s.hex)"></button>
-        }
       </div>
 
       <!-- Kontroller -->
@@ -127,12 +117,6 @@ export class ArComponent implements OnDestroy {
     img.onerror = () => { this.designImg = null; this.hasDesign.set(false); };
     img.src = url;
   }
-
-  readonly swatches: Swatch[] = [
-    { name: 'Gold', hex: '#d4af37' }, { name: 'Red', hex: '#d24b4b' }, { name: 'Pink', hex: '#e6a4c4' },
-    { name: 'Nude', hex: '#dcc3a6' }, { name: 'Chrome', hex: '#cdd6e0' }, { name: 'Black', hex: '#20202a' },
-    { name: 'Blue', hex: '#4b78d2' }, { name: 'Emerald', hex: '#1f8f63' }, { name: 'Purple', hex: '#8a5bd0' },
-  ];
 
   private stream: MediaStream | null = null;
   private raf = 0;

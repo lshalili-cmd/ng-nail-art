@@ -257,12 +257,13 @@ export class HandAnalysisService {
     }
     const aspect = (capSteps * stepPx) / maxW; // kapak uzunluğu / genişlik
 
-    // Sınıflandırma (silüet daralması + kapak en/boy)
-    if (taper < 0.30) return aspect > 0.95 ? 'stiletto' : 'almond';
-    if (taper < 0.52) return aspect > 0.85 ? 'almond' : 'oval';
-    if (taper < 0.74) return aspect > 1.05 ? 'coffin' : 'oval';
-    // Uç geniş kalıyor → düz kenar
-    return aspect > 0.45 ? 'square' : 'round';
+    // Sınıflandırma (silüet daralması + kapak en/boy) — 7 şekli dengeli ayırır,
+    // badem lehine kaymayı önlemek için bantlar daraltıldı ve aspect koşulu eklendi.
+    if (taper < 0.22) return aspect > 1.05 ? 'stiletto' : 'almond'; // çok sivri uç
+    if (taper < 0.44) return aspect > 1.15 ? 'almond' : 'oval';     // sivri: uzunsa badem, değilse oval
+    if (taper < 0.62) return aspect > 0.95 ? 'coffin' : 'oval';     // orta: uzun+düz uç → tabut
+    if (taper < 0.80) return aspect > 0.60 ? 'squoval' : 'round';   // hafif düz kesim → squoval
+    return aspect > 0.50 ? 'square' : 'round';                       // geniş düz uç → kare/yuvarlak
   }
 
   /** Avuç/el sırtı merkezinden bir yama örnekleyip baskın cilt rengini döndürür. */

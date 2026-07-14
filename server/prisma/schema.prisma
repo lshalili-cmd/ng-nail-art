@@ -1,12 +1,12 @@
-// ngNailArt — Prisma şeması (SQLite, geliştirme için)
-// SQLite dizi/enum desteklemez; diziler JSON string olarak tutulur.
+// ngNailArt — Prisma şeması (PostgreSQL / Neon — kalıcı veritabanı)
+// Diziler JSON string olarak tutulur (kod bu şekilde okuyor; değiştirmeye gerek yok).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

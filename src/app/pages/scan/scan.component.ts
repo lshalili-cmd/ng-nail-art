@@ -1,16 +1,13 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, inject, signal, computed, effect, viewChild, OnDestroy,
+  ChangeDetectionStrategy, Component, ElementRef, inject, signal, effect, viewChild, OnDestroy,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
-import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
-import { DataService, Design } from '../../core/data.service';
 import { HandAnalysisService, HandAnalysis, FingerLength } from '../../core/hand-analysis.service';
 import { ToneKey, Undertone } from '../../core/skin-tone';
 import { BackendService } from '../../core/api.service';
 import { AnalysisStore } from '../../core/analysis-store';
-import { recommend, ScoredDesign } from '../../core/recommendation';
 import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
 import { NailSegService } from '../../core/nail-seg.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
@@ -21,7 +18,7 @@ type CaptureMode = 'full' | 'closeup';
 @Component({
   selector: 'app-scan',
   standalone: true,
-  imports: [HeaderComponent, DesignCardComponent, RouterLink],
+  imports: [HeaderComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-header />
@@ -154,13 +151,6 @@ type CaptureMode = 'full' | 'closeup';
             <button class="btn-ghost" (click)="pickCloseupFile()">🖼️ {{ i18n.t('closeup_upload') }}</button>
           </div>
 
-          <div class="section-head"><h2 class="section-title">💎 {{ i18n.t('perfect_match') }}</h2></div>
-          <div class="rail">
-            @for (m of matchList(); track m.design.id) {
-              <app-design-card [design]="m.design" [width]="150" [score]="m.score" />
-            }
-          </div>
-
           <button class="btn-primary wide" routerLink="/studio">🎨 {{ i18n.t('scan_ai_suggest') }}</button>
           <button class="btn-ghost wide" (click)="reset()">🔄 {{ i18n.t('rescan') }}</button>
         }
@@ -237,7 +227,6 @@ type CaptureMode = 'full' | 'closeup';
 })
 export class ScanComponent implements OnDestroy {
   readonly i18n = inject(I18nService);
-  readonly data = inject(DataService);
   private readonly hands = inject(HandAnalysisService);
   private readonly backend = inject(BackendService);
   private readonly seg = inject(NailSegService);
@@ -264,7 +253,7 @@ export class ScanComponent implements OnDestroy {
   readonly error = signal<string | null>(null);
   readonly analysis = signal<HandAnalysis | null>(null);
   readonly closeup = signal<CloseupResult | null>(null);
-  readonly shape = signal<string>('almond');
+  readonly shape = signal<string>('oval');
   /** Otomatik analiz yapılamadıysa (MediaPipe yüklenemedi/el bulunamadı) manuel seçim modu. */
   readonly manualMode = signal<boolean>(false);
 
@@ -322,24 +311,6 @@ export class ScanComponent implements OnDestroy {
     { key: 'stiletto', emoji: '🗡️', img: 'images/shape_stiletto1.png' },
     { key: 'round', emoji: '⚪', img: 'images/shape_round1.png' },
   ];
-
-  /** Analiz + seçili şekle göre gerçek öneriler (yoksa null). */
-  private readonly recos = computed<ScoredDesign[] | null>(() => {
-    const a = this.analysis();
-    if (!a) return null;
-    return recommend(
-      { toneKey: a.toneKey, undertone: a.undertone, fingerLength: a.fingerLength, nailShape: this.shape(), lab: a.lab },
-      this.data.explore,
-      new Date().getMonth(),
-    ).slice(0, 8);
-  });
-
-  /** Şablon için: öneri varsa skorlu liste, yoksa varsayılan seçki. */
-  readonly matchList = computed<{ design: Design; score: number | undefined }[]>(() => {
-    const r = this.recos();
-    if (r) return r.map((d) => ({ design: d as Design, score: d.matchScore }));
-    return this.data.matches().map((d) => ({ design: d, score: undefined }));
-  });
 
   constructor() {
     // Analiz veya seçili şekil değişince paylaşılan depoyu güncelle (Ana Sayfa buradan beslenir)

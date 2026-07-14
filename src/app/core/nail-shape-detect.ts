@@ -57,21 +57,35 @@ export function classifyMaskShape(
       }
     }
   }
-  const widthAt = wmin.map((mn, b) => (wmax[b] >= mn ? wmax[b] - mn : 0));
-  const maxWidth = Math.max(...widthAt, 1);
+  let widthAt = wmin.map((mn, b) => (wmax[b] >= mn ? wmax[b] - mn : 0));
 
+  // Profili KÖK→UÇ yönüne çevir: index 0 = kök (geniş taban), son index = tırnak ucu.
   const headW = (widthAt[0] + widthAt[1] + widthAt[2]) / 3;
   const tailW = (widthAt[bins - 1] + widthAt[bins - 2] + widthAt[bins - 3]) / 3;
-  const tipEnd = tailW <= headW ? widthAt[bins - 1] : widthAt[0];
+  if (headW < tailW) widthAt = widthAt.slice().reverse();
 
-  const tipTaper = tipEnd / maxWidth; // 0 (sivri) .. 1 (düz)
-  const aspect = L / maxWidth;         // boy / en
+  const maxWidth = Math.max(...widthAt, 1);
+  const last = bins - 1;
+  const tipW = widthAt[last];                                   // en uçtaki genişlik
+  const nearTipW = (widthAt[last - 1] + widthAt[last - 2] + widthAt[last - 3]) / 3; // uca yakın gövde
 
+  const aspect = L / maxWidth;                 // boy / en
+  const tipTaper = tipW / maxWidth;            // 0 (sivri uç) .. 1 (geniş/düz uç)
+  const tipDrop = Math.max(0, (nearTipW - tipW) / maxWidth);   // uçta ANİ daralma → düz kesim (square/coffin)
+  const sideConverge = Math.max(0, (maxWidth - nearTipW) / maxWidth); // yanlar uca doğru içe mi geliyor
+
+  // Sınıflandırma: uç sivriliği + boy/en + uç düzlüğü + yan daralması ile 7 şekli dengeli ayırır.
   let shape: NailShape;
-  if (tipTaper < 0.28) shape = aspect > 2.6 ? 'stiletto' : 'almond';
-  else if (tipTaper < 0.50) shape = aspect > 2.3 ? 'coffin' : 'almond';
-  else if (tipTaper < 0.72) shape = 'oval';
-  else shape = aspect > 1.4 ? 'square' : 'round';
+  if (tipTaper < 0.24) {
+    shape = aspect > 2.4 ? 'stiletto' : 'almond';               // sivri uç
+  } else if (tipTaper > 0.66) {
+    if (sideConverge > 0.26 && aspect > 1.6) shape = 'coffin';  // yanlar içe + düz uç → tabut/balerin
+    else shape = aspect > 1.55 ? 'squoval' : 'square';          // düz uç, dolgun → kare/squoval
+  } else {
+    if (tipDrop > 0.18) shape = 'squoval';                      // hafif düz kesim
+    else if (aspect > 1.9 && tipTaper < 0.42) shape = 'almond'; // uzun + belirgin daralma
+    else shape = tipTaper > 0.5 ? 'round' : 'oval';             // yumuşak yuvarlak uç
+  }
 
   const confidence = Math.min(0.97,
     baseConf + (aspect > 1 ? 0.2 : 0) + (frac > 0.04 && frac < 0.7 ? 0.25 : 0));

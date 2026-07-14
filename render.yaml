@@ -26,9 +26,10 @@ services:
       # Oturum güvenliği — Render rastgele üretir
       - key: JWT_SECRET
         generateValue: true
-      # Veritabanı (SQLite; Postgres'e geçince bunu Neon/Render adresiyle değiştir)
+      # Veritabanı — Neon Postgres (KALICI). Değeri Render panelinden elle girilir
+      # (sync: false → şifre repoya YAZILMAZ; Environment sekmesinde tanımlanır).
       - key: DATABASE_URL
-        value: "file:./prod.db"
+        sync: false
       # Ödeme (iyzico) — CANLI anahtarları Render panelinden elle gir
       - key: IYZICO_URI
         value: "https://sandbox-api.iyzipay.com"
