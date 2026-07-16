@@ -6,6 +6,7 @@ export interface TryonDesign {
   desc?: string;             // tasarım tarifi → AR tırnağa DÜZ DOKU üretmek için kullanır
   color: string;             // taban renk (doku yüklenene kadar)
   pattern: string;           // finiş/desen (glossy, matte, glitter, french, chrome...)
+  shape?: string;            // tırnak şekli: oval | almond | square | squoval | coffin | stiletto | round
 }
 
 @Injectable({ providedIn: 'root' })

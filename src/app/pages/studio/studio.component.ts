@@ -188,6 +188,8 @@ export class StudioComponent implements OnInit {
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
   private readonly analysisStore = inject(AnalysisStore);
+  /** Taramadan gelen gerçek tırnak şekli (AR'a doğru şekli göndermek için). */
+  private tailoredShape: string | null = null;
   private readonly tryon = inject(TryonStore);
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
@@ -231,6 +233,7 @@ export class StudioComponent implements OnInit {
       const a = this.analysisStore.current();
       if (a && (a.nailShape || a.undertone) && !this.prompt().trim()) {
         this.tailored.set(true);
+        if (a.nailShape) this.tailoredShape = a.nailShape;   // AR'da doğru tırnak şekli için sakla
         this.prompt.set(this.buildTailoredPrompt(a));
         this.analysisStore.clear();          // bir kez kullan (yenile'de tekrar tetiklenmesin)
         void this.generate();                // otomatik üret
@@ -372,8 +375,9 @@ export class StudioComponent implements OnInit {
       ? [(d.colors || []).join(' '), d.style, d.finish, (d.patterns || []).join(' '), (d.effects || []).join(' ')]
           .filter(Boolean).join(' ').trim()
       : '';
-    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern });
-    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
+    const shape = this.tailoredShape || (d && d.shape) || 'oval';
+    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern, shape });
+    void this.router.navigate(['/ar'], { queryParams: { color, pattern, shape } });
   }
 
   /** Görsel hakkı bitince Mağaza'ya yönlendirir. */

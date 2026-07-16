@@ -105,8 +105,9 @@ export class DesignDetailComponent {
   tryAr(d: Design): void {
     const color = colorToHex(d.colors[0] ?? 'gold');
     const pattern = d.pattern ?? 'glossy';
-    this.tryon.set({ imageUrl: this.heroSrc(d), color, pattern });
-    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
+    const shape = d.shapes?.[0] || 'oval';   // tasarımın tırnak şekli → AR doğru çizsin
+    this.tryon.set({ imageUrl: this.heroSrc(d), color, pattern, shape });
+    void this.router.navigate(['/ar'], { queryParams: { color, pattern, shape } });
   }
 
   download(d: Design): void {

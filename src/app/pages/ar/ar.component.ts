@@ -94,7 +94,7 @@ export class ArComponent implements OnDestroy {
   readonly pattern = signal<string>('glossy');
 
   constructor() {
-    // "Dene" ile bir tasarımdan gelindiyse rengini/desenini uygula
+    // "Dene" ile bir tasarımdan gelindiyse rengini/desenini/şeklini uygula
     const qp = this.route.snapshot.queryParamMap;
     const c = qp.get('color');
     if (c) this.color.set(c);
@@ -198,6 +198,7 @@ export class ArComponent implements OnDestroy {
     return null;
   }
 
+
   private drawNails(ctx: CanvasRenderingContext2D, hands: { x: number; y: number }[][], w: number, h: number, color: string, pattern: string): void {
     const tips = [4, 8, 12, 16, 20];
     const lows = [3, 7, 11, 15, 19];
@@ -225,7 +226,7 @@ export class ArComponent implements OnDestroy {
         ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Desen aksanları — tırnak şekline kırpılmış
+        // Desen aksanları — tırnağa kırpılmış
         ctx.beginPath();
         ctx.ellipse(0, 0, nl / 2, nw / 2, 0, 0, Math.PI * 2);
         ctx.clip();
