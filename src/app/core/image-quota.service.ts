@@ -27,6 +27,8 @@ interface QuotaState {
   packId: string | null;
   /** Aktif ek paketin satın alma anı — ms. */
   packSince: number;
+  /** KALAN AR DENEME HAKKI: her görsel üretimi 1 AR hakkı verir; AR denemesi 1 harcar. */
+  arLeft: number;
 }
 
 /**
@@ -52,7 +54,7 @@ export class ImageQuotaService {
     const s = this.state();
     return s.key === this.periodKey()
       ? s
-      : { key: this.periodKey(), used: 0, extra: s.extra, packId: s.packId, packSince: s.packSince };
+      : { key: this.periodKey(), used: 0, extra: s.extra, packId: s.packId, packSince: s.packSince, arLeft: s.arLeft };
   });
 
   /** Aktif ek paketin bitiş anı (ms). Paket yoksa null. */
@@ -80,16 +82,29 @@ export class ImageQuotaService {
   readonly extraLeft = computed(() => this.synced().extra);
   /** Toplam kullanılabilir görsel. */
   readonly remaining = computed(() => this.planLeft() + this.extraLeft());
+  /** Kalan AR deneme hakkı (her üretim +1 verir). */
+  readonly arRemaining = computed(() => this.synced().arLeft);
 
-  /** Bir görsel üretim hakkı harcar. Hak yoksa false döner (uyarı gösterilir). */
+  /** Bir görsel üretim hakkı harcar VE 1 AR deneme hakkı kazandırır (üretim + 1 AR = 1 hak).
+   *  Hak yoksa false döner (uyarı gösterilir). */
   consume(): boolean {
     const s = this.synced();
     if (this.planQuota() - s.used > 0) {
-      this.save({ ...s, key: this.periodKey(), used: s.used + 1 });
+      this.save({ ...s, key: this.periodKey(), used: s.used + 1, arLeft: s.arLeft + 1 });
       return true;
     }
     if (s.extra > 0) {
-      this.save({ ...s, key: this.periodKey(), extra: s.extra - 1 });
+      this.save({ ...s, key: this.periodKey(), extra: s.extra - 1, arLeft: s.arLeft + 1 });
+      return true;
+    }
+    return false;
+  }
+
+  /** Bir AR deneme hakkı harcar. Hak yoksa false (AR engellenir → yeni tasarım üret). */
+  useAr(): boolean {
+    const s = this.synced();
+    if (s.arLeft > 0) {
+      this.save({ ...s, key: this.periodKey(), arLeft: s.arLeft - 1 });
       return true;
     }
     return false;
@@ -98,7 +113,7 @@ export class ImageQuotaService {
   /** Ek paket satın alındığında bakiyeye görsel ekler ve aktif paketi günceller. */
   buyPack(id: string, images: number): void {
     const s = this.synced();
-    this.save({ key: this.periodKey(), used: s.used, extra: s.extra + images, packId: id, packSince: Date.now() });
+    this.save({ key: this.periodKey(), used: s.used, extra: s.extra + images, packId: id, packSince: Date.now(), arLeft: s.arLeft });
   }
 
   /** Anlık kota durumu (senkron için). */
@@ -109,7 +124,7 @@ export class ImageQuotaService {
 
   /** Sunucudan gelen kota durumunu uygular (cihazlar arası senkron). */
   applyServer(v: { used: number; extra: number; packId: string | null; packSince: number }): void {
-    this.save({ key: this.periodKey(), used: v.used || 0, extra: v.extra || 0, packId: v.packId ?? null, packSince: v.packSince || 0 });
+    this.save({ key: this.periodKey(), used: v.used || 0, extra: v.extra || 0, packId: v.packId ?? null, packSince: v.packSince || 0, arLeft: this.synced().arLeft });
   }
 
   private save(s: QuotaState): void {
@@ -128,9 +143,10 @@ export class ImageQuotaService {
           extra: typeof p.extra === 'number' ? p.extra : 0,
           packId: typeof p.packId === 'string' ? p.packId : null,
           packSince: typeof p.packSince === 'number' ? p.packSince : 0,
+          arLeft: typeof p.arLeft === 'number' ? p.arLeft : 0,
         };
       }
     } catch { /* bozuksa varsayılan */ }
-    return { key: '', used: 0, extra: 0, packId: null, packSince: 0 };
+    return { key: '', used: 0, extra: 0, packId: null, packSince: 0, arLeft: 0 };
   }
 }

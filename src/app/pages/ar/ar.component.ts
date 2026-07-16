@@ -7,6 +7,7 @@ import { I18nService } from '../../core/i18n.service';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
 import { downloadImage, shareImage } from '../../core/share';
 import { TryonStore } from '../../core/tryon-store';
+import { ImageQuotaService } from '../../core/image-quota.service';
 
 
 @Component({
@@ -78,6 +79,7 @@ export class ArComponent implements OnDestroy {
   private readonly hands = inject(HandAnalysisService);
   private readonly route = inject(ActivatedRoute);
   private readonly tryon = inject(TryonStore);
+  readonly quota = inject(ImageQuotaService);
 
   /** Üretilen tasarım görseli — tırnağa canlı bindirmek için. */
   private designImg: HTMLImageElement | null = null;
@@ -126,6 +128,11 @@ export class ArComponent implements OnDestroy {
   async start(): Promise<void> {
     this.error.set(null);
     this.photo.set(null);
+    // KURAL: 1 üretim = 1 AR denemesi. AR hakkı yoksa engelle (yeni tasarım üret).
+    if (!this.quota.useAr()) {
+      this.error.set(this.i18n.t('ar_need_credit'));
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       this.error.set(this.i18n.t('err_camera'));
       return;
