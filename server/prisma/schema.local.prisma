@@ -1,0 +1,134 @@
+// ngNailArt — YEREL geliştirme şeması (SQLite — internet/Neon GEREKMEZ)
+// Bu şema SADECE yerel test içindir. Canlı (Render) hâlâ schema.prisma (Postgres/Neon) kullanır.
+// Kurulum tek tıkla: yerel-db-kur.bat  (kök klasörde)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Design {
+  id         Int      @id @default(autoincrement())
+  name       String
+  artist     String   @default("AI Studio")
+  pattern    String   @default("glossy")
+  category   String   @default("ai")
+  colors     String   @default("[]")        // JSON
+  shapes     String   @default("[]")        // JSON
+  tones      String   @default("[]")        // JSON
+  undertones String   @default("[]")        // JSON
+  seasons    String   @default("[\"all\"]") // JSON
+  img        String   @default("")          // data URL veya yol
+  prompt     String   @default("")
+  source     String   @default("ai_studio")
+  popular    Boolean  @default(false)
+  rating     Float    @default(0)
+  createdAt  DateTime @default(now())
+
+  favorites  Favorite[]
+
+  @@index([source])
+  @@index([popular])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    String   @default("guest")
+  designId  Int
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, designId])
+  @@index([userId])
+}
+
+model ScanAnalysis {
+  id           Int      @id @default(autoincrement())
+  userId       String   @default("guest")
+  toneKey      String?
+  undertone    String?
+  fingerLength String?
+  nailShape    String?
+  hex          String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  userId     String   @default("guest")
+  kind       String                      // "plan" | "pack"
+  itemId     String                      // plan id (monthly, pro...) veya pack id (pack_10...)
+  itemName   String   @default("")
+  amount     Float    @default(0)        // tutar
+  currency   String   @default("USD")
+  provider   String   @default("demo")   // iyzico | stripe | paytr | demo
+  status     String   @default("pending")// pending | paid | failed
+  ref        String   @default("")       // sağlayıcı işlem/oturum kimliği
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model BlockedSignup {
+  id        Int      @id @default(autoincrement())
+  email     String
+  phone     String
+  until     Float                        // ms — bu tarihe kadar aynı e-posta/telefon ile kayıt engelli
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([phone])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  phone        String   @unique
+  firstName    String   @default("")
+  lastName     String   @default("")
+  passwordHash String
+  verified     Boolean  @default(false)  // telefon OTP ile doğrulandı mı
+  otpCode      String?                    // aktif OTP (hash'siz — kısa ömürlü)
+  otpExpires   Float    @default(0)
+  resetToken   String?                    // şifre sıfırlama jetonu
+  resetExpires Float    @default(0)
+  plan         String   @default("free")
+  planSince    Float    @default(0)   // ms (BigInt yerine Float — JSON güvenli)
+  imagesUsed   Int      @default(0)
+  imagesExtra  Int      @default(0)
+  packId       String?
+  packSince    Float    @default(0)
+  role         String   @default("user")   // "user" | "admin"
+  createdAt    DateTime @default(now())
+}
+
+model ErrorLog {
+  id        Int      @id @default(autoincrement())
+  level     String   @default("error")   // error | warn
+  message   String
+  source    String   @default("")        // örn: AI, DB, AUTH, PROCESS, HTTP
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SupportTicket {
+  id        Int      @id @default(autoincrement())
+  userId    String   @default("")        // giriş yapmışsa kullanıcı id (yoksa boş)
+  name      String   @default("")        // ad soyad (varsa)
+  email     String   @default("")        // yanıt için iletişim e-postası
+  message   String                        // kullanıcının yazdığı sorun/mesaj
+  reply     String   @default("")        // admin yanıtı (uygulama içi gösterilir)
+  status    String   @default("open")    // open | replied | closed
+  repliedAt Float    @default(0)         // yanıt zamanı (ms)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
