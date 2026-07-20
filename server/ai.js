@@ -10,6 +10,7 @@ let openai = null;
 let gemini = null;
 let geminiMod = null;
 let replicate = null;
+let falKey = null;            // fal.ai FLUX 1.1 Pro — HTTP ile (paket gerekmez)
 let AI_PROVIDER = 'none';
 let AI_MODEL = '';
 
@@ -37,7 +38,12 @@ function initProviders() {
     if (Replicate) { replicate = new Replicate({ auth: REPLICATE_TOKEN }); console.log('🎨 Replicate/Flux hazır'); }
     else console.warn('ℹ️  REPLICATE_API_TOKEN var ama "replicate" paketi kurulu değil (npm i replicate)');
   }
-
+  // fal.ai FLUX 1.1 Pro — anahtar "id:secret" biçimindedir; HTTP ile çağrılır (paket gerekmez).
+  const FAL_KEY = process.env.FAL_KEY || process.env.FAL_API_KEY;
+  if (FAL_KEY && FAL_KEY !== 'your-fal-key-here') {
+    falKey = FAL_KEY.trim();
+    console.log('🎨 fal.ai / FLUX 1.1 Pro hazır');
+  }
   AI_PROVIDER = gemini ? 'gemini' : (openai ? 'openai' : 'none');
   AI_MODEL = gemini ? 'gemini-2.0-flash' : (openai ? (process.env.AI_MODEL || 'gpt-4.1-mini') : '');
   if (AI_PROVIDER === 'none') {
@@ -48,17 +54,62 @@ function initProviders() {
 }
 
 function status() {
-  const hasImage = !!(openai || gemini || replicate);   // kullanıcı üretimi (Flux 1.1 Pro vb.)
+  const hasImage = !!(falKey || openai || gemini || replicate);   // kullanıcı üretimi (FLUX 1.1 Pro vb.)
   return {
     configured: hasImage,
     provider: AI_PROVIDER,
     model: AI_MODEL,
     textAvailable: !!(openai || gemini),                 // spec için LLM (yoksa istemci mockDesign)
     imageGenAvailable: hasImage,
-    imageProvider: gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'none')),
-    fluxAvailable: !!replicate,
+    imageProvider: falKey ? 'flux-pro' : (gemini ? 'imagen3' : (openai ? 'dalle3' : (replicate ? 'flux-pro' : 'none'))),
+    fluxAvailable: !!(falKey || replicate),
     status: hasImage ? 'ready' : 'not_configured',
   };
+}
+
+/**
+ * fal.ai FLUX 1.1 Pro — HTTP POST ile görsel üretir. Yanıt: { images: [{ url }] }.
+ * Anahtar "id:secret" biçiminde; header: Authorization: Key <anahtar>.
+ */
+function falGenerate(prompt) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      prompt,
+      image_size: 'square_hd',
+      num_images: 1,
+      output_format: 'png',
+      enable_safety_checker: true,
+    });
+    const req = https.request({
+      method: 'POST',
+      hostname: 'fal.run',
+      path: '/fal-ai/flux-pro/v1.1',
+      headers: {
+        'Authorization': `Key ${falKey}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (c) => { data += c; });
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(makeError(`fal.ai hatası (${res.statusCode}): ${data.slice(0, 300)}`, 'AI_ERROR', 502));
+        }
+        try {
+          const json = JSON.parse(data);
+          const url = json && json.images && json.images[0] && json.images[0].url;
+          if (!url) return reject(makeError('fal.ai boş cevap döndürdü', 'AI_ERROR', 500));
+          resolve(url);
+        } catch (e) {
+          reject(makeError('fal.ai cevabı geçerli JSON değil: ' + (e && e.message ? e.message : ''), 'AI_ERROR', 500));
+        }
+      });
+    });
+    req.on('error', (err) => reject(makeError('fal.ai bağlantı hatası: ' + err.message, 'AI_ERROR', 502)));
+    req.write(body);
+    req.end();
+  });
 }
 
 const SYSTEM_PROMPT = `Sen profesyonel bir tırnak tasarım uzmanı ve AI asistanısın.
@@ -140,9 +191,9 @@ function download(url, dest) {
 
 async function generateImage(input, imgDir) {
   const { prompt, style, shape, colors, finish, tier } = input;
-  // KULLANICI ÜRETİMİ = Flux 1.1 Pro (Replicate) / OpenAI / Gemini. Anahtar yoksa demo'ya düşülür.
-  if (!openai && !gemini && !replicate) {
-    throw makeError('Görsel üretim servisi yok. Kullanıcı üretimi için REPLICATE_API_TOKEN (Flux 1.1 Pro) ekleyin.', 'AI_NOT_CONFIGURED', 503);
+  // KULLANICI ÜRETİMİ = FLUX 1.1 Pro (fal.ai) / Flux (Replicate) / OpenAI / Gemini. Anahtar yoksa demo'ya düşülür.
+  if (!falKey && !openai && !gemini && !replicate) {
+    throw makeError('Görsel üretim servisi yok. Kullanıcı üretimi için FAL_KEY (FLUX 1.1 Pro) ekleyin.', 'AI_NOT_CONFIGURED', 503);
   }
   const colorStr = (colors && colors.length) ? colors.join(', ') : '';
   // ÜSTTEN ÇEKİM TEK TIRNAK — hem stüdyo önizlemesi hem AR bindirmesi için ideal:
@@ -159,7 +210,12 @@ async function generateImage(input, imgDir) {
   const stamp = Date.now();
   let filename, provider, imageBytesBuffer, remoteUrl;
 
-  if (tier === 'wow' && replicate) {
+  if (falKey) {
+    // TERCİH EDİLEN: fal.ai FLUX 1.1 Pro (gerçek, salon kalitesinde tırnak görseli).
+    provider = 'flux-pro';
+    remoteUrl = await falGenerate(artPrompt);
+    filename = `flux_${stamp}_${rnd}.png`;
+  } else if (tier === 'wow' && replicate) {
     provider = 'flux-pro';
     const output = await replicate.run('black-forest-labs/flux-1.1-pro', {
       input: { prompt: artPrompt, aspect_ratio: '1:1', output_format: 'png', output_quality: 100, prompt_upsampling: true },

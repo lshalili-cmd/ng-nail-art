@@ -40,6 +40,9 @@ services:
       # Gerçek AI (Flux) — Replicate token'ı elle gir (opsiyonel; yoksa demo)
       - key: REPLICATE_API_TOKEN
         sync: false
+      # Gerçek AI (fal.ai / FLUX 1.1 Pro) — anahtar "id:secret"; Render panelinden elle gir
+      - key: FAL_KEY
+        sync: false
       # SMS / e-posta (opsiyonel; yoksa demo modda çalışır)
       - key: TWILIO_ACCOUNT_SID
         sync: false

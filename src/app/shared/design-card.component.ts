@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Design } from '../core/data.service';
 import { I18nService } from '../core/i18n.service';
 import { FavoritesService } from '../core/favorites.service';
+import { renderNailThumb } from '../core/nail-art';
 
 @Component({
   selector: 'app-design-card',
@@ -58,16 +59,24 @@ export class DesignCardComponent {
   @Input() score?: number;
 
   private photoFailed = false;
+  /** Yedek çizim — YALNIZCA fotoğraf yüklenemezse, tek bu kart için üretilir. */
+  private drawn = '';
 
   /** Statik katalog görseli varsa onu, yüklenemezse çizim önizlemesini kullan. */
   get imgSrc(): string {
     if (this.design.photo && !this.photoFailed) return this.design.photo;
-    return this.design.img ?? '';
+    // Sunucudan gelen tasarımların hazır img'si olabilir; katalog yedeği ise talep üzerine çizilir.
+    return this.design.img ?? this.drawn;
   }
 
   onImgError(): void {
-    // Statik dosya yoksa (404) çizime düş; çizim de yoksa gradient kalır.
-    if (!this.photoFailed) this.photoFailed = true;
+    // Statik dosya yoksa (404) çizime düş. Çizim SADECE burada, tek sefer üretilir
+    // (açılışta toplu üretim yok → donma yok). Hazır img varsa yeniden çizilmez.
+    if (this.photoFailed) return;
+    this.photoFailed = true;
+    if (!this.design.img && !this.drawn) {
+      this.drawn = renderNailThumb(this.design.colors, this.design.pattern ?? 'glossy');
+    }
   }
 
   toggleFav(e: Event): void {

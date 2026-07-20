@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { renderNailThumb } from './nail-art';
 
 export interface Design {
   id: number;
@@ -103,10 +102,13 @@ export class DataService {
     Array.from({ length: TOTAL_DESIGNS }, (_unused, k) => genDesign(k + 1));
 
   constructor() {
-    // Her tasarım için gerçek fotoğraf (public/designs/design-<id>.jpg) + yedek çizim.
+    // Her tasarım için yalnızca gerçek fotoğraf yolu atanır
+    // (public/designs/design-<id>.jpg). Yedek çizim (img) BURADA ÜRETİLMEZ:
+    // açılışta 121 canvas'ı PNG'ye kodlamak ana iş parçacığını kilitleyip
+    // sayfayı donduruyordu. Yedek çizim artık DesignCard içinde, yalnızca bir
+    // fotoğraf gerçekten yüklenemediğinde (tek tek) üretilir.
     for (const d of this.all) {
       d.photo = `designs/design-${d.id}.jpg`;
-      d.img = renderNailThumb(d.colors, d.pattern ?? 'glossy');
     }
   }
 
