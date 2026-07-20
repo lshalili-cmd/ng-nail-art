@@ -4,6 +4,10 @@ REM Cift tikla: .env'i yerele cevirir, SQLite veritabanini kurar, admin hesabini
 REM Canli site (Render) HALA Neon kullanir; bu sadece senin makinen icindir.
 cd /d "%~dp0server"
 
+REM Prisma CLI komutlari icin DATABASE_URL'i bu oturumda dogrudan file: yap
+REM (boylece .env okunmasa bile db push/generate SQLite kullanir - garanti).
+set "DATABASE_URL=file:./dev.db"
+
 echo.
 echo ============================================================
 echo   YEREL VERITABANI KURULUMU (SQLite - internetsiz, hizli)
