@@ -370,17 +370,60 @@ export class ScanComponent implements OnDestroy {
     }
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 960 } },
+        // Daha yüksek çözünürlük iste (kalite ↑). Cihaz veremezse tarayıcı en yakınını verir.
+        video: { facingMode: 'environment', width: { ideal: 1440 }, height: { ideal: 1920 } },
         audio: false,
       });
       const v = this.video().nativeElement;
       v.srcObject = this.stream;
       this.stage.set('camera'); // önce görünür yap ki kareler aksın
       await v.play();
+      // Kaynakta parlatma: kameranın poz telafisi/parlaklığını yükselt (destekleniyorsa).
+      // Canlı akışın ham/koyu gelmesini önler; el az pozlanmaz.
+      await this.tuneCameraBrightness();
     } catch (e) {
       console.error('[Scan] Kamera erişim hatası:', e);
       this.error.set(this.i18n.t('err_camera'));
       this.stage.set('idle');
+    }
+  }
+
+  /**
+   * Kamerayı KAYNAKTA daha parlak çekmeye zorlar (destekleyen cihazlarda).
+   * Otomatik pozu kapatmaz; sadece poz telafisini (EV+) ve parlaklığı yukarı çeker —
+   * böylece el, karedeki parlak yüzeyler yüzünden az pozlanmaz. Cihaz desteklemiyorsa
+   * sessizce atlar (sıfır risk).
+   */
+  private async tuneCameraBrightness(): Promise<void> {
+    try {
+      const track = this.stream?.getVideoTracks?.()[0];
+      const t = track as (MediaStreamTrack & {
+        getCapabilities?: () => Record<string, { min?: number; max?: number; step?: number }>;
+        applyConstraints?: (c: unknown) => Promise<void>;
+      }) | undefined;
+      if (!t || !t.getCapabilities || !t.applyConstraints) {
+        console.log('[Scan] kamera ayar API\'si yok — parlaklık zorlama atlandı');
+        return;
+      }
+      const caps = t.getCapabilities();
+      const advanced: Record<string, number>[] = [];
+      const ec = caps['exposureCompensation'];
+      if (ec && typeof ec.max === 'number') {
+        // Maksimuma yakın ama tavana yapışmayan pozitif EV (~%70) → daha parlak
+        advanced.push({ exposureCompensation: +(ec.max * 0.7).toFixed(3) });
+      }
+      const br = caps['brightness'];
+      if (br && typeof br.min === 'number' && typeof br.max === 'number') {
+        advanced.push({ brightness: Math.round(br.min + (br.max - br.min) * 0.62) });
+      }
+      if (!advanced.length) {
+        console.log('[Scan] kamera poz/parlaklık ayarını desteklemiyor — atlandı');
+        return;
+      }
+      await t.applyConstraints({ advanced });
+      console.log('[Scan] kamera KAYNAKTA parlatıldı:', JSON.stringify(advanced));
+    } catch (e) {
+      console.warn('[Scan] kamera parlaklık ayarı uygulanamadı (atlandı):', e);
     }
   }
 
@@ -392,24 +435,97 @@ export class ScanComponent implements OnDestroy {
   }
 
   async capture(): Promise<void> {
-    const v = this.video().nativeElement;
-    // Gerçek bir kare gelene kadar bekle (siyah/boş kare yakalamayı önler)
-    await this.waitForFrame(v);
-    if (!v.videoWidth) {
+    // PARÇA 1+2: en iyi kareyi al — önce cihazın GERÇEK fotoğraf hattı (ImageCapture,
+    // işlenmiş/parlak kare), o yoksa birden çok video karesinden en iyi pozlanmışı.
+    const work = await this.grabStill();
+    if (!work) {
       this.error.set(this.i18n.t('cam_not_ready'));
       return;
     }
-    // Her yakalamada TAZE tuval — MediaPipe'a temiz kaynak verir (tekrar analizde bozulmayı önler)
-    const work = document.createElement('canvas');
-    work.width = v.videoWidth;
-    work.height = v.videoHeight;
-    work.getContext('2d')?.drawImage(v, 0, 0, work.width, work.height);
     this.stopCamera();
     if (this.mode() === 'closeup') {
       await this.runCloseup(work);
     } else {
       await this.runAnalysis(work);
     }
+  }
+
+  /**
+   * En iyi durağan kareyi üretir.
+   *  1) ImageCapture.takePhoto() — cihazın gerçek fotoğraf pipeline'ı (HDR/parlaklık/renk
+   *     işlenmiş). Canlı video akışı HAM ve koyu geldiği için asıl kalite buradan gelir.
+   *  2) Desteklenmiyorsa (ör. eski iOS Safari): birkaç video karesi yakalar, en iyi
+   *     pozlanmış (en parlak) olanı seçer. Poz/renk normalizasyonu ayrıca analiz içinde çalışır.
+   */
+  private async grabStill(): Promise<HTMLCanvasElement | null> {
+    const v = this.video().nativeElement;
+    await this.waitForFrame(v);
+    if (!v.videoWidth) return null;
+
+    const shot = await this.tryImageCapture();
+    if (shot) { console.log('[Scan] ImageCapture ile çekildi (işlenmiş kare)'); return shot; }
+
+    const frames = await this.grabFrames(v, 5);
+    if (!frames.length) return null;
+    let best = frames[0], bestL = this.frameBrightness(best);
+    for (const f of frames.slice(1)) {
+      const b = this.frameBrightness(f);
+      if (b > bestL) { bestL = b; best = f; }
+    }
+    console.log(`[Scan] çok-kare fallback: ${frames.length} kareden en parlağı seçildi (L~${Math.round(bestL)})`);
+    return best;
+  }
+
+  /** Cihazın gerçek fotoğraf pipeline'ından (ImageCapture) işlenmiş kare — yoksa null. */
+  private async tryImageCapture(): Promise<HTMLCanvasElement | null> {
+    try {
+      const track = this.stream?.getVideoTracks?.()[0];
+      const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto(): Promise<Blob> } }).ImageCapture;
+      if (!track || !IC) return null;
+      const blob = await new IC(track).takePhoto();
+      const bmp = await createImageBitmap(blob);
+      // Çok büyük sensör fotoğrafını makul boyuta küçült (analiz hızı için) — kalite yeterli kalır.
+      const maxW = 1440;
+      const scale = Math.min(1, maxW / bmp.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * scale);
+      c.height = Math.round(bmp.height * scale);
+      c.getContext('2d')?.drawImage(bmp, 0, 0, c.width, c.height);
+      bmp.close?.();
+      return c;
+    } catch (e) {
+      console.warn('[Scan] ImageCapture yok/başarısız, video karesine düşülüyor:', e);
+      return null;
+    }
+  }
+
+  /** Video akışından ~100 ms aralıklarla n taze kare (tuval) yakalar (video ilerlesin diye). */
+  private async grabFrames(v: HTMLVideoElement, n: number): Promise<HTMLCanvasElement[]> {
+    const out: HTMLCanvasElement[] = [];
+    for (let i = 0; i < n; i++) {
+      if (!v.videoWidth) break;
+      const c = document.createElement('canvas');
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d')?.drawImage(v, 0, 0, c.width, c.height);
+      out.push(c);
+      if (i < n - 1) await new Promise((r) => setTimeout(r, 100));
+    }
+    return out;
+  }
+
+  /** Bir karenin ortalama parlaklığını (0-255) küçültülmüş kopyadan ölçer. */
+  private frameBrightness(c: HTMLCanvasElement): number {
+    try {
+      const S = 32;
+      const t = document.createElement('canvas'); t.width = S; t.height = S;
+      const cx = t.getContext('2d', { willReadFrequently: true });
+      if (!cx) return 0;
+      cx.drawImage(c, 0, 0, S, S);
+      const d = cx.getImageData(0, 0, S, S).data;
+      let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { sum += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
+      return n ? sum / n : 0;
+    } catch { return 0; }
   }
 
   /** Yakın çekim karesinden tırnak şeklini çıkarır: ML modeli varsa onu, yoksa flood-fill. */
