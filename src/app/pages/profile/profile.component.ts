@@ -53,6 +53,12 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
               <button class="btn-primary" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
               <button class="btn-ghost" (click)="openAuth('register')">{{ i18n.t('register') }}</button>
             </div>
+            <!-- Dil seçici (giriş/kayıt öncesi dili değiştir) -->
+            <div class="w-langs">
+              @for (l of locales; track l.code) {
+                <button class="w-lang" [class.on]="i18n.locale() === l.code" (click)="i18n.setLocale(l.code)" [attr.aria-label]="l.label">{{ l.flag }}</button>
+              }
+            </div>
           </div>
         }
       </header>
@@ -303,6 +309,10 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
     .w-tag { font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #d9b45a; margin-top: 12px; letter-spacing: 0.04em; }
     .w-cta { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; margin-top: 34px; }
     .w-cta .btn-primary, .w-cta .btn-ghost { width: 100%; padding: 13px 22px; font-size: 15px; }
+    .w-langs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+    .w-lang { font-size: 22px; line-height: 1; padding: 5px 7px; border-radius: 9px; opacity: 0.45;
+      transition: opacity 0.15s ease, background 0.15s ease; }
+    .w-lang.on { opacity: 1; background: rgba(212,175,55,0.16); border: 1px solid rgba(212,175,55,0.4); }
     .phead { text-align: center; padding: 28px 0 10px; }
     .av { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto; display: flex;
       align-items: center; justify-content: center; font-size: 38px; font-weight: 700; color: #1a1206;
