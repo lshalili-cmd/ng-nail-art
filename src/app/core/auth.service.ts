@@ -29,10 +29,11 @@ export function validPassword(pw: string): boolean {
   return letters === 1 && digits === pw.length - 1;
 }
 
-/** JWT token'ını tüm /api isteklerine ekler (giriş yapılmışsa). */
+/** JWT token'ını tüm /api isteklerine ekler (giriş yapılmışsa). Göreli '/api' veya
+ *  native'de mutlaklaşmış '.../api' isteklerini kapsar (sıradan bağımsız güvenli). */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = inject(AuthService).token();
-  if (token && req.url.startsWith('/api')) {
+  if (token && (req.url.startsWith('/api') || req.url.includes('/api/'))) {
     req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
   }
   return next(req);

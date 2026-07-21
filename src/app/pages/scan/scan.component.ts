@@ -432,45 +432,48 @@ export class ScanComponent implements OnDestroy {
   }
 
   async capture(): Promise<void> {
-    // PARÇA 1+2: en iyi kareyi al — önce cihazın GERÇEK fotoğraf hattı (ImageCapture,
-    // işlenmiş/parlak kare), o yoksa birden çok video karesinden en iyi pozlanmışı.
-    const work = await this.grabStill();
-    if (!work) {
+    // PARÇA 1+2: aday kareler — ImageCapture (işlenmiş/iyi poz) ÖNCE, video karesi
+    // (çerçevesi önizlemeyle birebir → tespit güvenilir) YEDEK. Analiz, elin bulunduğu
+    // ilk adayı kullanır (ImageCapture'ın kadraj farkı yüzünden el kaçarsa video karesine düşer).
+    const cands = await this.grabCandidates();
+    if (!cands.length) {
       this.error.set(this.i18n.t('cam_not_ready'));
       return;
     }
     this.stopCamera();
     if (this.mode() === 'closeup') {
-      await this.runCloseup(work);
+      await this.runCloseup(cands[0]);
     } else {
-      await this.runAnalysis(work);
+      await this.runAnalysis(cands);
     }
   }
 
   /**
-   * En iyi durağan kareyi üretir.
-   *  1) ImageCapture.takePhoto() — cihazın gerçek fotoğraf pipeline'ı (HDR/parlaklık/renk
-   *     işlenmiş). Canlı video akışı HAM ve koyu geldiği için asıl kalite buradan gelir.
-   *  2) Desteklenmiyorsa (ör. eski iOS Safari): birkaç video karesi yakalar, en iyi
-   *     pozlanmış (en parlak) olanı seçer. Poz/renk normalizasyonu ayrıca analiz içinde çalışır.
+   * Analiz için aday kareler döndürür (öncelik sırasıyla):
+   *  1) ImageCapture.takePhoto() — cihazın gerçek fotoğraf hattı (iyi poz/renk).
+   *  2) Video karesi — kaynakta parlatılmış canlı akıştan, en parlak kare. Çerçevesi
+   *     önizlemeyle BİREBİR olduğu için el tespiti güvenilir; ImageCapture'da el kaçarsa yedek.
    */
-  private async grabStill(): Promise<HTMLCanvasElement | null> {
+  private async grabCandidates(): Promise<HTMLCanvasElement[]> {
     const v = this.video().nativeElement;
     await this.waitForFrame(v);
-    if (!v.videoWidth) return null;
+    if (!v.videoWidth) return [];
+    const cands: HTMLCanvasElement[] = [];
 
     const shot = await this.tryImageCapture();
-    if (shot) { console.log('[Scan] ImageCapture ile çekildi (işlenmiş kare)'); return shot; }
+    if (shot) { console.log('[Scan] ImageCapture ile çekildi (işlenmiş kare)'); cands.push(shot); }
 
-    const frames = await this.grabFrames(v, 5);
-    if (!frames.length) return null;
-    let best = frames[0], bestL = this.frameBrightness(best);
-    for (const f of frames.slice(1)) {
-      const b = this.frameBrightness(f);
-      if (b > bestL) { bestL = b; best = f; }
+    const frames = await this.grabFrames(v, 4);
+    if (frames.length) {
+      let best = frames[0], bestL = this.frameBrightness(best);
+      for (const f of frames.slice(1)) {
+        const b = this.frameBrightness(f);
+        if (b > bestL) { bestL = b; best = f; }
+      }
+      console.log(`[Scan] video karesi yedek: ${frames.length} kareden en parlağı (L~${Math.round(bestL)})`);
+      cands.push(best);
     }
-    console.log(`[Scan] çok-kare fallback: ${frames.length} kareden en parlağı seçildi (L~${Math.round(bestL)})`);
-    return best;
+    return cands;
   }
 
   /** Cihazın gerçek fotoğraf pipeline'ından (ImageCapture) işlenmiş kare — yoksa null. */
@@ -610,7 +613,8 @@ export class ScanComponent implements OnDestroy {
     input.value = '';
   }
 
-  private async runAnalysis(work: HTMLCanvasElement): Promise<void> {
+  private async runAnalysis(input: HTMLCanvasElement | HTMLCanvasElement[]): Promise<void> {
+    const cands = Array.isArray(input) ? input : [input];
     this.error.set(null);
     this.closeup.set(null); // yeni tam tarama → önceki yakın çekim sonucunu temizle
     this.stage.set('analyzing');
@@ -618,13 +622,21 @@ export class ScanComponent implements OnDestroy {
       await this.hands.init();
     } catch (e) {
       console.error('[Scan] MediaPipe modeli yüklenemedi — manuel seçime geçiliyor:', e);
-      this.manualResults(work);   // takılıp kalma: sonuç ekranına geç, manuel seç
+      this.manualResults(cands[0]);   // takılıp kalma: sonuç ekranına geç, manuel seç
       return;
     }
-    const result = this.hands.analyze(work);
+    // Adayları sırayla dene; ELİN BULUNDUĞU ilk kareyi kullan (ImageCapture kadrajı
+    // kaçırırsa video karesine düşer). Böylece "tespit: 0 el" sorunu çözülür.
+    let result = this.hands.analyze(cands[0]);
+    let work = cands[0];
+    for (let i = 1; i < cands.length && !result.handDetected; i++) {
+      console.warn(`[Scan] ${i}. adayda el yok — sonraki kare deneniyor...`);
+      result = this.hands.analyze(cands[i]);
+      work = cands[i];
+    }
     if (!result.handDetected) {
-      console.warn('[Scan] El bulunamadı — manuel seçime geçiliyor.');
-      this.manualResults(work);
+      console.warn('[Scan] Hiçbir karede el bulunamadı — manuel seçime geçiliyor.');
+      this.manualResults(cands[cands.length - 1]);
       return;
     }
     this.manualMode.set(false);

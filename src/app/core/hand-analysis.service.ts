@@ -5,6 +5,7 @@ import {
   estimateSceneGains, estimateExposureGain, scaleBrightness, medianRgb, rgbToHex, rgbToLab,
   IlluminantGains, Lab, Rgb, ToneKey, Undertone,
 } from './skin-tone';
+import { detectNailShapeCloseup } from './nail-shape-detect';
 
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
 const MODEL_URL =
@@ -146,7 +147,10 @@ export class HandAnalysisService {
     const tone = classifyTone(lab);
     const undertone = detectUndertone(lab);
     const fingerLength = this.fingerStructure(lm);
-    const shape = this.estimateNailShape(canvas, lm, rawSkin);
+    // TIRNAK ŞEKLİ (3a): önce her parmak ucunu kırpıp yakın-çekim dedektörüyle oy çokluğu
+    // dene (çok daha isabetli); o başarısızsa eski silüet yöntemine düş.
+    let shape = this.shapeFromTips(canvas, lm);
+    if (!shape.shape) shape = this.estimateNailShape(canvas, lm, rawSkin);
     console.log(
       `[Scan] HAM rgb=${rawSkin.r|0},${rawSkin.g|0},${rawSkin.b|0} → ` +
       `renk(r×${stats.gains.gr.toFixed(2)} b×${stats.gains.gb.toFixed(2)}) poz×${stats.exposure.toFixed(2)} → ` +
@@ -340,6 +344,67 @@ export class HandAnalysisService {
     } catch {
       return neutral;
     }
+  }
+
+  /**
+   * TIRNAK ŞEKLİ — 3a: Her parmağın UCUNU kırpıp yakın-çekim dedektörünü (renk-tohumlu
+   * taşma-doldurma + PCA) çalıştırır, sonuçları güven-ağırlıklı OY ÇOKLUĞUYLA birleştirir.
+   * Eklem-silüeti yönteminden ("hep badem") çok daha isabetlidir çünkü her tırnağın
+   * gerçek konturunu tek tek analiz eder.
+   */
+  private shapeFromTips(
+    canvas: HTMLCanvasElement, lm: NormalizedLandmark[],
+  ): { shape: NailShape | null; confidence: number } {
+    // Başparmak hariç 4 parmak: [DIP, TIP]
+    const fingers: [number, number][] = [[7, 8], [11, 12], [15, 16], [19, 20]];
+    const votes: Record<string, number> = {};
+    let counted = 0, sumConf = 0;
+    for (const [dipI, tipI] of fingers) {
+      const crop = this.cropFingertip(canvas, lm[dipI], lm[tipI]);
+      if (!crop) continue;
+      const res = detectNailShapeCloseup(crop);
+      if (res.shape && res.confidence > 0) {
+        votes[res.shape] = (votes[res.shape] ?? 0) + res.confidence;
+        counted++; sumConf += res.confidence;
+      }
+    }
+    if (!counted) return { shape: null, confidence: 0 };
+    let best: NailShape = 'oval', top = 0;
+    for (const k of Object.keys(votes)) if (votes[k] > top) { top = votes[k]; best = k as NailShape; }
+    // Güven: kazananın oy payı × ortalama tekil güven × parmak sayısı bonusu
+    const share = top / sumConf;                        // kazanan şeklin toplam içindeki payı
+    const avg = sumConf / counted;
+    const confidence = Math.min(0.95, share * avg * (0.7 + 0.1 * counted));
+    console.log(`[Scan] tırnak şekli (uç kırpım): ${best} · ${counted}/4 parmak · %${Math.round(confidence * 100)}`);
+    return { shape: best, confidence: Number(confidence.toFixed(2)) };
+  }
+
+  /**
+   * Bir parmağın tırnak bölgesini kare bir tuval olarak kırpar. Kırpım, DIP→TIP ekseninde
+   * tırnak plakasının merkezine (uca doğru ~%55) yerleştirilir; boyutu parmak boğum
+   * uzunluğuna orantılıdır. Böylece yakın-çekim dedektörünün merkez-tohumu tırnağa denk gelir.
+   */
+  private cropFingertip(
+    canvas: HTMLCanvasElement, dip: NormalizedLandmark, tip: NormalizedLandmark,
+  ): HTMLCanvasElement | null {
+    const W = canvas.width, H = canvas.height;
+    const dxn = tip.x - dip.x, dyn = tip.y - dip.y;
+    const lenN = Math.hypot(dxn, dyn);
+    if (lenN < 0.01) return null;
+    // Tırnak merkezi: DIP'ten uca doğru %55
+    const cx = (dip.x + dxn * 0.55) * W;
+    const cy = (dip.y + dyn * 0.55) * H;
+    // Kırpım yarı-boyu: DIP-TIP piksel mesafesinin ~0.9 katı (tırnak + kenar payı)
+    const lenPx = lenN * Math.hypot(W, H);
+    const half = Math.max(18, Math.round(lenPx * 0.9));
+    const s = half * 2;
+    const c = document.createElement('canvas');
+    c.width = s; c.height = s;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+    // Kaynak bölge sınırları taşabilir; drawImage taşan kısmı otomatik kırpar.
+    ctx.drawImage(canvas, Math.round(cx - half), Math.round(cy - half), s, s, 0, 0, s, s);
+    return c;
   }
 
   /** Parmak uzunluğu oranından yapı sınıflandırması (MCP→TIP / avuç boyu). */
