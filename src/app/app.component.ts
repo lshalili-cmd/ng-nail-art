@@ -14,8 +14,9 @@ import { SyncService } from './core/sync.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <router-outlet />
-    <!-- Yönetici paneli (/admin) tam ekrandır: kullanıcı alt menüsü/splash/onboarding gösterilmez. -->
-    @if (!adminRoute()) {
+    <!-- Yönetici paneli (/admin) tam ekrandır. Üye OLMAYANA da kabuk gösterilmez:
+         yalnızca üyelik/giriş ekranı (slogan) görünür — alt menü/onboarding gizli. -->
+    @if (!adminRoute() && auth.loggedIn()) {
       <app-bottom-nav />
       <app-onboarding />
       <app-splash />
@@ -23,7 +24,7 @@ import { SyncService } from './core/sync.service';
   `,
 })
 export class AppComponent {
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private readonly sync = inject(SyncService);
   private readonly router = inject(Router);
 

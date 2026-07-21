@@ -26,9 +26,14 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
           <p class="em">{{ u.email }}</p>
           <button class="btn-ghost auth-btn" (click)="auth.logout()">{{ i18n.t('logout') }}</button>
         } @else {
-          <h1 class="nm">{{ i18n.t('auth_guest') }}</h1>
-          <p class="em">{{ i18n.t('auth_sub') }}</p>
-          <button class="btn-primary auth-btn" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
+          <!-- ÜYE OLMAYAN: yalnızca slogan + Giriş/Kayıt. Uygulama içeriği kapalıdır. -->
+          <p class="em" style="letter-spacing:3px;color:var(--gold);font-weight:700;font-size:11px;margin:0 0 6px">{{ i18n.t('hero_overline') }}</p>
+          <h1 class="nm">{{ i18n.t('hero_title') }}</h1>
+          <p class="em">{{ i18n.t('hero_sub') }}</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+            <button class="btn-primary auth-btn" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
+            <button class="btn-ghost auth-btn" (click)="openAuth('register')">{{ i18n.t('register') }}</button>
+          </div>
         }
       </header>
 
@@ -112,6 +117,8 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
         </div>
       }
 
+      <!-- Aşağıdaki içerik (istatistik, plan, menü) YALNIZCA üyeye gösterilir. -->
+      @if (auth.loggedIn()) {
       <div class="stats">
         <div class="stat card"><span class="n">12</span><span class="l">{{ i18n.t('designs') }}</span></div>
         <div class="stat card"><span class="n">{{ fav.count() }}</span><span class="l">{{ i18n.t('favorites') }}</span></div>
@@ -147,6 +154,8 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
           </button>
         }
       </div>
+      }
+      <!-- /üye-içeriği -->
 
       <!-- Favorilerim penceresi (menüdeki butona tıklanınca açılır) -->
       @if (favOpen()) {
