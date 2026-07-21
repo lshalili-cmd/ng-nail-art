@@ -5,7 +5,9 @@ import { PlanService } from './plan.service';
 // BİRLEŞİK AI KULLANIM HAKKI (görsel üretimi = 1 hak). Tarama+AI önerisi 1 hak,
 // AI Stüdyo prompt+tasarım 1 hak — hepsi bu havuzdan. Bitince tüm AI durur.
 const PLAN_MONTHLY: Record<string, number> = {
-  free: 50,    // TEST — rahat test için bol (prod'da 1). "Hak bitince dur"u görmek istersen düşür.
+  free: 1,     // ÜYELERE 1 BEDAVA HAK: 1 üretim (Tara→AI VEYA Stüdyo) + o tasarımın 1 AR'ı = 1 hak.
+               // free dönem anahtarı hep 'free|free' olduğundan bu hak AYLIK YENİLENMEZ — tek seferliktir.
+               // (used sunucuda tutulur; tarayıcı temizlense de sıfırlanmaz. Devamı için Mağaza.)
   monthly: 30,
   yearly: 30,
   pro: 100,
