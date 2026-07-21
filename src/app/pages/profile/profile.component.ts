@@ -20,19 +20,39 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
   template: `
     <div class="page">
       <header class="phead">
-        <div class="av">{{ auth.loggedIn() ? avatarLetter() : '👤' }}</div>
+        @if (auth.loggedIn()) {
+          <div class="av">{{ avatarLetter() }}</div>
+        }
         @if (auth.user(); as u) {
           <h1 class="nm">{{ u.email.split('@')[0] }}</h1>
           <p class="em">{{ u.email }}</p>
           <button class="btn-ghost auth-btn" (click)="auth.logout()">{{ i18n.t('logout') }}</button>
         } @else {
-          <!-- ÜYE OLMAYAN: yalnızca slogan + Giriş/Kayıt. Uygulama içeriği kapalıdır. -->
-          <p class="em" style="letter-spacing:3px;color:var(--gold);font-weight:700;font-size:11px;margin:0 0 6px">{{ i18n.t('hero_overline') }}</p>
-          <h1 class="nm">{{ i18n.t('hero_title') }}</h1>
-          <p class="em">{{ i18n.t('hero_sub') }}</p>
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px">
-            <button class="btn-primary auth-btn" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
-            <button class="btn-ghost auth-btn" (click)="openAuth('register')">{{ i18n.t('register') }}</button>
+          <!-- ÜYE OLMAYAN: "miracle" markalı tam ekran karşılama (logo + slogan + Giriş/Kayıt). İçerik kapalı. -->
+          <div class="welcome">
+            <div class="w-emblem">
+              <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="wg" x1="0" y1="0" x2="0.3" y2="1">
+                    <stop offset="0" stop-color="#fbeaa8"/><stop offset="0.5" stop-color="#d9b141"/><stop offset="1" stop-color="#a5791f"/>
+                  </linearGradient>
+                </defs>
+                <path d="M64 26 L136 26 L162 54 L100 128 L38 54 Z" fill="url(#wg)"/>
+                <g stroke="#8a6410" stroke-width="1.4" fill="none" opacity=".55" stroke-linejoin="round">
+                  <path d="M38 54 L162 54"/><path d="M64 26 L84 54 L100 128"/><path d="M136 26 L116 54 L100 128"/><path d="M84 54 L116 54"/>
+                </g>
+                <path d="M74 38 l3.2 8.6 8.6 3.2 -8.6 3.2 -3.2 8.6 -3.2 -8.6 -8.6 -3.2 8.6 -3.2 z" fill="#fff8e7"/>
+                <path d="M78 150 C82 138 118 138 122 150 C140 182 128 246 100 262 C72 246 60 182 78 150 Z" fill="url(#wg)"/>
+                <ellipse cx="88" cy="188" rx="7" ry="34" fill="#fff8e7" opacity=".5" transform="rotate(-10 88 188)"/>
+              </svg>
+            </div>
+            <div class="w-kicker">NAIL ART AI</div>
+            <div class="w-name">miracle</div>
+            <div class="w-tag">◇&nbsp;&nbsp;{{ i18n.t('splash_slogan') }}&nbsp;&nbsp;◇</div>
+            <div class="w-cta">
+              <button class="btn-primary" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
+              <button class="btn-ghost" (click)="openAuth('register')">{{ i18n.t('register') }}</button>
+            </div>
           </div>
         }
       </header>
@@ -267,6 +287,22 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
     </div>
   `,
   styles: [`
+    /* ÜYELİK KARŞILAMA — "miracle" markalı tam ekran arka plan (splash görünümü, ağır ışın efekti YOK) */
+    .welcome { position: fixed; inset: 0; z-index: 50; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+      padding: 32px 22px calc(32px + env(safe-area-inset-bottom));
+      background: radial-gradient(120% 80% at 50% 28%, #141009, #000 72%); }
+    .w-emblem { width: min(52vw, 190px); aspect-ratio: 1; border: 1.5px solid rgba(212,175,55,0.85);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle, rgba(20,15,8,0.6), transparent 72%); }
+    .w-emblem svg { width: 66%; height: 78%; }
+    .w-kicker { letter-spacing: 0.5em; font-size: 12px; color: #b89a52; text-indent: 0.5em; margin: 22px 0 6px; }
+    .w-name { font-family: Georgia, "Times New Roman", serif; font-size: clamp(48px, 17vw, 74px); line-height: 1;
+      background: linear-gradient(180deg, #fbe6a8, #d4af37 55%, #a97e22);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .w-tag { font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #d9b45a; margin-top: 12px; letter-spacing: 0.04em; }
+    .w-cta { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; margin-top: 34px; }
+    .w-cta .btn-primary, .w-cta .btn-ghost { width: 100%; padding: 13px 22px; font-size: 15px; }
     .phead { text-align: center; padding: 28px 0 10px; }
     .av { width: 88px; height: 88px; border-radius: 50%; margin: 0 auto; display: flex;
       align-items: center; justify-content: center; font-size: 38px; font-weight: 700; color: #1a1206;
