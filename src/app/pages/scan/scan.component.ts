@@ -397,15 +397,12 @@ export class ScanComponent implements OnDestroy {
   private async tuneCameraBrightness(): Promise<void> {
     try {
       const track = this.stream?.getVideoTracks?.()[0];
-      const t = track as (MediaStreamTrack & {
-        getCapabilities?: () => Record<string, { min?: number; max?: number; step?: number }>;
-        applyConstraints?: (c: unknown) => Promise<void>;
-      }) | undefined;
-      if (!t || !t.getCapabilities || !t.applyConstraints) {
+      if (!track || typeof track.getCapabilities !== 'function' || typeof track.applyConstraints !== 'function') {
         console.log('[Scan] kamera ayar API\'si yok — parlaklık zorlama atlandı');
         return;
       }
-      const caps = t.getCapabilities();
+      // exposureCompensation/brightness standart tipte yok (deneysel) → esnek tipe çevir.
+      const caps = track.getCapabilities() as unknown as Record<string, { min?: number; max?: number; step?: number }>;
       const advanced: Record<string, number>[] = [];
       const ec = caps['exposureCompensation'];
       if (ec && typeof ec.max === 'number') {
@@ -420,7 +417,7 @@ export class ScanComponent implements OnDestroy {
         console.log('[Scan] kamera poz/parlaklık ayarını desteklemiyor — atlandı');
         return;
       }
-      await t.applyConstraints({ advanced });
+      await track.applyConstraints({ advanced } as unknown as MediaTrackConstraints);
       console.log('[Scan] kamera KAYNAKTA parlatıldı:', JSON.stringify(advanced));
     } catch (e) {
       console.warn('[Scan] kamera parlaklık ayarı uygulanamadı (atlandı):', e);
