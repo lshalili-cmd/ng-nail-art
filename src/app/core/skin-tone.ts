@@ -152,6 +152,36 @@ export function estimateSceneGains(pixels: Uint8ClampedArray): IlluminantGains {
   return g;
 }
 
+/**
+ * POZ (parlaklık) normalizasyon çarpanı — analiz kalitesinin kritik parçası.
+ *
+ * Ton sınıflandırması (ITA) mutlak parlaklığa (L*) çok duyarlıdır; kamera cildi
+ * düşük pozlarsa açık tenli biri bile "koyu" çıkar. Bu fonksiyon karenin
+ * "beyaz noktasını" (parlak piksellerin 97. yüzdeliği) ölçer; kare az pozlanmışsa
+ * beyaz noktayı hedefe taşıyacak bir çarpan üretir. Çarpan [1, 1.7] ile
+ * KELEPÇELİDİR (aşırı parlatıp koyu teni yanlış açığa çıkarmamak için) ve karede
+ * yeterli parlaklık zaten varsa 1 döner (iyi pozda hiç dokunmaz — sıfır gerileme).
+ */
+export function estimateExposureGain(pixels: Uint8ClampedArray): number {
+  const maxes: number[] = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] < 200) continue;
+    maxes.push(Math.max(pixels[i], pixels[i + 1], pixels[i + 2]));
+  }
+  if (!maxes.length) return 1;
+  maxes.sort((a, b) => a - b);
+  const p97 = maxes[Math.min(maxes.length - 1, Math.floor(maxes.length * 0.97))];
+  const TARGET = 242;
+  if (p97 >= TARGET) return 1;                         // iyi/fazla pozlanmış → dokunma
+  return Math.max(1, Math.min(1.7, TARGET / Math.max(1, p97)));
+}
+
+/** Bir rengi düz parlaklık çarpanıyla ölçekler (0-255 kelepçeli). */
+export function scaleBrightness({ r, g, b }: Rgb, k: number): Rgb {
+  const c = (v: number) => Math.max(0, Math.min(255, v * k));
+  return { r: c(r), g: c(g), b: c(b) };
+}
+
 /** averageSkin gibi, ama geçerli cilt pikseli yoksa null döner (çok-yama örnekleme için). */
 export function averageSkinOrNull(pixels: Uint8ClampedArray): Rgb | null {
   const v = averageSkin(pixels);

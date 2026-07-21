@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { FilesetResolver, HandLandmarker, type NormalizedLandmark } from '@mediapipe/tasks-vision';
 import {
   averageSkin, averageSkinOrNull, applyGains, classifyTone, detectUndertone,
-  estimateSceneGains, medianRgb, rgbToHex, rgbToLab,
+  estimateSceneGains, estimateExposureGain, scaleBrightness, medianRgb, rgbToHex, rgbToLab,
   IlluminantGains, Lab, Rgb, ToneKey, Undertone,
 } from './skin-tone';
 
@@ -135,17 +135,24 @@ export class HandAnalysisService {
     // 1) HAM cilt rengi — çoklu yama (el sırtı + parmak dipleri) medyanı.
     //    Ham renk, tırnak şekli tahmincisine gider (o, kareyi ham pikselle karşılaştırır).
     const rawSkin = this.sampleSkin(canvas, lm);
-    // 2) Işık düzeltmesi — karedeki ışık rengi kestirilir, cilt rengi normalize edilir.
-    //    DÜZELTİLMİŞ renk yalnızca ton/alt ton sınıflandırmasına gider; böylece sarı
-    //    ampul "sıcak", soğuk LED "soğuk" yanılgısı ortadan kalkar.
-    const gains = this.illuminantGains(canvas);
-    const rgb = applyGains(rawSkin, gains);
-    console.log(`[Scan] ışık düzeltme kazançları r=${gains.gr.toFixed(2)} b=${gains.gb.toFixed(2)}`);
+    // 2) Kare istatistikleri: ışık rengi (renk dengesi) + poz (parlaklık) düzeltmesi.
+    const stats = this.frameStats(canvas);
+    // 3) Önce renk dengesi (sarı/soğuk ışık), sonra poz (az pozlanmış kareyi parlat).
+    //    DÜZELTİLMİŞ renk yalnızca ton/alt ton sınıflandırmasına gider; ham renk şekil
+    //    tahmincisine gider (o kareyle karşılaştırdığı için ham kalmalı).
+    const colorFixed = applyGains(rawSkin, stats.gains);
+    const rgb = scaleBrightness(colorFixed, stats.exposure);
     const lab = rgbToLab(rgb);
     const tone = classifyTone(lab);
     const undertone = detectUndertone(lab);
     const fingerLength = this.fingerStructure(lm);
     const shape = this.estimateNailShape(canvas, lm, rawSkin);
+    console.log(
+      `[Scan] HAM rgb=${rawSkin.r|0},${rawSkin.g|0},${rawSkin.b|0} → ` +
+      `renk(r×${stats.gains.gr.toFixed(2)} b×${stats.gains.gb.toFixed(2)}) poz×${stats.exposure.toFixed(2)} → ` +
+      `SON rgb=${rgb.r|0},${rgb.g|0},${rgb.b|0} ${rgbToHex(rgb)} | L*=${Math.round(lab.L)} ITA=${tone.ita}° ` +
+      `→ TON=${tone.key} ALTTON=${undertone}`,
+    );
 
     return {
       handDetected: true,
@@ -318,18 +325,20 @@ export class HandAnalysisService {
     return medianRgb(samples) ?? averageSkin(new Uint8ClampedArray(0));
   }
 
-  /** Karenin ışık rengini küçültülmüş kopyadan kestirir (hızlı — 48x48). */
-  private illuminantGains(canvas: HTMLCanvasElement): IlluminantGains {
+  /** Karenin renk dengesi (ışık) + poz (parlaklık) kazançlarını küçültülmüş kopyadan kestirir. */
+  private frameStats(canvas: HTMLCanvasElement): { gains: IlluminantGains; exposure: number } {
+    const neutral = { gains: { gr: 1, gg: 1, gb: 1 } as IlluminantGains, exposure: 1 };
     try {
       const S = 48;
       const c = document.createElement('canvas');
       c.width = S; c.height = S;
       const cx = c.getContext('2d', { willReadFrequently: true });
-      if (!cx) return { gr: 1, gg: 1, gb: 1 };
+      if (!cx) return neutral;
       cx.drawImage(canvas, 0, 0, S, S);
-      return estimateSceneGains(cx.getImageData(0, 0, S, S).data);
+      const data = cx.getImageData(0, 0, S, S).data;
+      return { gains: estimateSceneGains(data), exposure: estimateExposureGain(data) };
     } catch {
-      return { gr: 1, gg: 1, gb: 1 };
+      return neutral;
     }
   }
 
