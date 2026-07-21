@@ -27,15 +27,18 @@ echo [4/5] Veritabani tablolari kuruluyor...
 call npx prisma db push --schema=prisma\schema.local.prisma --accept-data-loss
 if errorlevel 1 goto :err
 
-echo [5/5] Yonetici hesabi olusturuluyor (admin@demo.com / Admin123)...
+echo [5/5] Hesaplar olusturuluyor (admin + test uyesi)...
 call node scripts\create-admin.js
+call node scripts\create-member.js
 
 echo.
 echo ============================================================
 echo   KURULUM TAMAM. Backend baslatiliyor...
 echo   Bu pencere ACIK kalsin. Tarayicida:
-echo     http://localhost:3000/admin
-echo     admin@demo.com  /  Admin123
+echo     Admin :  http://localhost:3000/admin
+echo              admin@demo.com  /  Admin123
+echo     Uye   :  http://localhost:4200/profile  -^> Giris Yap
+echo              uye@demo.com  /  a12345
 echo ============================================================
 echo.
 
