@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { FilesetResolver, HandLandmarker, type NormalizedLandmark } from '@mediapipe/tasks-vision';
 import {
-  averageSkin, classifyTone, detectUndertone, rgbToHex, rgbToLab,
-  Lab, Rgb, ToneKey, Undertone,
+  averageSkin, averageSkinOrNull, applyGains, classifyTone, detectUndertone,
+  estimateSceneGains, medianRgb, rgbToHex, rgbToLab,
+  IlluminantGains, Lab, Rgb, ToneKey, Undertone,
 } from './skin-tone';
 
 const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
@@ -131,12 +132,20 @@ export class HandAnalysisService {
     const lm = hands[0];
     const handedness = result.handednesses?.[0]?.[0]?.categoryName ?? null;
 
-    const rgb = this.sampleSkin(canvas, lm);
+    // 1) HAM cilt rengi — çoklu yama (el sırtı + parmak dipleri) medyanı.
+    //    Ham renk, tırnak şekli tahmincisine gider (o, kareyi ham pikselle karşılaştırır).
+    const rawSkin = this.sampleSkin(canvas, lm);
+    // 2) Işık düzeltmesi — karedeki ışık rengi kestirilir, cilt rengi normalize edilir.
+    //    DÜZELTİLMİŞ renk yalnızca ton/alt ton sınıflandırmasına gider; böylece sarı
+    //    ampul "sıcak", soğuk LED "soğuk" yanılgısı ortadan kalkar.
+    const gains = this.illuminantGains(canvas);
+    const rgb = applyGains(rawSkin, gains);
+    console.log(`[Scan] ışık düzeltme kazançları r=${gains.gr.toFixed(2)} b=${gains.gb.toFixed(2)}`);
     const lab = rgbToLab(rgb);
     const tone = classifyTone(lab);
     const undertone = detectUndertone(lab);
     const fingerLength = this.fingerStructure(lm);
-    const shape = this.estimateNailShape(canvas, lm, rgb);
+    const shape = this.estimateNailShape(canvas, lm, rawSkin);
 
     return {
       handDetected: true,
@@ -267,26 +276,61 @@ export class HandAnalysisService {
   }
 
   /** Avuç/el sırtı merkezinden bir yama örnekleyip baskın cilt rengini döndürür. */
+  /**
+   * ÇOK-YAMALI cilt örnekleme: tek nokta yerine el sırtı + parmak dipleri dahil
+   * ~9 ayrı yamadan renk alınır ve kanal bazında MEDYAN birleştirilir. Tek yamanın
+   * gölgeye, yüzüğe veya damara denk gelmesi artık sonucu bozamaz.
+   */
   private sampleSkin(canvas: HTMLCanvasElement, lm: NormalizedLandmark[]): Rgb {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return { r: 200, g: 160, b: 130 };
+    const W = canvas.width, H = canvas.height;
 
-    // El sırtı merkezi: bilek(0) + MCP eklemleri(5,9,13,17) ortalaması
+    const mid = (a: number, b: number, t = 0.5) =>
+      ({ x: lm[a].x + (lm[b].x - lm[a].x) * t, y: lm[a].y + (lm[b].y - lm[a].y) * t });
+    // El sırtı merkezi
     const pts = [0, 5, 9, 13, 17].map((i) => lm[i]);
-    const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-    const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    const center = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
+    // Yama merkezleri: sırt merkezi, bilek→orta MCP arası, MCP araları (bileğe %30 kaydırılmış),
+    // ve dört parmağın dip boğum ortaları (MCP→PIP)
+    const spots = [
+      center,
+      mid(0, 9, 0.45),
+      { x: mid(5, 9).x + (lm[0].x - mid(5, 9).x) * 0.3, y: mid(5, 9).y + (lm[0].y - mid(5, 9).y) * 0.3 },
+      { x: mid(9, 13).x + (lm[0].x - mid(9, 13).x) * 0.3, y: mid(9, 13).y + (lm[0].y - mid(9, 13).y) * 0.3 },
+      { x: mid(13, 17).x + (lm[0].x - mid(13, 17).x) * 0.3, y: mid(13, 17).y + (lm[0].y - mid(13, 17).y) * 0.3 },
+      mid(5, 6), mid(9, 10), mid(13, 14), mid(17, 18),
+    ];
 
-    const px = Math.round(cx * canvas.width);
-    const py = Math.round(cy * canvas.height);
-    const half = Math.max(12, Math.round(canvas.width * 0.05));
-    const x = Math.max(0, px - half);
-    const y = Math.max(0, py - half);
-    const w = Math.min(half * 2, canvas.width - x);
-    const h = Math.min(half * 2, canvas.height - y);
-    if (w <= 0 || h <= 0) return { r: 200, g: 160, b: 130 };
+    const half = Math.max(8, Math.round(W * 0.035));
+    const samples: Rgb[] = [];
+    for (const s of spots) {
+      const px = Math.round(s.x * W), py = Math.round(s.y * H);
+      const x = Math.max(0, px - half), y = Math.max(0, py - half);
+      const w = Math.min(half * 2, W - x), h = Math.min(half * 2, H - y);
+      if (w <= 0 || h <= 0) continue;
+      try {
+        const v = averageSkinOrNull(ctx.getImageData(x, y, w, h).data);
+        if (v) samples.push(v);
+      } catch { /* yama okunamadıysa geç */ }
+    }
+    console.log(`[Scan] cilt örnekleme: ${samples.length}/${spots.length} geçerli yama`);
+    return medianRgb(samples) ?? averageSkin(new Uint8ClampedArray(0));
+  }
 
-    const data = ctx.getImageData(x, y, w, h).data;
-    return averageSkin(data);
+  /** Karenin ışık rengini küçültülmüş kopyadan kestirir (hızlı — 48x48). */
+  private illuminantGains(canvas: HTMLCanvasElement): IlluminantGains {
+    try {
+      const S = 48;
+      const c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      const cx = c.getContext('2d', { willReadFrequently: true });
+      if (!cx) return { gr: 1, gg: 1, gb: 1 };
+      cx.drawImage(canvas, 0, 0, S, S);
+      return estimateSceneGains(cx.getImageData(0, 0, S, S).data);
+    } catch {
+      return { gr: 1, gg: 1, gb: 1 };
+    }
   }
 
   /** Parmak uzunluğu oranından yapı sınıflandırması (MCP→TIP / avuç boyu). */

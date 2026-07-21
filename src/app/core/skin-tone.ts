@@ -64,6 +64,112 @@ export function detectUndertone(lab: Lab): Undertone {
   return 'neutral';
 }
 
+/** Işık kaynağı düzeltme kazançları (kanal başına çarpan; yeşil=1'e normalize). */
+export interface IlluminantGains { gr: number; gg: number; gb: number; }
+
+/**
+ * Karedeki ışık rengini kestirir ve düzeltme kazançları üretir ("shades-of-gray",
+ * Minkowski p=6). Sarı ampul altında mavi kanalı güçlendirir, soğuk LED altında
+ * kırmızıyı — böylece ten rengi/alt ton sınıflandırması ışıktan bağımsızlaşır.
+ * Kare çoğunlukla elden oluşsa bile aşırı düzeltmeyi önlemek için kazançlar
+ * [0.65, 1.55] aralığına kelepçelenir.
+ */
+export function estimateIlluminantGains(pixels: Uint8ClampedArray): IlluminantGains {
+  const P = 6;
+  let sr = 0, sg = 0, sb = 0, n = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] < 200) continue;
+    sr += Math.pow(pixels[i] / 255, P);
+    sg += Math.pow(pixels[i + 1] / 255, P);
+    sb += Math.pow(pixels[i + 2] / 255, P);
+    n++;
+  }
+  if (!n) return { gr: 1, gg: 1, gb: 1 };
+  const mr = Math.pow(sr / n, 1 / P) || 1e-4;
+  const mg = Math.pow(sg / n, 1 / P) || 1e-4;
+  const mb = Math.pow(sb / n, 1 / P) || 1e-4;
+  const gray = (mr + mg + mb) / 3;
+  // Yeşil kanala normalize et (parlaklığı değil, renk dengesini düzeltiyoruz)
+  const base = gray / mg;
+  const clamp = (v: number) => Math.max(0.65, Math.min(1.55, v));
+  return { gr: clamp(gray / mr / base), gg: 1, gb: clamp(gray / mb / base) };
+}
+
+/** Kazançları bir renge uygular (0-255'e kelepçeli). */
+export function applyGains({ r, g, b }: Rgb, k: IlluminantGains): Rgb {
+  const c = (v: number) => Math.max(0, Math.min(255, v));
+  return { r: c(r * k.gr), g: c(g * k.gg), b: c(b * k.gb) };
+}
+
+/**
+ * SAHNE ışık düzeltmesi (hibrit, cilt-farkında) — analiz kalitesinin 1. adımı.
+ *
+ * Üç kademe:
+ *  1) BEYAZ REFERANS: Karede parlak ve nötr bir bölge varsa (duvar/kağıt),
+ *     ışık rengi ondan güvenilir okunur → tam düzeltme.
+ *  2) İSTATİSTİK (shades-of-gray) + YÖN FARKINDA SÖNÜM: Beyaz referans yoksa
+ *     genel kestirim kullanılır. Cilt, kestirimi yalnızca 'sıcak' yönünde
+ *     yanıltabilir (cilt asla mavi değildir) → sıcak yönde güçlü sönüm
+ *     (kare cilt-ağırlıklıysa daha da güçlü), soğuk yönde hafif sönüm.
+ *  3) ÖLÜ BÖLGE: Kestirilen sapma küçükse HİÇ düzeltme yapılmaz — normal
+ *     ışıkta kullanıcının gerçek alt tonu asla bozulmaz (sıfır gerileme).
+ */
+export function estimateSceneGains(pixels: Uint8ClampedArray): IlluminantGains {
+  const rs: number[] = [], gs: number[] = [], bs: number[] = [];
+  let skinLike = 0, tot = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] < 200) continue;
+    const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+    rs.push(r); gs.push(g); bs.push(b); tot++;
+    if (r > g && g >= b - 6) skinLike++;                 // cilt benzeri piksel
+  }
+  if (!tot) return { gr: 1, gg: 1, gb: 1 };
+
+  const p95 = (a: number[]) => {
+    const s = [...a].sort((x, y) => x - y);
+    return s[Math.min(s.length - 1, Math.floor(s.length * 0.95))];
+  };
+  const wr = p95(rs), wg = p95(gs), wb = p95(bs);
+  const mx = Math.max(wr, wg, wb), mn = Math.max(1, Math.min(wr, wg, wb));
+
+  let g: IlluminantGains;
+  if (wg > 170 && mx / mn < 1.4 && mx < 253) {
+    // 1) Güvenilir beyaz referans (parlak, nötr, doymamış) → tam düzeltme
+    g = { gr: wg / wr, gg: 1, gb: wg / wb };
+  } else {
+    // 2) İstatistiksel kestirim + yön farkında sönüm
+    const raw = estimateIlluminantGains(pixels);
+    const d = raw.gb >= 1 ? (skinLike / tot > 0.6 ? 0.35 : 0.6) : 0.85;
+    g = { gr: Math.pow(raw.gr, d), gg: 1, gb: Math.pow(raw.gb, d) };
+  }
+  const c = (v: number) => Math.max(0.7, Math.min(1.5, v));
+  g = { gr: c(g.gr), gg: 1, gb: c(g.gb) };
+
+  // 3) Ölü bölge — hafif sapmaya dokunma (normal ışık = düzeltme yok)
+  if (g.gr > 0.9 && g.gr < 1.12 && g.gb > 0.9 && g.gb < 1.12) {
+    return { gr: 1, gg: 1, gb: 1 };
+  }
+  return g;
+}
+
+/** averageSkin gibi, ama geçerli cilt pikseli yoksa null döner (çok-yama örnekleme için). */
+export function averageSkinOrNull(pixels: Uint8ClampedArray): Rgb | null {
+  const v = averageSkin(pixels);
+  // averageSkin boş kümede sabit varsayılan döndürür — onu "geçersiz yama" say.
+  return (v.r === 200 && v.g === 160 && v.b === 130) ? null : v;
+}
+
+/** Birden çok yama renginin kanal bazında medyanı (gölge/yüzük gibi sapmalara dayanıklı). */
+export function medianRgb(list: Rgb[]): Rgb | null {
+  if (!list.length) return null;
+  const med = (arr: number[]) => {
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  return { r: med(list.map((c) => c.r)), g: med(list.map((c) => c.g)), b: med(list.map((c) => c.b)) };
+}
+
 /** RGB'yi #hex'e çevirir. */
 export function rgbToHex({ r, g, b }: Rgb): string {
   const h = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
