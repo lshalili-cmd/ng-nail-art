@@ -581,7 +581,8 @@ app.post('/api/payments/checkout', async (req, res) => {
           provider: result.provider || 'demo', status: 'pending',
           ref: result.ref || '', providerRef: result.providerRef || result.ref || '',
         } });
-      } catch { /* migrate edilmemişse geç */ }
+        console.log(`📝 Sipariş kaydedildi (pending): ref=${result.ref} · ${b.itemId} · ${amount} ${currency}`);
+      } catch (e) { console.error('❌ SİPARİŞ KAYDI BAŞARISIZ (şema eski olabilir → yerel-pg-baslat.bat ile db push):', e.message); }
     }
     res.json({ success: true, data: result });
   } catch (e) {

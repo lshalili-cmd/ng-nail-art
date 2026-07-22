@@ -5,6 +5,7 @@ import { I18nService } from '../../core/i18n.service';
 import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { PaymentService } from '../../core/payment.service';
+import { AuthService } from '../../core/auth.service';
 import { CurrencyService, CURRENCIES } from '../../core/pricing';
 
 interface Plan {
@@ -12,7 +13,7 @@ interface Plan {
   highlight?: boolean; badgeKey?: string; featureKeys: string[];
 }
 interface Pack { id: string; nameKey: string; credits: number; }
-interface CartItem { kind: 'plan' | 'pack'; id: string; name: string; amount: number; priceLabel: string; credits?: number; }
+interface CartItem { kind: 'plan' | 'pack'; id: string; name: string; amount: number; priceLabel: string; credits?: number; ref?: string; }
 const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe', paytr: 'PayTR' };
 
 @Component({
@@ -180,6 +181,7 @@ export class ShopComponent implements OnInit {
   readonly payment = inject(PaymentService);
   readonly cur = inject(CurrencyService);
   readonly currencies = CURRENCIES;
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly added = signal<number | null>(null);
@@ -202,15 +204,29 @@ export class ShopComponent implements OnInit {
 
   ngOnInit(): void {
     void this.payment.loadStatus();
-    // Gerçek sağlayıcıdan geri dönüş: ?paid=1&ref=... → bekleyen alımı uygula
+    // SUNUCU DOĞRULAMALI DÖNÜŞ: bekleyen bir ödeme varsa (iyzico'ya gidip dönüldüyse),
+    // callback gelmese bile ödemeyi SUNUCUDAN doğrula ve planı/krediyi sunucudan tazele.
     const q = this.route.snapshot.queryParamMap;
-    if (q.get('paid') === '1') {
-      const ref = q.get('ref') || '';
-      const pend = this.loadPending();
-      if (pend) { void this.payment.confirm(ref); this.applyPurchase(pend); this.added.set(pend.credits ?? null); }
-      this.clearPending();
+    const pend = this.loadPending();
+    if (pend) {
+      const ref = q.get('ref') || pend.ref || '';
+      void this.finishPending(pend, ref);
+    }
+    if (q.get('paid') != null || q.get('canceled') != null) {
       void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
     }
+  }
+
+  /** Bekleyen ödemeyi sunucudan doğrular; ödendiyse planı/krediyi sunucudan tazeler. */
+  private async finishPending(pend: CartItem, ref: string): Promise<void> {
+    const paid = await this.payment.confirm(ref);
+    if (paid) {
+      this.applyPurchase(pend);
+      this.added.set(pend.credits ?? null);
+      this.payDone.set(true);
+      await this.auth.loadMe();   // sunucu-otoriter plan/kredi → SyncService uygular
+    }
+    this.clearPending();
   }
 
   // Fiyat ve limitler kaynağı: app/data/financial-config.json (v5.0, USD 4-katman funnel)
@@ -330,14 +346,16 @@ export class ShopComponent implements OnInit {
       return;
     }
     if (res.mode === 'live' && res.url) {
-      // Gerçek sağlayıcı: bekleyen alımı sakla ve ödeme sayfasına yönlendir
-      this.savePending(it);
+      // Gerçek sağlayıcı: bekleyen alımı (ref ile) sakla ve ödeme sayfasına yönlendir.
+      // Dönüşte finishPending() bu ref ile ödemeyi sunucudan doğrular.
+      this.savePending({ ...it, ref: res.ref });
       window.location.href = res.url;
       return;
     }
-    // Demo: onayla + uygula
+    // Demo: onayla + uygula + sunucudan tazele
     await this.payment.confirm(res.ref);
     this.applyPurchase(it);
+    await this.auth.loadMe();
     this.paying.set(false);
     this.payDone.set(true);
   }

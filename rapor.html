@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngNailArt — Raporlar</title>
+<style>
+  :root { --line:#dbe4ec; --head:#eef4f8; --head-ink:#2c5566; --stripe:#dcebf4; --ink:#2b3440; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:18px 14px 34px; background:#f6f8fa; color:var(--ink);
+         font:12.5px/1.4 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:1040px; margin:0 auto; }
+  header.top { margin-bottom:14px; }
+  header.top h1 { margin:0 0 3px; font-size:18px; color:#b8912e; }
+  header.top .sub { color:#6b7684; font-size:11.5px; }
+  section { margin:16px 0; background:#fff; border:1px solid var(--line); border-radius:9px;
+            overflow:hidden; box-shadow:0 1px 2px rgba(20,40,60,.05); }
+  h2 { margin:0; padding:8px 12px; font-size:13px; background:var(--head); color:var(--head-ink);
+       border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+  h2 .count { font-size:11px; font-weight:600; color:#fff; background:#7fa8c0;
+              padding:1px 8px; border-radius:999px; }
+  .tbl-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th { text-align:left; padding:6px 10px; font-weight:700; color:var(--head-ink);
+       background:var(--head); border-bottom:2px solid var(--line); white-space:nowrap; }
+  td { padding:5px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:nth-child(even) { background:var(--stripe); }
+  tbody tr:hover { background:#cfe3f0; }
+  td.empty { text-align:center; color:#8a95a1; font-style:italic; padding:14px; }
+  footer { text-align:center; color:#9aa4af; font-size:11px; margin-top:20px; }
+</style></head>
+<body><div class="wrap">
+  <header class="top">
+    <h1>💅 ngNailArt — Raporlar</h1>
+    <div class="sub">Oluşturulma: 22.07.2026 18:20:52 · Kullanıcı: 4 · Ödeme: 1 · Banlı: 6</div>
+  </header>
+  
+  <section>
+    <h2>Kullanıcılar <span class="count">4</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>E-posta</th><th>Telefon</th><th>Ad</th><th>Soyad</th><th>Rol</th><th>Doğrulanmış</th><th>Plan</th><th>Ek Kredi</th><th>Kayıt</th></tr></thead>
+        <tbody><tr><td>20</td><td>metinshalili@gmail.com</td><td>+90512983190831</td><td>MUBARIZ</td><td>SHKHALİLİ</td><td>user</td><td>Evet</td><td>free</td><td>0</td><td>22.07.2026 15:13:25</td></tr><tr><td>19</td><td>asasdada@gmail.com</td><td>+9051315415</td><td>asdad</td><td>asdads</td><td>user</td><td>Evet</td><td>monthly</td><td>0</td><td>22.07.2026 13:54:46</td></tr><tr><td>2</td><td>uye@demo.com</td><td>+900000000002</td><td>Üye</td><td></td><td>user</td><td>Evet</td><td>free</td><td>0</td><td>22.07.2026 10:35:25</td></tr><tr><td>1</td><td>admin@demo.com</td><td>+900000000001</td><td>Admin</td><td></td><td>admin</td><td>Evet</td><td>free</td><td>0</td><td>22.07.2026 10:35:25</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Kullanıcı Statusları <span class="count">4</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>E-posta</th><th>Rol</th><th>Doğrulama</th><th>Plan</th><th>Plan Durumu</th><th>Ek Kredi</th></tr></thead>
+        <tbody><tr><td>20</td><td>metinshalili@gmail.com</td><td>Üye</td><td>Doğrulanmış</td><td>free</td><td>Ücretsiz</td><td>0</td></tr><tr><td>19</td><td>asasdada@gmail.com</td><td>Üye</td><td>Doğrulanmış</td><td>monthly</td><td>Aktif</td><td>0</td></tr><tr><td>2</td><td>uye@demo.com</td><td>Üye</td><td>Doğrulanmış</td><td>free</td><td>Ücretsiz</td><td>0</td></tr><tr><td>1</td><td>admin@demo.com</td><td>Yönetici</td><td>Doğrulanmış</td><td>free</td><td>Ücretsiz</td><td>0</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Başarılı Ödemeler <span class="count">1</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>E-posta</th><th>Ürün</th><th>Tutar</th><th>Para Birimi</th><th>Sağlayıcı</th><th>Tarih</th></tr></thead>
+        <tbody><tr><td>12</td><td>asasdada@gmail.com</td><td>Aylık Premium</td><td>349</td><td>TRY</td><td>iyzico</td><td>22.07.2026 17:11:53</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Banlı Kullanıcılar <span class="count">6</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>E-posta</th><th>Telefon</th><th>Ban Bitiş</th><th>Hâlâ Banlı</th></tr></thead>
+        <tbody><tr><td>6</td><td>qatest_1784706813685_2@local.test</td><td>+9055568136852</td><td>31.08.2026 10:53:34</td><td>Evet</td></tr><tr><td>5</td><td>qatest_1784706813685_1@local.test</td><td>+9055568136851</td><td>31.08.2026 10:53:34</td><td>Evet</td></tr><tr><td>4</td><td>qatest_1784706218969_2@local.test</td><td>+9055562189692</td><td>31.08.2026 10:43:39</td><td>Evet</td></tr><tr><td>3</td><td>qatest_1784706218969_1@local.test</td><td>+9055562189691</td><td>31.08.2026 10:43:39</td><td>Evet</td></tr><tr><td>2</td><td>qatest_1784706206035_2@local.test</td><td>+9055562060352</td><td>31.08.2026 10:43:27</td><td>Evet</td></tr><tr><td>1</td><td>qatest_1784706206035_1@local.test</td><td>+9055562060351</td><td>31.08.2026 10:43:27</td><td>Evet</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <footer>Bu rapor anlık bir kopyadır. Güncellemek için rapor-html.bat'ı tekrar çalıştır.</footer>
+</div></body></html>

@@ -46,12 +46,17 @@ export class PaymentService {
     return { mode: 'demo', provider: input.provider || 'demo', ref: 'local_' + Date.now() };
   }
 
-  /** Başarı onayı (demo). Gerçek sağlayıcıda webhook/callback yapar. */
-  async confirm(ref: string): Promise<void> {
+  /**
+   * Ödemeyi SUNUCUDAN doğrular. Sunucu iyzico'ya sorar (retrieve); gerçekten ödendiyse
+   * planı/krediyi uygular ve status:'paid' döner. Böylece callback gelmese bile mağazaya
+   * dönüşte ödeme kendiliğinden doğrulanır. @returns ödendi mi (true/false).
+   */
+  async confirm(ref: string): Promise<boolean> {
     try {
-      await firstValueFrom(
-        this.http.post('/api/payments/confirm', { ref }).pipe(timeout(5000)),
+      const res = await firstValueFrom(
+        this.http.post<{ success: boolean; data?: { status?: string } }>('/api/payments/confirm', { ref }).pipe(timeout(9000)),
       );
-    } catch { /* sessiz geç */ }
+      return !!(res?.success && res.data?.status === 'paid');
+    } catch { return false; }
   }
 }
