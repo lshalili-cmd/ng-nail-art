@@ -8,6 +8,7 @@ const fs = require('fs');
 const ai = require('./ai');
 const db = require('./db');
 const payments = require('./payments');
+const catalog = require('./catalog');
 const auth = require('./auth');
 const sms = require('./sms');
 const mailer = require('./mailer');
@@ -368,14 +369,19 @@ app.put('/api/auth/state', async (req, res) => {
   if (uid === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
   const b = req.body || {};
   try {
-    const user = await db.prisma.user.update({
-      where: { id: Number(uid) },
-      data: {
-        plan: b.plan, planSince: Number(b.planSince) || 0,
-        imagesUsed: Number(b.imagesUsed) || 0, imagesExtra: Number(b.imagesExtra) || 0,
-        packId: b.packId || null, packSince: Number(b.packSince) || 0,
-      },
-    });
+    const id = Number(uid);
+    const current = await db.prisma.user.findUnique({ where: { id } });
+    if (!current) return res.status(404).json({ success: false, code: 'NOT_FOUND' });
+    // GÜVENLİK: plan/paket/planSince/packSince ve kredi ARTIŞI client'tan ALINMAZ
+    // (eskiden kullanıcı plan:'pro', imagesExtra:999 yazıp bedava premium alabiliyordu).
+    //  - imagesUsed: yalnızca ARTABİLİR (kullanıcı 0'a çekip bedava hakkını geri kazanamaz).
+    //  - imagesExtra: yalnızca AZALABİLİR (ücretli kredi harcanabilir ama kendine EKLEYEMEZ;
+    //    kredi/plan yalnızca doğrulanmış ödemeyle sunucuda artar — bkz. /api/payments/confirm).
+    const sentUsed = Number(b.imagesUsed);
+    const nextUsed = Number.isFinite(sentUsed) ? Math.max(current.imagesUsed || 0, sentUsed) : (current.imagesUsed || 0);
+    const sentExtra = Number(b.imagesExtra);
+    const nextExtra = Number.isFinite(sentExtra) ? Math.min(current.imagesExtra || 0, Math.max(0, sentExtra)) : (current.imagesExtra || 0);
+    const user = await db.prisma.user.update({ where: { id }, data: { imagesUsed: nextUsed, imagesExtra: nextExtra } });
     res.json({ success: true, user: auth.pub(user) });
   } catch (e) { dbError(res, e); }
 });
@@ -447,12 +453,19 @@ app.get('/api/payments/status', (_req, res) => {
 
 app.post('/api/payments/checkout', async (req, res) => {
   const b = req.body || {};
-  if (!b.itemId || b.amount == null) {
-    return res.status(400).json({ success: false, error: 'itemId ve amount gerekli', code: 'BAD_REQUEST' });
+  // GÜVENLİK: tutar İSTEMCİDEN alınmaz — itemId sunucu kataloğundan doğrulanır.
+  if (!b.itemId || !catalog.isValidItem(b.itemId)) {
+    return res.status(400).json({ success: false, error: 'Geçersiz ürün', code: 'BAD_ITEM' });
   }
+  const currency = catalog.CURRENCIES.includes(b.currency) ? b.currency : 'USD';
+  const amount = catalog.priceOf(b.itemId, currency);           // ← SUNUCU FİYATI (client amount YOK SAYILIR)
+  if (amount == null || amount <= 0) {
+    return res.status(400).json({ success: false, error: 'Bu ürün için fiyat yok', code: 'NO_PRICE' });
+  }
+  const grant = catalog.grantOf(b.itemId);
+  const kind = grant && grant.kind === 'pack' ? 'pack' : 'plan';
   const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
   const userId = auth.userIdFrom(req);
-  // Giriş yapmış kullanıcının bilgilerini ödeme sağlayıcısına (iyzico) gönder
   let buyer = null;
   if (userId !== 'guest' && db.ready()) {
     try {
@@ -462,16 +475,15 @@ app.post('/api/payments/checkout', async (req, res) => {
   }
   try {
     const result = await payments.createCheckout({
-      provider: b.provider, kind: b.kind || 'plan', itemId: b.itemId,
-      itemName: b.itemName || b.itemId, amount: Number(b.amount),
-      currency: b.currency || 'USD', userId, buyer, baseUrl,
+      provider: b.provider, kind, itemId: b.itemId,
+      itemName: b.itemName || b.itemId, amount,               // ← doğrulanmış tutar
+      currency, userId, buyer, baseUrl,
     });
-    // Siparişi kaydet (DB varsa; yoksa sessiz geç)
     if (db.ready()) {
       try {
         await db.prisma.order.create({ data: {
-          userId, kind: b.kind || 'plan', itemId: String(b.itemId),
-          itemName: b.itemName || String(b.itemId), amount: Number(b.amount), currency: b.currency || 'USD',
+          userId, kind, itemId: String(b.itemId),
+          itemName: b.itemName || String(b.itemId), amount, currency,
           provider: result.provider || 'demo', status: 'pending', ref: result.ref || '',
         } });
       } catch { /* migrate edilmemişse geç */ }
@@ -482,14 +494,26 @@ app.post('/api/payments/checkout', async (req, res) => {
   }
 });
 
-// Demo/başarı onayı — gerçek sağlayıcıda bunu webhook/callback yapar
+// Ödeme onayı → planı/krediyi SUNUCUDA verir (istemciye güvenilmez). İdempotent:
+// yalnızca 'pending' → 'paid' geçişinde bir kez uygulanır (çift callback güvenli).
 app.post('/api/payments/confirm', async (req, res) => {
   const { ref } = req.body || {};
   const userId = auth.userIdFrom(req);
+  if (userId === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
   if (db.ready() && ref) {
     try {
-      await db.prisma.order.updateMany({ where: { ref: String(ref), userId }, data: { status: 'paid' } });
-    } catch { /* geç */ }
+      // Sadece bu kullanıcının pending siparişini paid yap (idempotency + sahiplik kontrolü)
+      const upd = await db.prisma.order.updateMany({
+        where: { ref: String(ref), userId, status: 'pending' }, data: { status: 'paid' },
+      });
+      if (upd.count > 0) {
+        const order = await db.prisma.order.findFirst({ where: { ref: String(ref), userId } });
+        if (order) {
+          const applied = await catalog.applyGrant(db.prisma, userId, order.itemId, Date.now());
+          if (applied) console.log(`💳 Satın alım uygulandı → kullanıcı ${userId}: ${JSON.stringify(applied)}`);
+        }
+      }
+    } catch (e) { console.error('❌ confirm/grant hatası:', e.message); }
   }
   res.json({ success: true, data: { status: 'paid', ref: ref || null } });
 });

@@ -40,13 +40,15 @@ function compare(pw, h) { return bcrypt.compare(pw, h); }
 function sign(user) { return jwt.sign({ id: user.id, email: user.email }, SECRET, { expiresIn: '30d' }); }
 function verify(token) { try { return jwt.verify(token, SECRET); } catch { return null; } }
 
-/** İstekten kullanıcı kimliği: geçerli Bearer token → id, yoksa body/query.userId, o da yoksa "guest". */
+/** İstekten kullanıcı kimliği: YALNIZCA geçerli Bearer token → id, yoksa "guest".
+ *  GÜVENLİK: eskiden query/body.userId'ye düşüyordu → token'sız herkes ?userId=<id> ile
+ *  başka kullanıcı adına işlem yapabiliyordu (IDOR / hesap ele geçirme). Bu fallback KALDIRILDI. */
 function userIdFrom(req) {
   const h = req.headers.authorization || '';
   const t = h.startsWith('Bearer ') ? h.slice(7) : '';
   const payload = t ? verify(t) : null;
   if (payload && payload.id) return String(payload.id);
-  return (req.query && req.query.userId) || (req.body && req.body.userId) || 'guest';
+  return 'guest';
 }
 
 /** Public kullanıcı nesnesi (şifre/otp/jeton hariç). */
