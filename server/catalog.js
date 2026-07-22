@@ -15,6 +15,7 @@ const PRICES = {
   pack_10:    { USD: 6,      EUR: 5.99,   GBP: 4.99,   TRY: 249 },
   pack_25:    { USD: 13,     EUR: 12.99,  GBP: 10.99,  TRY: 549 },
   pack_50:    { USD: 25,     EUR: 24.99,  GBP: 19.99,  TRY: 999 },
+  test_1tl:   { USD: 1,      EUR: 1,      GBP: 1,      TRY: 1 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
 };
 
 /** itemId → satın alım neyi verir: plan (süreli) veya kredi paketi. */
@@ -26,9 +27,36 @@ const GRANTS = {
   pack_10:    { kind: 'pack', credits: 10 },
   pack_25:    { kind: 'pack', credits: 25 },
   pack_50:    { kind: 'pack', credits: 50 },
+  test_1tl:   { kind: 'pack', credits: 5 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
 };
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'TRY'];
+
+// ── SUNUCU TARAFI KOTA (paywall backstop) ─────────────────────────────────
+// Plan başına AYLIK görsel üretim hakkı (src/app/core/image-quota.service.ts ile
+// aynı tutulmalı). Sunucu, üretim uçlarında bu tabloyu KENDİ verisiyle doğrular;
+// istemcinin localStorage kotasına GÜVENİLMEZ.
+const PLAN_MONTHLY = { free: 1, monthly: 30, yearly: 30, pro: 100, pro_yearly: 100 };
+// Plan toplam süresi (gün) — bu süre dolunca plan 'free'e döner.
+const PLAN_DURATION_DAYS = { monthly: 30, yearly: 365, pro: 30, pro_yearly: 365 };
+
+/**
+ * Kullanıcının plan durumunu ve aylık hakkını SUNUCUDA hesaplar.
+ * @returns { plan, limit, period, active } — period 30 günlük pencerelerle yenilenir;
+ *          period değişince sunucu imagesUsed'ı sıfırlar (bkz. index.js generate-image).
+ */
+function planInfo(plan, planSince, now) {
+  const ts = now || Date.now();
+  const p = String(plan || 'free');
+  const since = Number(planSince) || 0;
+  const durDays = PLAN_DURATION_DAYS[p];
+  // Ücretsiz plan veya süresi dolmuş/ tanımsız plan → free (tek seferlik hak, yenilenmez)
+  if (p === 'free' || !durDays || !since || ts > since + durDays * DAY) {
+    return { plan: 'free', limit: PLAN_MONTHLY.free, period: 'free', active: false };
+  }
+  const windowIndex = Math.floor((ts - since) / (30 * DAY)); // aylık yenileme penceresi
+  return { plan: p, limit: PLAN_MONTHLY[p] || 0, period: `${p}|${windowIndex}`, active: true };
+}
 
 /** Geçerli itemId mi? */
 function isValidItem(itemId) { return Object.prototype.hasOwnProperty.call(PRICES, itemId); }
@@ -65,4 +93,4 @@ async function applyGrant(prisma, userId, itemId, now) {
   return null;
 }
 
-module.exports = { PRICES, GRANTS, CURRENCIES, DAY, isValidItem, priceOf, grantOf, applyGrant };
+module.exports = { PRICES, GRANTS, CURRENCIES, DAY, PLAN_MONTHLY, planInfo, isValidItem, priceOf, grantOf, applyGrant };

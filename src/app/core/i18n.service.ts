@@ -232,7 +232,7 @@ Object.assign(EN, {
   f_y360: '360 images/year total', f_all_unlim: 'Everything unlimited', f_589: '~$5.89/mo',
   f_p100: '100 AI images/month', f_salon: 'For salons & pros', f_py1200: '1,200 images/year total', f_1875: '~$18.75/mo',
   f_bigsalon: 'For large salons & agencies',
-  pk_mini: 'Mini', pk_standart: 'Standard', pk_mega: 'Mega',
+  pk_mini: 'Mini', pk_standart: 'Standard', pk_mega: 'Mega', pk_test: 'Test (1₺)',
   sug1: 'Gold chrome almond French', sug2: 'Pastel pink minimal', sug3: 'Galaxy deep blue',
   sug4: 'Pearl white for brides', sug5: 'Red matte coffin',
 });
@@ -244,7 +244,7 @@ Object.assign(TR, {
   f_y360: 'Yıllık toplam 360 görsel', f_all_unlim: 'Her şey sınırsız', f_589: '~$5.89/ay',
   f_p100: 'Aylık 100 görsel üretim', f_salon: 'Salon & profesyoneller için', f_py1200: 'Yıllık toplam 1.200 görsel', f_1875: '~$18.75/ay',
   f_bigsalon: 'Büyük salon & ajanslar için',
-  pk_mini: 'Mini', pk_standart: 'Standart', pk_mega: 'Mega',
+  pk_mini: 'Mini', pk_standart: 'Standart', pk_mega: 'Mega', pk_test: 'Test (1₺)',
   sug1: 'Altın kromlu badem French', sug2: 'Pastel pembe minimal', sug3: 'Galaksi temalı koyu mavi',
   sug4: 'Gelin için inci beyazı', sug5: 'Kırmızı mat coffin',
 });
@@ -256,7 +256,7 @@ Object.assign(RU, {
   f_y360: '360 изображений в год', f_all_unlim: 'Всё без лимита', f_589: '~$5.89/мес',
   f_p100: '100 AI-изображений/мес', f_salon: 'Для салонов и профи', f_py1200: '1 200 изображений в год', f_1875: '~$18.75/мес',
   f_bigsalon: 'Для больших салонов и агентств',
-  pk_mini: 'Mini', pk_standart: 'Стандарт', pk_mega: 'Mega',
+  pk_mini: 'Mini', pk_standart: 'Стандарт', pk_mega: 'Mega', pk_test: 'Test (1₺)',
   sug1: 'Золотой хром миндаль френч', sug2: 'Пастельный розовый минимал', sug3: 'Галактика тёмно-синий',
   sug4: 'Жемчужно-белый для невест', sug5: 'Красный матовый coffin',
 });
@@ -268,7 +268,7 @@ Object.assign(AR, {
   f_y360: '٣٦٠ صورة سنوياً', f_all_unlim: 'كل شيء غير محدود', f_589: '~$5.89/شهر',
   f_p100: '١٠٠ صورة ذكاء/شهر', f_salon: 'للصالونات والمحترفين', f_py1200: '١٢٠٠ صورة سنوياً', f_1875: '~$18.75/شهر',
   f_bigsalon: 'للصالونات والوكالات الكبيرة',
-  pk_mini: 'Mini', pk_standart: 'ستاندرد', pk_mega: 'Mega',
+  pk_mini: 'Mini', pk_standart: 'ستاندرد', pk_mega: 'Mega', pk_test: 'Test (1₺)',
   sug1: 'كروم ذهبي لوز فرنش', sug2: 'وردي باستيل بسيط', sug3: 'مجرة أزرق غامق',
   sug4: 'أبيض لؤلؤي للعرائس', sug5: 'أحمر مطفي coffin',
 });

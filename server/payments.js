@@ -46,7 +46,7 @@ function status() {
  * @returns { mode:'live'|'demo', provider, url?, ref } — live ise url'ye yönlendirilir,
  *          demo ise istemci /api/payments/confirm ile başarıyı simüle eder.
  */
-async function createCheckout({ provider, kind, itemId, itemName, amount, currency, userId, buyer, baseUrl }) {
+async function createCheckout({ provider, kind, itemId, itemName, amount, currency, userId, buyer, baseUrl, apiBase }) {
   const c = configured();
   // İstenen sağlayıcı hazırsa onu, değilse ilk hazır olanı, o da yoksa demo'yu kullan
   const chosen = provider && c[provider] ? provider
@@ -59,7 +59,7 @@ async function createCheckout({ provider, kind, itemId, itemName, amount, curren
 
   try {
     if (chosen === 'stripe') return await stripeCheckout({ itemName, amount, currency, baseUrl, ref });
-    if (chosen === 'iyzico') return await iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref });
+    if (chosen === 'iyzico') return await iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, apiBase, ref });
     if (chosen === 'paytr') return await paytrCheckout({ itemName, amount, userId, baseUrl, ref });
   } catch (e) {
     // Sağlayıcı YAPILANDIRILMIŞ ama çağrı başarısız → sahte demo YERİNE gerçek hatayı döndür (kullanıcı görsün)
@@ -88,7 +88,8 @@ async function stripeCheckout({ itemName, amount, currency, baseUrl, ref }) {
     cancel_url: `${baseUrl}/shop?canceled=1`,
     client_reference_id: ref,
   });
-  return { mode: 'live', provider: 'stripe', url: session.url, ref: session.id };
+  // ref = İÇ sipariş kimliği (redirect + DB'de order.ref) · providerRef = doğrulama için Stripe session id.
+  return { mode: 'live', provider: 'stripe', url: session.url, ref, providerRef: session.id };
 }
 
 /**
@@ -116,7 +117,7 @@ function toAscii(s) {
 // --- iyzico: Checkout Form Initialize (resmi iyzipay paketi — doğru PKI imzası) ---
 // "Geçersiz imza"nın iki bilinen sebebi kapatıldı: (1) fiyat sonunda sıfır (iyziPrice),
 // (2) Türkçe/ASCII-dışı karakterler (toAscii). Anahtarlar da trim edilir.
-async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, ref }) {
+async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseUrl, apiBase, ref }) {
   const Iyzipay = tryRequire('iyzipay');
   if (!Iyzipay) throw new Error('iyzipay paketi kurulu değil (npm i iyzipay)');
   const iyzipay = new Iyzipay({
@@ -139,7 +140,7 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseU
   const request = {
     locale: 'tr', conversationId: ref, price, paidPrice: price,
     currency: currency || 'TRY', basketId: ref, paymentGroup: 'SUBSCRIPTION',
-    callbackUrl: `${baseUrl}/shop?paid=1&provider=iyzico&ref=${ref}`,
+    callbackUrl: `${(apiBase || baseUrl).replace(/\/+$/, '')}/api/payments/callback/iyzico?ref=${encodeURIComponent(ref)}&fe=${encodeURIComponent(baseUrl)}`,
     buyer: {
       id: String(userId || 'guest'), name, surname, gsmNumber: gsm, email,
       identityNumber: '11111111111', registrationAddress: 'Istanbul Turkiye',
@@ -157,7 +158,8 @@ async function iyzicoCheckout({ itemName, amount, currency, userId, buyer, baseU
     console.warn('💳 iyzico yanıtı:', JSON.stringify({ status: result.status, errorCode: result.errorCode, errorMessage: result.errorMessage }));
     throw new Error(`iyzico: ${result.errorMessage || 'init hatası'}${result.errorCode ? ' (kod ' + result.errorCode + ')' : ''}`);
   }
-  return { mode: 'live', provider: 'iyzico', url: result.paymentPageUrl, ref: result.token || ref };
+  // ref = İÇ sipariş kimliği · providerRef = iyzico token (checkoutForm.retrieve ile doğrulama için).
+  return { mode: 'live', provider: 'iyzico', url: result.paymentPageUrl, ref, providerRef: result.token || ref };
 }
 
 // --- PayTR: get-token (iFrame) ---
@@ -184,7 +186,72 @@ async function paytrCheckout({ itemName, amount, userId, baseUrl, ref }) {
   const body = await httpPost('https://www.paytr.com/odeme/api/get-token', params.toString());
   const json = JSON.parse(body);
   if (json.status !== 'success') throw new Error(json.reason || 'PayTR token hatası');
-  return { mode: 'live', provider: 'paytr', url: `https://www.paytr.com/odeme/guvenli/${json.token}`, ref: merchant_oid };
+  // PayTR: merchant_oid hem iç ref hem doğrulama anahtarı (callback hash bununla eşleşir).
+  return { mode: 'live', provider: 'paytr', url: `https://www.paytr.com/odeme/guvenli/${json.token}`, ref: merchant_oid, providerRef: merchant_oid };
+}
+
+/**
+ * GÜVENLİK: Bir ödemenin GERÇEKTEN tamamlandığını SAĞLAYICIDAN doğrular.
+ * /api/payments/confirm bunu çağırmadan plan/kredi VERMEZ — böylece kullanıcı
+ * ödeme yapmadan checkout ref'i ile "confirm" çağırıp bedava premium ALAMAZ.
+ * @returns { ok:boolean, status, reason? }
+ *   ok=true  → sağlayıcı ödemeyi "ödendi" olarak doğruladı, plan/kredi verilebilir.
+ *   ok=false → doğrulanamadı/ödenmedi; VERME.
+ */
+async function verifyPayment({ provider, ref, amount, currency }) {
+  const c = configured();
+  try {
+    if (provider === 'stripe') {
+      if (!c.stripe) return { ok: false, status: 'unverifiable', reason: 'stripe yapılandırılmamış' };
+      const Stripe = tryRequire('stripe');
+      if (!Stripe) return { ok: false, status: 'unverifiable', reason: 'stripe paketi yok' };
+      const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+      const s = await stripe.checkout.sessions.retrieve(String(ref));
+      const paid = s && s.payment_status === 'paid';
+      // Tutar da doğrulanır (kuruş) — sağlayıcıda ödenen, sunucu fiyatıyla eşleşmeli.
+      const expected = Math.round(Number(amount) * 100);
+      const amountOk = !amount || !s.amount_total || Number(s.amount_total) >= expected;
+      return { ok: !!(paid && amountOk), status: paid ? 'paid' : (s && s.payment_status) || 'unpaid' };
+    }
+    if (provider === 'iyzico') {
+      if (!c.iyzico) return { ok: false, status: 'unverifiable', reason: 'iyzico yapılandırılmamış' };
+      const Iyzipay = tryRequire('iyzipay');
+      if (!Iyzipay) return { ok: false, status: 'unverifiable', reason: 'iyzipay paketi yok' };
+      const iyzipay = new Iyzipay({
+        apiKey: String(process.env.IYZICO_API_KEY || '').trim(),
+        secretKey: String(process.env.IYZICO_SECRET || '').trim(),
+        uri: String(process.env.IYZICO_URI || 'https://sandbox-api.iyzipay.com').trim().replace(/\/+$/, ''),
+      });
+      const result = await new Promise((resolve, reject) => {
+        iyzipay.checkoutForm.retrieve({ locale: 'tr', token: String(ref) }, (err, r) => (err ? reject(err) : resolve(r)));
+      });
+      const paid = result && result.status === 'success' && result.paymentStatus === 'SUCCESS';
+      const amountOk = !amount || !result.paidPrice || parseFloat(result.paidPrice) + 0.01 >= parseFloat(amount);
+      return { ok: !!(paid && amountOk), status: paid ? 'paid' : (result && result.paymentStatus) || 'unpaid' };
+    }
+    if (provider === 'paytr') {
+      // PayTR "pull" doğrulaması sunmaz; gerçek doğrulama sunucu→sunucu CALLBACK ile yapılır
+      // (bkz. index.js /api/payments/callback/paytr — hash imzası doğrulanır). Buradan VERME.
+      return { ok: false, status: 'unverifiable', reason: 'paytr yalnızca callback ile doğrulanır' };
+    }
+    // demo (gerçek para yok) → onaya izin ver
+    return { ok: true, status: 'demo' };
+  } catch (e) {
+    console.warn(`💳 verifyPayment(${provider}) hata:`, e.message);
+    return { ok: false, status: 'error', reason: e.message };
+  }
+}
+
+/** PayTR sunucu→sunucu callback imzasını doğrular (gövde: POST form alanları). */
+function verifyPaytrCallback(body) {
+  const merchant_key = process.env.PAYTR_MERCHANT_KEY;
+  const merchant_salt = process.env.PAYTR_MERCHANT_SALT;
+  if (!merchant_key || !merchant_salt || !body) return { ok: false };
+  const { merchant_oid, status, total_amount, hash } = body;
+  const calc = crypto.createHmac('sha256', merchant_key)
+    .update(String(merchant_oid) + merchant_salt + String(status) + String(total_amount))
+    .digest('base64');
+  return { ok: calc === hash, merchant_oid, paid: status === 'success' };
 }
 
 function httpPost(url, data) {
@@ -200,4 +267,4 @@ function httpPost(url, data) {
   });
 }
 
-module.exports = { initProviders, status, createCheckout, PROVIDERS };
+module.exports = { initProviders, status, createCheckout, verifyPayment, verifyPaytrCallback, PROVIDERS };

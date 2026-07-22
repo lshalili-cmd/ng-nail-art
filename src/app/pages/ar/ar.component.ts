@@ -5,9 +5,10 @@ import { ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
-import { downloadImage, shareImage } from '../../core/share';
 import { TryonStore } from '../../core/tryon-store';
 import { ImageQuotaService } from '../../core/image-quota.service';
+import { FavoritesService } from '../../core/favorites.service';
+import { Design } from '../../core/data.service';
 
 
 @Component({
@@ -33,14 +34,18 @@ import { ImageQuotaService } from '../../core/image-quota.service';
         @if (starting()) {
           <div class="hint"><span class="ic spin">⏳</span><p>{{ i18n.t('ar_starting') }}</p></div>
         }
-        @if (photo(); as p) { <img class="shot" [src]="p" alt="AR" /> }
+        @if (photo(); as p) {
+          <img class="shot" [src]="p" alt="AR" />
+          <button class="fav-btn" (click)="toggleFav()" [attr.aria-pressed]="fav.has(favId())"
+                  [title]="i18n.t('favorites')">
+            {{ fav.has(favId()) ? '❤️' : '🤍' }}
+          </button>
+        }
       </div>
 
       <!-- Kontroller -->
       <div class="actions">
-        @if (photo(); as p) {
-          <button class="btn-primary" (click)="download(p)">💾 {{ i18n.t('download') }}</button>
-          <button class="btn-ghost" (click)="share(p)">📤 {{ i18n.t('share') }}</button>
+        @if (photo()) {
           <button class="btn-ghost" (click)="photo.set(null)">🔄 {{ i18n.t('rescan') }}</button>
         } @else if (!running()) {
           <button class="btn-primary" (click)="start()" [disabled]="starting()">📸 {{ i18n.t('ar_title') }}</button>
@@ -64,6 +69,11 @@ import { ImageQuotaService } from '../../core/image-quota.service';
     .spin { animation: arspin 1.1s linear infinite; display: inline-block; }
     @keyframes arspin { to { transform: rotate(360deg); } }
     .shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+    .fav-btn { position: absolute; top: 12px; inset-inline-end: 12px; z-index: 2; font-size: 20px;
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+      background: rgba(0,0,0,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s; }
+    .fav-btn:active { transform: scale(0.9); }
     .banner { margin: 12px 0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
     .banner.err { background: rgba(178,58,58,0.14); border: 1px solid rgba(178,58,58,0.4); color: #f0b8b8; }
     .lbl { margin: 16px 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
@@ -80,6 +90,7 @@ export class ArComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly tryon = inject(TryonStore);
   readonly quota = inject(ImageQuotaService);
+  readonly fav = inject(FavoritesService);
 
   /** Üretilen tasarım görseli — tırnağa canlı bindirmek için. */
   private designImg: HTMLImageElement | null = null;
@@ -92,6 +103,7 @@ export class ArComponent implements OnDestroy {
   readonly starting = signal(false);
   readonly error = signal<string | null>(null);
   readonly photo = signal<string | null>(null);
+  readonly favId = signal<number>(0);   // çekilen AR görseli için benzersiz favori kimliği
   readonly color = signal<string>('#d4af37');
   readonly pattern = signal<string>('glossy');
 
@@ -312,6 +324,7 @@ export class ArComponent implements OnDestroy {
     ctx.drawImage(c, 0, 0, out.width, out.height);
     try {
       this.photo.set(out.toDataURL('image/png'));
+      this.favId.set(Date.now());   // her yeni çekim için yeni favori kimliği
     } catch (e) {
       // Çapraz-köken tasarım görseli tuvali "kirletmiş" olabilir → fotoğraf okunamaz.
       // Canlı önizleme çalışmaya devam eder; sadece kaydetme/çekim engellenir.
@@ -321,13 +334,22 @@ export class ArComponent implements OnDestroy {
     this.stop();
   }
 
-  download(url: string): void {
-    downloadImage(url, 'nailart-ar.png');
-  }
-
-  async share(url: string): Promise<void> {
-    const ok = await shareImage(url, 'nailart-ar.png', 'Miracle Nail Art');
-    if (!ok) downloadImage(url, 'nailart-ar.png');
+  /** Çekilen AR el görselini favorilere ekler/çıkarır (Profil > Favorilerim'de görünür). */
+  toggleFav(): void {
+    const img = this.photo();
+    if (!img) return;
+    const d: Design = {
+      id: this.favId(),
+      name: this.i18n.t('ar_title'),
+      artist: 'AR',
+      grad: 'linear-gradient(135deg,#f3e5a8,#b8912e)',
+      img,
+      pattern: this.pattern(),
+      category: 'ar',
+      shapes: [], tones: [], undertones: [], seasons: ['all'], colors: [],
+      popular: false, rating: 0, badge: 'new',
+    };
+    this.fav.toggle(d);
   }
 
   stop(): void {

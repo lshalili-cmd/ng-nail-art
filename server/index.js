@@ -13,6 +13,9 @@ const auth = require('./auth');
 const sms = require('./sms');
 const mailer = require('./mailer');
 const admin = require('./admin');
+const rateLimit = (() => { try { return require('express-rate-limit'); } catch { return null; } })();
+
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 ai.initProviders();
 payments.initProviders();
@@ -20,11 +23,63 @@ if (!auth.ready()) console.warn('ℹ️  Auth paketleri yok (npm i bcryptjs json
 if (!sms.ready()) console.warn('ℹ️  SMS sağlayıcısı yok — OTP DEMO modunda (kod yanıtta döner). Twilio/Netgsm anahtarı ekleyin.');
 if (!mailer.ready()) console.warn('ℹ️  SMTP yok — şifre sıfırlama e-postası DEMO modunda (bağlantı yanıtta döner).');
 
+// GÜVENLİK (fail-fast): Üretimde JWT_SECRET zayıfsa (yok/varsayılan/kısa) token'lar
+// sahte üretilebilir → sunucuyu BAŞLATMA. Geliştirmede yalnızca uyar.
+if (auth.weakSecret()) {
+  if (IS_PROD) {
+    console.error('❌ ÜRETİMDE JWT_SECRET tanımsız/varsayılan/çok kısa. En az 16 karakter rastgele bir değer verin. Başlatma DURDURULDU.');
+    process.exit(1);
+  } else {
+    console.warn('⚠️  JWT_SECRET zayıf (varsayılan) — yalnızca geliştirmede kabul edilir. Üretimde güçlü bir değer verin.');
+  }
+}
+if (!IS_PROD && !mailer.ready() && !sms.ready()) {
+  console.warn('ℹ️  SMS ve e-posta DEMO — OTP/reset kodları API yanıtında döner (yalnızca geliştirme). Üretimde en az biri gerçek olmalı.');
+}
+if (IS_PROD && (!mailer.ready() || !sms.ready())) {
+  console.warn('⚠️  ÜRETİMDE SMS veya e-posta DEMO modda! OTP/reset kodu yanıtta DÖNMEZ (demoOtp üretimde gizlenir) ama gerçek kod da gitmez. Twilio + Brevo anahtarlarını girin.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: true, credentials: true }));
+// Render/Neon gibi ters-vekil arkasında gerçek istemci IP'si için (rate-limit doğru çalışsın).
+app.set('trust proxy', 1);
+
+// CORS — üretimde YALNIZCA izin verilen origin'lere. Liste APP_URL + ALLOWED_ORIGINS'ten
+// kurulur; native (Capacitor) ve sunucu-sunucu istekleri (Origin'siz) her zaman geçer.
+const ALLOWED = new Set(
+  [process.env.APP_URL, process.env.FRONTEND_URL, ...String(process.env.ALLOWED_ORIGINS || '').split(',')]
+    .map((s) => String(s || '').trim().replace(/\/+$/, '')).filter(Boolean)
+);
+// Native kabuk origin'leri her zaman izinli (mobil uygulama canlı backend'e bunlarla gelir).
+['https://localhost', 'capacitor://localhost', 'ionic://localhost', 'http://localhost:4200', 'http://localhost:8100'].forEach((o) => ALLOWED.add(o));
+// Delegate biçimi: AYNI-ORIGIN (uygulama backend ile aynı adresten sunulur) HER ZAMAN geçer —
+// böylece APP_URL yanlış/eksik olsa bile üretimde login/ödeme kırılmaz. Çapraz origin yalnızca allowlist'te.
+app.use(cors((req, cb) => {
+  const origin = req.headers.origin;
+  const host = req.headers.host || '';
+  let ok = false;
+  if (!origin) ok = true;                                  // native/mobil/curl (Origin yok)
+  else {
+    const clean = String(origin).replace(/\/+$/, '');
+    const sameHost = clean === `https://${host}` || clean === `http://${host}`;
+    ok = !IS_PROD || sameHost || ALLOWED.has(clean);
+  }
+  cb(ok ? null : new Error('CORS: origin izinli değil'), { origin: ok, credentials: true });
+}));
 app.use(express.json({ limit: '4mb' }));
+
+// ── Rate limiting (kaba kuvvet / kötüye kullanım koruması) ─────────────────
+// Paket yoksa (yerel, kurulmamış) no-op'a düşer; üretimde express-rate-limit kurulur.
+function makeLimiter(opts) {
+  if (!rateLimit) return (_req, _res, next) => next();
+  return rateLimit({ standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Çok fazla istek, lütfen biraz sonra tekrar deneyin.', code: 'RATE_LIMITED' }, ...opts });
+}
+const authLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 40 });   // giriş/kayıt/otp/şifre
+const aiLimiter = makeLimiter({ windowMs: 10 * 60 * 1000, max: 40 });     // AI üretim uçları
+const writeLimiter = makeLimiter({ windowMs: 10 * 60 * 1000, max: 60 });  // halka açık yazma (designs/support)
+if (!rateLimit) console.warn('ℹ️  express-rate-limit kurulu değil — hız sınırı KAPALI. Üretim için: npm i express-rate-limit');
 
 // Yönetici: hata yakalama (loglanan tüm hatalar panele düşer) + bakım modu geçidi
 admin.captureConsole();
@@ -75,13 +130,22 @@ app.get('/api/ai/status', (_req, res) => {
   res.json({ success: true, data: ai.status() });
 });
 
-app.post('/api/ai/chat', async (req, res) => {
+// GÜVENLİK: giriş zorunlu uçlar için — token yoksa 401 döner, null verir.
+function requireUserId(req, res) {
+  const uid = auth.userIdFrom(req);
+  if (uid === 'guest') { res.status(401).json({ success: false, error: 'Bu işlem için giriş yapın', code: 'AUTH_REQUIRED' }); return null; }
+  return uid;
+}
+
+// AI metin üretimi — giriş + hız sınırı (ücretli LLM'in anonim/sınırsız kullanımı engellenir).
+app.post('/api/ai/chat', aiLimiter, async (req, res) => {
+  const uid = requireUserId(req, res); if (!uid) return;
   const { prompt, language } = req.body || {};
   if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
     return res.status(400).json({ success: false, error: 'Lütfen bir tasarım isteği girin', code: 'EMPTY_PROMPT' });
   }
   try {
-    console.log(`🎨 AI chat: "${prompt.slice(0, 60)}..."`);
+    console.log(`🎨 AI chat (kullanıcı ${uid}): "${prompt.slice(0, 60)}..."`);
     const data = await ai.chat(prompt, language);
     res.json({ success: true, data, meta: { provider: ai.status().provider, model: ai.status().model, timestamp: new Date().toISOString() } });
   } catch (e) {
@@ -89,16 +153,40 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
-app.post('/api/ai/generate-image', async (req, res) => {
+// Görsel üretimi — giriş + SUNUCU TARAFI KOTA (istemci localStorage'ına güvenilmez) + hız sınırı.
+// Kota sunucuda düşülür → kullanıcı endpoint'i doğrudan çağırarak paywall'ı DELEMEZ.
+app.post('/api/ai/generate-image', aiLimiter, async (req, res) => {
+  const uid = requireUserId(req, res); if (!uid) return;
   const { prompt } = req.body || {};
   if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
     return res.status(400).json({ success: false, error: 'Prompt gerekli', code: 'EMPTY_PROMPT' });
   }
+  if (!db.ready()) return dbNotReady(res);
   try {
-    console.log(`🖼️  Görsel üretimi: "${prompt.slice(0, 50)}..."`);
+    const user = await db.prisma.user.findUnique({ where: { id: Number(uid) } });
+    if (!user) return res.status(404).json({ success: false, code: 'NOT_FOUND' });
+    const info = catalog.planInfo(user.plan, user.planSince, Date.now());
+    // Dönem (aylık pencere) değiştiyse plan kullanımı sıfırdan sayılır.
+    const usedInPeriod = user.imagesPeriod === info.period ? (user.imagesUsed || 0) : 0;
+    const planLeft = Math.max(0, info.limit - usedInPeriod);
+    const extra = Math.max(0, user.imagesExtra || 0);
+    if (planLeft + extra <= 0) {
+      return res.status(402).json({ success: false, error: 'Görsel üretim hakkınız doldu. Mağazadan ek paket alabilirsiniz.', code: 'QUOTA_EXCEEDED' });
+    }
+    console.log(`🖼️  Görsel üretimi (kullanıcı ${uid}, kalan ${planLeft + extra}): "${prompt.slice(0, 50)}..."`);
     const data = await ai.generateImage(req.body, IMG_DIR);
+    // Başarı → hakkı SUNUCUDA düş: önce plan hakkı, o bitince ek paket bakiyesi.
+    let nextUsed = usedInPeriod, nextExtra = extra;
+    if (planLeft > 0) nextUsed = usedInPeriod + 1; else nextExtra = extra - 1;
+    const upd = await db.prisma.user.update({
+      where: { id: Number(uid) },
+      data: { imagesUsed: nextUsed, imagesExtra: nextExtra, imagesPeriod: info.period },
+    });
     console.log(`✅ Görsel kaydedildi: ${data.filename} (${Math.round(data.size / 1024)}KB, ${data.provider})`);
-    res.json({ success: true, data });
+    res.json({
+      success: true, data, user: auth.pub(upd),
+      quota: { used: nextUsed, extra: nextExtra, limit: info.limit, remaining: Math.max(0, info.limit - nextUsed) + nextExtra },
+    });
   } catch (e) {
     handleAiError(res, e);
   }
@@ -122,10 +210,15 @@ app.get('/api/designs', async (_req, res) => {
   } catch (e) { dbError(res, e); }
 });
 
-app.post('/api/designs', async (req, res) => {
+app.post('/api/designs', writeLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
+  const uid = requireUserId(req, res); if (!uid) return;   // anonim spam engeli (giriş şart)
   const b = req.body || {};
   if (!b.name) return res.status(400).json({ success: false, error: 'name gerekli', code: 'BAD_REQUEST' });
+  // Görsel boyut sınırı: dev DB'yi devasa base64 ile şişirmeyi engelle (~1.5MB).
+  if (typeof b.img === 'string' && b.img.length > 1_600_000) {
+    return res.status(413).json({ success: false, error: 'Görsel çok büyük', code: 'IMG_TOO_LARGE' });
+  }
   try {
     const d = await db.prisma.design.create({
       data: {
@@ -143,7 +236,7 @@ app.post('/api/designs', async (req, res) => {
 function authNotReady(res) {
   return res.status(503).json({ success: false, error: 'Giriş yapılandırılmamış (npm i bcryptjs jsonwebtoken)', code: 'AUTH_NOT_READY' });
 }
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   if (!auth.ready()) return authNotReady(res);
   const b = req.body || {};
@@ -171,12 +264,12 @@ app.post('/api/auth/register', async (req, res) => {
       verified: false, otpCode: code, otpExpires: Date.now() + 10 * 60 * 1000,
     } });
     const sent = await sms.sendOtp(phone, code);
-    res.json({ success: true, needOtp: true, email, phone, otpProvider: sent.provider, demoOtp: sent.mode === 'demo' ? code : undefined });
+    res.json({ success: true, needOtp: true, email, phone, otpProvider: sent.provider, demoOtp: (!IS_PROD && sent.mode === 'demo') ? code : undefined });
   } catch (e) { dbError(res, e); }
 });
 
 // Telefon OTP doğrulama → hesabı aktifleştirir ve token verir
-app.post('/api/auth/verify-otp', async (req, res) => {
+app.post('/api/auth/verify-otp', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
   const code = String((req.body || {}).code || '');
@@ -193,7 +286,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 });
 
 // OTP yeniden gönder → SMS DEĞİL, E-POSTA. (İlk kod SMS ile 1 kez; tekrar gönderme maile gider.)
-app.post('/api/auth/resend-otp', async (req, res) => {
+app.post('/api/auth/resend-otp', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
   try {
@@ -203,11 +296,11 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     const code = auth.genOtp();
     await db.prisma.user.update({ where: { id: user.id }, data: { otpCode: code, otpExpires: Date.now() + 10 * 60 * 1000 } });
     const sent = await mailer.sendOtpEmail(user.email, code);   // e-posta ile (SMS'i tekrar kullanma)
-    res.json({ success: true, otpChannel: 'email', otpMode: sent.mode, demoOtp: sent.mode === 'demo' ? code : undefined });
+    res.json({ success: true, otpChannel: 'email', otpMode: sent.mode, demoOtp: (!IS_PROD && sent.mode === 'demo') ? code : undefined });
   } catch (e) { dbError(res, e); }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   if (!auth.ready()) return authNotReady(res);
   const { email, password } = req.body || {};
@@ -222,7 +315,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Şifremi unuttum → e-postaya 6 haneli KOD gönderilir
-app.post('/api/auth/forgot', async (req, res) => {
+app.post('/api/auth/forgot', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
   try {
@@ -231,7 +324,7 @@ app.post('/api/auth/forgot', async (req, res) => {
       const code = auth.genOtp();
       await db.prisma.user.update({ where: { id: user.id }, data: { resetToken: code, resetExpires: Date.now() + 60 * 60 * 1000 } });
       const sent = await mailer.sendResetCode(email, code);
-      return res.json({ success: true, demoOtp: sent.mode === 'demo' ? code : undefined });
+      return res.json({ success: true, demoOtp: (!IS_PROD && sent.mode === 'demo') ? code : undefined });
     }
     // Güvenlik: kullanıcı yoksa da aynı yanıt (e-posta sızdırma önlenir)
     res.json({ success: true });
@@ -239,7 +332,7 @@ app.post('/api/auth/forgot', async (req, res) => {
 });
 
 // Kod + yeni şifre ile sıfırla
-app.post('/api/auth/reset', async (req, res) => {
+app.post('/api/auth/reset', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase();
   const code = String((req.body || {}).code || '').trim();
@@ -274,7 +367,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 
 // Hesabı sil (e-posta + telefon + şifre doğrulanır) → 40 gün aynı e-posta/telefonla kayıt engeli
 // Hesap silme — ADIM 1: kimlik doğrula, E-POSTA ile onay linki gönder (silme e-posta ile onaylanır).
-app.post('/api/auth/delete-account', async (req, res) => {
+app.post('/api/auth/delete-account', authLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   if (!auth.ready()) return authNotReady(res);
   const email = String((req.body || {}).email || '').toLowerCase().trim();
@@ -291,7 +384,7 @@ app.post('/api/auth/delete-account', async (req, res) => {
     const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
     const link = `${baseUrl}/profile?delete=${token}`;
     const sent = await mailer.sendDeleteLink(user.email, link);
-    res.json({ success: true, needEmail: true, emailMode: sent.mode, demoLink: sent.mode === 'demo' ? link : undefined });
+    res.json({ success: true, needEmail: true, emailMode: sent.mode, demoLink: (!IS_PROD && sent.mode === 'demo') ? link : undefined });
   } catch (e) { dbError(res, e); }
 });
 
@@ -316,7 +409,7 @@ app.post('/api/auth/confirm-delete', async (req, res) => {
 });
 
 // Yardım/Destek — kullanıcı sorununu yazar, admin panelinde görünür (giriş şart değil)
-app.post('/api/support', async (req, res) => {
+app.post('/api/support', writeLimiter, async (req, res) => {
   if (!db.ready()) return dbNotReady(res);
   const b = req.body || {};
   const message = String(b.message || '').trim();
@@ -465,6 +558,7 @@ app.post('/api/payments/checkout', async (req, res) => {
   const grant = catalog.grantOf(b.itemId);
   const kind = grant && grant.kind === 'pack' ? 'pack' : 'plan';
   const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
+  const apiBase = `${req.protocol}://${req.get('host')}`;   // backend'in kendi adresi (iyzico callback POST'u buraya gelir)
   const userId = auth.userIdFrom(req);
   let buyer = null;
   if (userId !== 'guest' && db.ready()) {
@@ -477,14 +571,15 @@ app.post('/api/payments/checkout', async (req, res) => {
     const result = await payments.createCheckout({
       provider: b.provider, kind, itemId: b.itemId,
       itemName: b.itemName || b.itemId, amount,               // ← doğrulanmış tutar
-      currency, userId, buyer, baseUrl,
+      currency, userId, buyer, baseUrl, apiBase,
     });
     if (db.ready()) {
       try {
         await db.prisma.order.create({ data: {
           userId, kind, itemId: String(b.itemId),
           itemName: b.itemName || String(b.itemId), amount, currency,
-          provider: result.provider || 'demo', status: 'pending', ref: result.ref || '',
+          provider: result.provider || 'demo', status: 'pending',
+          ref: result.ref || '', providerRef: result.providerRef || result.ref || '',
         } });
       } catch { /* migrate edilmemişse geç */ }
     }
@@ -500,22 +595,79 @@ app.post('/api/payments/confirm', async (req, res) => {
   const { ref } = req.body || {};
   const userId = auth.userIdFrom(req);
   if (userId === 'guest') return res.status(401).json({ success: false, code: 'NO_AUTH' });
-  if (db.ready() && ref) {
-    try {
-      // Sadece bu kullanıcının pending siparişini paid yap (idempotency + sahiplik kontrolü)
-      const upd = await db.prisma.order.updateMany({
-        where: { ref: String(ref), userId, status: 'pending' }, data: { status: 'paid' },
-      });
-      if (upd.count > 0) {
-        const order = await db.prisma.order.findFirst({ where: { ref: String(ref), userId } });
-        if (order) {
-          const applied = await catalog.applyGrant(db.prisma, userId, order.itemId, Date.now());
-          if (applied) console.log(`💳 Satın alım uygulandı → kullanıcı ${userId}: ${JSON.stringify(applied)}`);
-        }
-      }
-    } catch (e) { console.error('❌ confirm/grant hatası:', e.message); }
+  if (!db.ready() || !ref) return res.json({ success: true, data: { status: 'pending', ref: ref || null } });
+  try {
+    // Sahiplik kontrolü: yalnızca bu kullanıcının siparişi.
+    const order = await db.prisma.order.findFirst({ where: { ref: String(ref), userId } });
+    if (!order) return res.status(404).json({ success: false, error: 'Sipariş bulunamadı', code: 'ORDER_NOT_FOUND' });
+    if (order.status === 'paid') return res.json({ success: true, data: { status: 'paid', ref, already: true } }); // idempotent
+    // GÜVENLİK: demo sipariş ÜRETİMDE plan/kredi VERMEZ (gerçek ödeme yok → bedava premium engellenir).
+    if (order.provider === 'demo' && IS_PROD) {
+      return res.status(400).json({ success: false, error: 'Ödeme doğrulanamadı', code: 'PAYMENT_NOT_VERIFIED', status: 'demo' });
+    }
+    // SAĞLAYICIDAN GERÇEK ÖDEME TEYİDİ (Stripe/iyzico retrieve). Demo (dev) → izinli.
+    const v = await payments.verifyPayment({ provider: order.provider, ref: order.providerRef || order.ref, amount: order.amount, currency: order.currency });
+    if (!v.ok) {
+      // 'error' (geçici) → pending bırak, tekrar denenebilir; aksi halde 'failed'.
+      await db.prisma.order.updateMany({ where: { id: order.id, status: 'pending' }, data: { status: v.status === 'error' || v.status === 'unverifiable' ? 'pending' : 'failed' } }).catch(() => {});
+      return res.status(402).json({ success: false, error: 'Ödeme doğrulanamadı', code: 'PAYMENT_NOT_VERIFIED', status: v.status });
+    }
+    // İdempotent: yalnızca pending→paid geçişinde bir kez uygula (çift callback güvenli).
+    const upd = await db.prisma.order.updateMany({ where: { id: order.id, status: 'pending' }, data: { status: 'paid' } });
+    if (upd.count > 0) {
+      const applied = await catalog.applyGrant(db.prisma, userId, order.itemId, Date.now());
+      if (applied) console.log(`💳 Ödeme DOĞRULANDI & uygulandı → kullanıcı ${userId}: ${JSON.stringify(applied)}`);
+    }
+    return res.json({ success: true, data: { status: 'paid', ref } });
+  } catch (e) {
+    console.error('❌ confirm/grant hatası:', e.message);
+    return res.status(500).json({ success: false, error: e.message, code: 'CONFIRM_ERROR' });
   }
-  res.json({ success: true, data: { status: 'paid', ref: ref || null } });
+});
+
+// iyzico Checkout Form dönüşü: iyzico ödemeden sonra token'ı buraya POST eder ("Cannot POST /shop"
+// hatasının çözümü). Ödemeyi doğrula → plan/krediyi ver → tarayıcıyı ön yüz /shop'a 302 ile döndür.
+app.post('/api/payments/callback/iyzico', express.urlencoded({ extended: false }), async (req, res) => {
+  const ref = String(req.query.ref || '');
+  const feRaw = String(req.query.fe || '');
+  const token = String((req.body && (req.body.token || req.body.paymentId)) || '');
+  let paid = false;
+  try {
+    if (db.ready() && ref) {
+      const order = await db.prisma.order.findFirst({ where: { ref } });
+      if (order && order.status !== 'paid') {
+        const v = await payments.verifyPayment({ provider: 'iyzico', ref: token || order.providerRef, amount: order.amount, currency: order.currency });
+        if (v.ok) {
+          const upd = await db.prisma.order.updateMany({ where: { id: order.id, status: 'pending' }, data: { status: 'paid' } });
+          if (upd.count > 0) await catalog.applyGrant(db.prisma, order.userId, order.itemId, Date.now());
+          paid = true;
+          console.log(`💳 iyzico callback DOĞRULANDI & uygulandı → sipariş ${order.id}`);
+        }
+      } else if (order && order.status === 'paid') { paid = true; }
+    }
+  } catch (e) { console.error('❌ iyzico callback:', e.message); }
+  // Güvenli ön yüz adresi (açık yönlendirme engeli): APP_URL > localhost fe > backend host.
+  let fe = process.env.APP_URL || '';
+  if (!fe) fe = /^https?:\/\/localhost(:\d+)?$/i.test(feRaw) ? feRaw : `${req.protocol}://${req.get('host')}`;
+  res.redirect(302, `${fe.replace(/\/+$/, '')}/shop?paid=${paid ? 1 : 0}&provider=iyzico&ref=${encodeURIComponent(ref)}`);
+});
+
+// PayTR sunucu→sunucu bildirimi (gerçek ödeme doğrulaması — hash imzası). PayTR yanıt olarak
+// düz "OK" bekler; almazsa bildirimi tekrar dener. iyzico/Stripe pull-doğrulaması confirm'de yapılır.
+app.post('/api/payments/callback/paytr', express.urlencoded({ extended: false }), async (req, res) => {
+  try {
+    const v = payments.verifyPaytrCallback(req.body || {});
+    if (!v.ok) return res.status(400).send('PAYTR imza uyuşmadı');
+    if (db.ready() && v.paid) {
+      const order = await db.prisma.order.findFirst({ where: { OR: [{ ref: String(v.merchant_oid) }, { providerRef: String(v.merchant_oid) }] } });
+      if (order && order.status === 'pending') {
+        await db.prisma.order.updateMany({ where: { id: order.id, status: 'pending' }, data: { status: 'paid' } });
+        await catalog.applyGrant(db.prisma, order.userId, order.itemId, Date.now());
+        console.log(`💳 PayTR callback DOĞRULANDI & uygulandı → sipariş ${order.id}`);
+      }
+    }
+    res.send('OK');
+  } catch (e) { console.error('❌ PayTR callback:', e.message); res.status(500).send('error'); }
 });
 
 // Yönetici uçları (rol korumalı) — 404 yakalayıcıdan ÖNCE bağlanır

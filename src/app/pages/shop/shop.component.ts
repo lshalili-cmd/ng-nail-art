@@ -230,6 +230,7 @@ export class ShopComponent implements OnInit {
   ];
 
   readonly packs: Pack[] = [
+    { id: 'test_1tl', nameKey: 'pk_test', credits: 5 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
     { id: 'pack_10', nameKey: 'pk_mini', credits: 10 },
     { id: 'pack_25', nameKey: 'pk_standart', credits: 25 },
     { id: 'pack_50', nameKey: 'pk_mega', credits: 50 },

@@ -68,7 +68,8 @@ model Order {
   currency   String   @default("USD")
   provider   String   @default("demo")   // iyzico | stripe | paytr | demo
   status     String   @default("pending")// pending | paid | failed
-  ref        String   @default("")       // sağlayıcı işlem/oturum kimliği
+  ref        String   @default("")       // İÇ sipariş kimliği (redirect + confirm bununla eşleşir)
+  providerRef String  @default("")       // sağlayıcı oturum/token kimliği (retrieve ile ödeme doğrulama)
   createdAt  DateTime @default(now())
 
   @@index([userId])
@@ -102,6 +103,7 @@ model User {
   planSince    Float    @default(0)   // ms (BigInt yerine Float — JSON güvenli)
   imagesUsed   Int      @default(0)
   imagesExtra  Int      @default(0)
+  imagesPeriod String?                     // sunucu kotası dönem anahtarı (aylık yenilenir)
   packId       String?
   packSince    Float    @default(0)
   role         String   @default("user")   // "user" | "admin"

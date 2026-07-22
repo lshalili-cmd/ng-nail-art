@@ -23,7 +23,8 @@ REM Backend'e birkac saniye baslama payi ver
 timeout /t 5 >nul
 
 REM 2) ONYUZ (port 4200) — ana klasorde, kendi penceresinde acik kalir.
-start "ngNailArt ONYUZ (4200)" /D "%~dp0" cmd /k npm start
+REM    --poll: disaridan (Claude kopru) yazilan degisimleri yakalar, --live-reload otomatik yeniler.
+start "ngNailArt ONYUZ (4200)" /D "%~dp0" cmd /k npx ng serve --open --host localhost --port 4200 --poll 1500 --live-reload
 
 echo Iki pencere acildi.
 echo   - BACKEND penceresinde:  Server http://localhost:3000  ve  hazir: iyzico

@@ -23,16 +23,28 @@ services:
         value: "20"
       - key: PORT
         value: "3000"
-      # Oturum güvenliği — Render rastgele üretir
+      # ÜRETİM modu — demo OTP/kod sızıntısı kapanır, CORS allowlist devreye girer,
+      # zayıf JWT_SECRET ile başlatma DURUR, demo sipariş plan/kredi VERMEZ.
+      - key: NODE_ENV
+        value: "production"
+      # Oturum güvenliği — Render rastgele üretir (16+ karakter). ELLE değiştirme.
       - key: JWT_SECRET
         generateValue: true
+      # Uygulamanın herkese açık adresi (ödeme dönüşü + e-posta linkleri + CORS için) — ZORUNLU.
+      # Kendi Render URL'inle değiştir (ör. https://miracle-nailart.onrender.com).
+      - key: APP_URL
+        sync: false
+      # CORS izinli origin(ler) — virgülle ayır (özel alan adı eklersen). Boşsa APP_URL kullanılır.
+      - key: ALLOWED_ORIGINS
+        sync: false
       # Veritabanı — Neon Postgres (KALICI). Değeri Render panelinden elle girilir
       # (sync: false → şifre repoya YAZILMAZ; Environment sekmesinde tanımlanır).
       - key: DATABASE_URL
         sync: false
-      # Ödeme (iyzico) — CANLI anahtarları Render panelinden elle gir
+      # Ödeme (iyzico) — CANLI. Test için Render panelinden sandbox URI + sandbox anahtar gir.
+      # CANLI tahsilat için: IYZICO_URI = https://api.iyzipay.com + gerçek anahtarlar.
       - key: IYZICO_URI
-        value: "https://sandbox-api.iyzipay.com"
+        value: "https://api.iyzipay.com"
       - key: IYZICO_API_KEY
         sync: false
       - key: IYZICO_SECRET
@@ -43,16 +55,16 @@ services:
       # Gerçek AI (fal.ai / FLUX 1.1 Pro) — anahtar "id:secret"; Render panelinden elle gir
       - key: FAL_KEY
         sync: false
-      # SMS / e-posta (opsiyonel; yoksa demo modda çalışır)
+      # SMS (Twilio) — ÜRETİMDE ZORUNLU (yoksa OTP demo olur ve kod artık yanıtta DÖNMEZ → doğrulama yapılamaz).
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN
         sync: false
       - key: TWILIO_FROM
         sync: false
-      - key: SMTP_HOST
+      # E-posta (Brevo HTTP API — Render'da SMTP portları kapalı olduğu için ÖNERİLEN yol).
+      # Şifre sıfırlama + hesap silme onayı için ÜRETİMDE ZORUNLU.
+      - key: BREVO_API_KEY
         sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
+      - key: BREVO_SENDER
         sync: false

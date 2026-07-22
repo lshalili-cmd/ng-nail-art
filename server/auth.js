@@ -7,17 +7,30 @@ const crypto = require('crypto');
 function tryRequire(n) { try { return require(n); } catch { return null; } }
 const bcrypt = tryRequire('bcryptjs');
 const jwt = tryRequire('jsonwebtoken');
-const SECRET = process.env.JWT_SECRET || 'ngnail-dev-secret-change-me';
+const DEFAULT_SECRET = 'ngnail-dev-secret-change-me';
+const SECRET = process.env.JWT_SECRET || DEFAULT_SECRET;
+
+/** GÜVENLİK: JWT_SECRET tanımsız/varsayılan/çok kısa mı? (üretimde başlatmayı durdurmak için) */
+function weakSecret() {
+  const s = process.env.JWT_SECRET || '';
+  return !s || s === DEFAULT_SECRET || s.length < 16;
+}
 
 /**
- * Şifre kuralı: TAM 1 harf (büyük/küçük farketmez) + geri kalanı rakam, en az 6 karakter.
- * Örn geçerli: "a12345", "12345B", "9x87654"  · geçersiz: "abc123", "123456", "a1234"
+ * Şifre kuralı — İKİSİNDEN BİRİ geçerli (geriye dönük uyumlu):
+ *  (a) ESKİ kural: TAM 1 harf + geri kalanı rakam, en az 6 karakter ("a12345").
+ *  (b) GÜÇLÜ şifre: en az 8 karakter, en az 1 harf ve 1 rakam ("Gul2026sifre").
+ * Böylece mevcut kullanıcılar etkilenmez ama güvenlik isteyen güçlü şifre seçebilir.
  */
 function validPassword(pw) {
-  if (typeof pw !== 'string' || pw.length < 6) return false;
+  if (typeof pw !== 'string') return false;
   const letters = (pw.match(/[A-Za-z]/g) || []).length;
   const digits = (pw.match(/[0-9]/g) || []).length;
-  return letters === 1 && digits === pw.length - 1;
+  // (a) eski kural
+  if (pw.length >= 6 && letters === 1 && digits === pw.length - 1) return true;
+  // (b) güçlü şifre
+  if (pw.length >= 8 && letters >= 1 && digits >= 1) return true;
+  return false;
 }
 
 /** 6 haneli OTP kodu. */
@@ -61,4 +74,4 @@ function pub(u) {
   };
 }
 
-module.exports = { ready, hash, compare, sign, verify, userIdFrom, pub, validPassword, genOtp, genToken, normPhone };
+module.exports = { ready, hash, compare, sign, verify, userIdFrom, pub, validPassword, genOtp, genToken, normPhone, weakSecret };
