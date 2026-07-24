@@ -108,7 +108,7 @@ export class DataService {
     // sayfayı donduruyordu. Yedek çizim artık DesignCard içinde, yalnızca bir
     // fotoğraf gerçekten yüklenemediğinde (tek tek) üretilir.
     for (const d of this.all) {
-      d.photo = `designs/design-${d.id}.jpg`;
+      d.photo = `designs/design-${d.id}.jpg.png`;
     }
   }
 
