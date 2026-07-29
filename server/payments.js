@@ -6,7 +6,7 @@ require('dotenv').config();
 const crypto = require('crypto');
 const https = require('https');
 
-const PROVIDERS = ['iyzico', 'stripe', 'paytr'];
+const PROVIDERS = ['iyzico', 'paytr'];
 
 function tryRequire(name) { try { return require(name); } catch { return null; } }
 function realKey(v) { return !!v && !/your-|-here$/i.test(v); }
@@ -227,7 +227,13 @@ async function verifyPayment({ provider, ref, amount, currency }) {
       });
       const paid = result && result.status === 'success' && result.paymentStatus === 'SUCCESS';
       const amountOk = !amount || !result.paidPrice || parseFloat(result.paidPrice) + 0.01 >= parseFloat(amount);
-      return { ok: !!(paid && amountOk), status: paid ? 'paid' : (result && result.paymentStatus) || 'unpaid' };
+      // KART MASKESİ (PCI-uyumlu): iyzico yalnızca BIN (ilk 6-8) ve SON 4 haneyi verir.
+      // Tam kart numarası (PAN) bize HİÇ ulaşmaz ve ASLA saklanmaz — sadece "ilk4 **** **** son4".
+      const first4 = result && result.binNumber ? String(result.binNumber).slice(0, 4) : '';
+      const last4 = (result && result.lastFourDigits) || '';
+      const cardMask = (first4 || last4) ? `${first4 || '****'} **** **** ${last4 || '****'}` : '';
+      const cardBrand = [result && result.cardAssociation, result && result.cardFamily].filter(Boolean).join(' / ');
+      return { ok: !!(paid && amountOk), status: paid ? 'paid' : (result && result.paymentStatus) || 'unpaid', cardMask, cardBrand };
     }
     if (provider === 'paytr') {
       // PayTR "pull" doğrulaması sunmaz; gerçek doğrulama sunucu→sunucu CALLBACK ile yapılır

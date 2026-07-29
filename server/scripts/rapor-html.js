@@ -56,7 +56,10 @@ function buildTable(title, columns, rows) {
        FROM "User" u ORDER BY u.id DESC`);
 
     const payments = await prisma.$queryRawUnsafe(
-      `SELECT o.id, u.email, o."itemName", o.amount, o.currency, o.provider, o."createdAt"
+      `SELECT o.id, u.email, o."itemName", o.amount, o.currency, o.provider,
+              COALESCE(NULLIF(o."cardMask", ''), '-')  AS kart,
+              COALESCE(NULLIF(o."cardBrand", ''), '-') AS kart_tipi,
+              o."createdAt"
        FROM "Order" o
        LEFT JOIN "User" u ON u.id = CASE WHEN o."userId" ~ '^[0-9]+$' THEN o."userId"::int END
        WHERE o.status='paid' ORDER BY o.id DESC`);
@@ -98,6 +101,8 @@ function buildTable(title, columns, rows) {
         { key: 'amount', label: 'Tutar' },
         { key: 'currency', label: 'Para Birimi' },
         { key: 'provider', label: 'Sağlayıcı' },
+        { key: 'kart', label: 'Kart' },
+        { key: 'kart_tipi', label: 'Kart Tipi' },
         { key: 'createdAt', label: 'Tarih', fmt: fmtDate },
       ], payments),
 

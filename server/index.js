@@ -601,7 +601,15 @@ app.post('/api/payments/confirm', async (req, res) => {
     // Sahiplik kontrolü: yalnızca bu kullanıcının siparişi.
     const order = await db.prisma.order.findFirst({ where: { ref: String(ref), userId } });
     if (!order) return res.status(404).json({ success: false, error: 'Sipariş bulunamadı', code: 'ORDER_NOT_FOUND' });
-    if (order.status === 'paid') return res.json({ success: true, data: { status: 'paid', ref, already: true } }); // idempotent
+    if (order.status === 'paid') {
+      // Ödenmiş ama kart maskesi eksikse (callback maskeyi kaydedememiş/özellik öncesi) arkadan doldur.
+      if (!order.cardMask && order.provider === 'iyzico') {
+        payments.verifyPayment({ provider: 'iyzico', ref: order.providerRef || order.ref, amount: order.amount, currency: order.currency })
+          .then((vv) => { if (vv && vv.cardMask) return db.prisma.order.updateMany({ where: { id: order.id }, data: { cardMask: vv.cardMask, cardBrand: vv.cardBrand || '' } }); })
+          .catch(() => {});
+      }
+      return res.json({ success: true, data: { status: 'paid', ref, already: true } }); // idempotent
+    }
     // GÜVENLİK: demo sipariş ÜRETİMDE plan/kredi VERMEZ (gerçek ödeme yok → bedava premium engellenir).
     if (order.provider === 'demo' && IS_PROD) {
       return res.status(400).json({ success: false, error: 'Ödeme doğrulanamadı', code: 'PAYMENT_NOT_VERIFIED', status: 'demo' });
@@ -618,6 +626,10 @@ app.post('/api/payments/confirm', async (req, res) => {
     if (upd.count > 0) {
       const applied = await catalog.applyGrant(db.prisma, userId, order.itemId, Date.now());
       if (applied) console.log(`💳 Ödeme DOĞRULANDI & uygulandı → kullanıcı ${userId}: ${JSON.stringify(applied)}`);
+    }
+    // Maskeli kart bilgisi (ilk4 **** **** son4) — rapor için. Şema eskiyse sessiz geç (ödemeyi kırma).
+    if (v.cardMask) {
+      await db.prisma.order.updateMany({ where: { id: order.id }, data: { cardMask: v.cardMask, cardBrand: v.cardBrand || '' } }).catch(() => {});
     }
     return res.json({ success: true, data: { status: 'paid', ref } });
   } catch (e) {
@@ -641,6 +653,10 @@ app.post('/api/payments/callback/iyzico', express.urlencoded({ extended: false }
         if (v.ok) {
           const upd = await db.prisma.order.updateMany({ where: { id: order.id, status: 'pending' }, data: { status: 'paid' } });
           if (upd.count > 0) await catalog.applyGrant(db.prisma, order.userId, order.itemId, Date.now());
+          // Maskeli kart bilgisi (rapor için) — şema eskiyse sessiz geç.
+          if (v.cardMask) {
+            await db.prisma.order.updateMany({ where: { id: order.id }, data: { cardMask: v.cardMask, cardBrand: v.cardBrand || '' } }).catch(() => {});
+          }
           paid = true;
           console.log(`💳 iyzico callback DOĞRULANDI & uygulandı → sipariş ${order.id}`);
         }

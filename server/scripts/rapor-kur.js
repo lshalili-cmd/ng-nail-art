@@ -20,7 +20,10 @@ const steps = [
             "createdAt"                              AS ban_tarihi
      FROM "BlockedSignup"`],
   ['basarili_odemeler', `CREATE TABLE rapor.basarili_odemeler AS
-     SELECT o.id, u.email, o."itemName", o.amount, o.currency, o.provider, o.ref, o."createdAt"
+     SELECT o.id, u.email, o."itemName", o.amount, o.currency, o.provider,
+            COALESCE(NULLIF(o."cardMask", ''), '-')  AS kart,
+            COALESCE(NULLIF(o."cardBrand", ''), '-') AS kart_tipi,
+            o.ref, o."createdAt"
      FROM "Order" o
      LEFT JOIN "User" u ON u.id = CASE WHEN o."userId" ~ '^[0-9]+$' THEN o."userId"::int END
      WHERE o.status = 'paid'`],

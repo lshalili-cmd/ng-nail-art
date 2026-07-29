@@ -71,6 +71,8 @@ model Order {
   status     String   @default("pending")// pending | paid | failed
   ref        String   @default("")       // İÇ sipariş kimliği (redirect + confirm bununla eşleşir)
   providerRef String  @default("")       // sağlayıcı oturum/token kimliği (ödeme doğrulama)
+  cardMask   String   @default("")       // MASKELİ kart: "ilk4 **** **** son4" (PCI-uyumlu; tam PAN ASLA saklanmaz)
+  cardBrand  String   @default("")       // kart markası/ailesi
   createdAt  DateTime @default(now())
 
   @@index([userId])
