@@ -1,0 +1,46 @@
+ngNailArt — Contact / İşletme sahibi bilgisi
+============================================
+İçerik: Owner (Resad Askeroğlu), Business Type (Sole Proprietorship),
+Email (info@ngnailart.com) + İngilizce açıklama cümlesi.
+
+DOSYA:
+  src/app/pages/contact/contact.component.ts   (YENİ — hazır Contact sayfası)
+
+--------------------------------------------------------------------
+KULLANIM — İKİ YOLDAN BİRİ
+--------------------------------------------------------------------
+
+YOL A) Komple hazır sayfa (önerilen, en kolay)
+  1) Zip'i proje köküne çıkar (src/app/pages/contact/contact.component.ts yerine oturur).
+  2) src/app/app.routes.ts içindeki routes dizisine şu satırı ekle:
+
+       { path: 'contact',
+         loadComponent: () => import('./pages/contact/contact.component')
+           .then(m => m.ContactComponent) },
+
+  3) İstersen bir yere (footer/menü/profil) link koy:  routerLink="/contact"
+     Artık /contact adresinde owner bilgisi görünür. Tasarımın bozulmaz.
+
+YOL B) Zaten bir Contact bölümün varsa — sadece şu bloğu oraya yapıştır:
+
+  <div class="card" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;padding:12px 2px;border-bottom:1px solid var(--line)">
+      <span style="font-size:12.5px;color:var(--muted-2)">Owner</span>
+      <span style="font-size:14.5px;font-weight:600;color:var(--ink)">Resad Askeroğlu</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:12px 2px;border-bottom:1px solid var(--line)">
+      <span style="font-size:12.5px;color:var(--muted-2)">Business Type</span>
+      <span style="font-size:14.5px;font-weight:600;color:var(--ink)">Sole Proprietorship</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:12px 2px">
+      <span style="font-size:12.5px;color:var(--muted-2)">Email</span>
+      <a style="font-size:14.5px;font-weight:600;color:var(--gold-soft);text-decoration:none"
+         href="mailto:info@ngnailart.com">info@ngnailart.com</a>
+    </div>
+    <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:var(--muted);
+       background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      NG Nail Art is owned and operated by Resad Askeroğlu, a sole proprietorship registered in Türkiye.
+    </p>
+  </div>
+
+Başka hiçbir şey değişmez.
