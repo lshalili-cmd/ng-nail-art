@@ -29,6 +29,14 @@ import { LegalDoc, legalText } from '../../core/legal.content';
             : 'This text is for information; the binding version should be reviewed by legal counsel.' }}
         </p>
       </div>
+
+      <!-- Bize Ulaşın / Contact Us -->
+      <div class="doc card contact">
+        <h2 class="doc-t">{{ i18n.locale() === 'tr' ? 'Bize Ulaşın' : 'Contact Us' }}</h2>
+        <p class="crow"><span class="ck">{{ i18n.locale() === 'tr' ? 'Sahip Adı' : 'Owner Name' }}:</span> Resad Askeroglu</p>
+        <p class="crow"><span class="ck">{{ i18n.locale() === 'tr' ? 'E-posta' : 'Email' }}:</span>
+          <a class="cmail" href="mailto:info@ngnailart.com">info&#64;ngnailart.com</a></p>
+      </div>
     </div>
   `,
   styles: [`
@@ -51,6 +59,11 @@ import { LegalDoc, legalText } from '../../core/legal.content';
     .doc-body ::ng-deep b { color: var(--ink); }
     .doc-note { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--line);
       font-size: 11.5px; color: var(--muted-2); font-style: italic; }
+    .contact { margin-top: 14px; }
+    .crow { margin: 6px 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+    .crow .ck { color: var(--ink); font-weight: 600; }
+    .cmail { color: var(--gold-soft); text-decoration: none; }
+    .cmail:hover { text-decoration: underline; }
   `],
 })
 export class LegalComponent {
