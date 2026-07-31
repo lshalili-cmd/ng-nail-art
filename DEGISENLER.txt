@@ -1,0 +1,23 @@
+ngNailArt — Güncelleme paketi (Cowork)
+=======================================
+Bu zip, proje KÖK klasörünün üzerine açılır (mevcut dosyaların üzerine yazar).
+İçindekiler (4 dosya):
+
+YENİ:
+  src/app/core/hand-image-store.ts
+    - El fotoğrafı + 21 landmark + kaynak tutan signal deposu (sanal deneme için).
+
+DEĞİŞEN:
+  src/app/pages/scan/scan.component.ts
+    - Tarama/yükleme sonrası el fotoğrafı + landmark'lar HandImageStore'a yazılıyor.
+  src/app/pages/studio/studio.component.ts
+    - "Yükle / Fotoğraf çek" ile el fotoğrafı girişi + MediaPipe landmark çıkarımı + önizleme.
+    - "● demo" rozeti ve demo notu KALDIRILDI (üretim görünümü).
+  src/app/core/ai.service.ts
+    - Demo tasarım açıklamasındaki "backend bağlayın" metni üretim diline çevrildi.
+
+NOT: Sahte demo el (SVG) kaldırıldı; taban görsel her zaman gerçek el.
+NOT: public/images/demo-hand.svg artık kullanılmıyor (varsa silebilirsin).
+
+UYGULAMA: zip'i D:\leman\ngNailArt (proje kökü) içine çıkar, "üzerine yaz" de.
+Sonra dev sunucusunu dev.bat (--poll) ile başlat.

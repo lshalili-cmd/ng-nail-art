@@ -1,16 +1,20 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, inject, signal, effect, viewChild, OnDestroy,
+  ChangeDetectionStrategy, Component, ElementRef, inject, signal, computed, effect, viewChild, OnDestroy,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
+import { DesignCardComponent } from '../../shared/design-card.component';
 import { I18nService } from '../../core/i18n.service';
+import { DataService, Design } from '../../core/data.service';
 import { HandAnalysisService, HandAnalysis, FingerLength } from '../../core/hand-analysis.service';
 import { ToneKey, Undertone } from '../../core/skin-tone';
 import { BackendService } from '../../core/api.service';
 import { AnalysisStore } from '../../core/analysis-store';
+import { recommend, ScoredDesign } from '../../core/recommendation';
 import { detectNailShapeCloseup, CloseupResult } from '../../core/nail-shape-detect';
 import { NailSegService } from '../../core/nail-seg.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
+import { HandImageStore } from '../../core/hand-image-store';
 
 type Stage = 'idle' | 'camera' | 'analyzing' | 'results';
 type CaptureMode = 'full' | 'closeup';
@@ -18,7 +22,7 @@ type CaptureMode = 'full' | 'closeup';
 @Component({
   selector: 'app-scan',
   standalone: true,
-  imports: [HeaderComponent, RouterLink],
+  imports: [HeaderComponent, DesignCardComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-header />
@@ -151,6 +155,13 @@ type CaptureMode = 'full' | 'closeup';
             <button class="btn-ghost" (click)="pickCloseupFile()">🖼️ {{ i18n.t('closeup_upload') }}</button>
           </div>
 
+          <div class="section-head"><h2 class="section-title">💎 {{ i18n.t('perfect_match') }}</h2></div>
+          <div class="rail">
+            @for (m of matchList(); track m.design.id) {
+              <app-design-card [design]="m.design" [width]="150" [score]="m.score" />
+            }
+          </div>
+
           <button class="btn-primary wide" routerLink="/studio">🎨 {{ i18n.t('scan_ai_suggest') }}</button>
           <button class="btn-ghost wide" (click)="reset()">🔄 {{ i18n.t('rescan') }}</button>
         }
@@ -227,12 +238,27 @@ type CaptureMode = 'full' | 'closeup';
 })
 export class ScanComponent implements OnDestroy {
   readonly i18n = inject(I18nService);
+  readonly data = inject(DataService);
   private readonly hands = inject(HandAnalysisService);
   private readonly backend = inject(BackendService);
   private readonly seg = inject(NailSegService);
   private readonly store = inject(AnalysisStore);
+  private readonly handImage = inject(HandImageStore);
   private readonly router = inject(Router);
   readonly quota = inject(ImageQuotaService);
+
+  /** Yakalanan kareyi + landmark'ları Stüdyo denemesi için paylaşılan depoya yazar. */
+  private saveHandImage(work: HTMLCanvasElement, landmarks: HandAnalysis['landmarks']): void {
+    try {
+      this.handImage.set({
+        imageUrl: work.toDataURL('image/jpeg', 0.92),
+        width: work.width,
+        height: work.height,
+        landmarks,
+        source: 'scan',
+      });
+    } catch { /* toDataURL başarısızsa (ör. tainted canvas) sessizce geç */ }
+  }
 
   /** Hak bitti uyarısı — tarama (el analizi + AI önerisi = 1 hak) başlatılamaz. */
   readonly quotaBlocked = signal<boolean>(false);
@@ -253,7 +279,7 @@ export class ScanComponent implements OnDestroy {
   readonly error = signal<string | null>(null);
   readonly analysis = signal<HandAnalysis | null>(null);
   readonly closeup = signal<CloseupResult | null>(null);
-  readonly shape = signal<string>('oval');
+  readonly shape = signal<string>('almond');
   /** Otomatik analiz yapılamadıysa (MediaPipe yüklenemedi/el bulunamadı) manuel seçim modu. */
   readonly manualMode = signal<boolean>(false);
 
@@ -299,6 +325,8 @@ export class ScanComponent implements OnDestroy {
       disp.width = work.width; disp.height = work.height;
       disp.getContext('2d')?.drawImage(work, 0, 0);
     } catch { /* kare çizilemezse geç */ }
+    // Landmark yok (el bulunamadı) ama fotoğraf yine de Stüdyo denemesinde kullanılabilir
+    this.saveHandImage(work, null);
     this.stage.set('results');
   }
 
@@ -311,6 +339,24 @@ export class ScanComponent implements OnDestroy {
     { key: 'stiletto', emoji: '🗡️', img: 'images/shape_stiletto1.png' },
     { key: 'round', emoji: '⚪', img: 'images/shape_round1.png' },
   ];
+
+  /** Analiz + seçili şekle göre gerçek öneriler (yoksa null). */
+  private readonly recos = computed<ScoredDesign[] | null>(() => {
+    const a = this.analysis();
+    if (!a) return null;
+    return recommend(
+      { toneKey: a.toneKey, undertone: a.undertone, fingerLength: a.fingerLength, nailShape: this.shape(), lab: a.lab },
+      this.data.explore,
+      new Date().getMonth(),
+    ).slice(0, 8);
+  });
+
+  /** Şablon için: öneri varsa skorlu liste, yoksa varsayılan seçki. */
+  readonly matchList = computed<{ design: Design; score: number | undefined }[]>(() => {
+    const r = this.recos();
+    if (r) return r.map((d) => ({ design: d as Design, score: d.matchScore }));
+    return this.data.matches().map((d) => ({ design: d, score: undefined }));
+  });
 
   constructor() {
     // Analiz veya seçili şekil değişince paylaşılan depoyu güncelle (Ana Sayfa buradan beslenir)
@@ -370,57 +416,17 @@ export class ScanComponent implements OnDestroy {
     }
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
-        // Daha yüksek çözünürlük iste (kalite ↑). Cihaz veremezse tarayıcı en yakınını verir.
-        video: { facingMode: 'environment', width: { ideal: 1440 }, height: { ideal: 1920 } },
+        video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 960 } },
         audio: false,
       });
       const v = this.video().nativeElement;
       v.srcObject = this.stream;
       this.stage.set('camera'); // önce görünür yap ki kareler aksın
       await v.play();
-      // Kaynakta parlatma: kameranın poz telafisi/parlaklığını yükselt (destekleniyorsa).
-      // Canlı akışın ham/koyu gelmesini önler; el az pozlanmaz.
-      await this.tuneCameraBrightness();
     } catch (e) {
       console.error('[Scan] Kamera erişim hatası:', e);
       this.error.set(this.i18n.t('err_camera'));
       this.stage.set('idle');
-    }
-  }
-
-  /**
-   * Kamerayı KAYNAKTA daha parlak çekmeye zorlar (destekleyen cihazlarda).
-   * Otomatik pozu kapatmaz; sadece poz telafisini (EV+) ve parlaklığı yukarı çeker —
-   * böylece el, karedeki parlak yüzeyler yüzünden az pozlanmaz. Cihaz desteklemiyorsa
-   * sessizce atlar (sıfır risk).
-   */
-  private async tuneCameraBrightness(): Promise<void> {
-    try {
-      const track = this.stream?.getVideoTracks?.()[0];
-      if (!track || typeof track.getCapabilities !== 'function' || typeof track.applyConstraints !== 'function') {
-        console.log('[Scan] kamera ayar API\'si yok — parlaklık zorlama atlandı');
-        return;
-      }
-      // exposureCompensation/brightness standart tipte yok (deneysel) → esnek tipe çevir.
-      const caps = track.getCapabilities() as unknown as Record<string, { min?: number; max?: number; step?: number }>;
-      const advanced: Record<string, number>[] = [];
-      const ec = caps['exposureCompensation'];
-      if (ec && typeof ec.max === 'number') {
-        // Maksimuma yakın ama tavana yapışmayan pozitif EV (~%70) → daha parlak
-        advanced.push({ exposureCompensation: +(ec.max * 0.7).toFixed(3) });
-      }
-      const br = caps['brightness'];
-      if (br && typeof br.min === 'number' && typeof br.max === 'number') {
-        advanced.push({ brightness: Math.round(br.min + (br.max - br.min) * 0.62) });
-      }
-      if (!advanced.length) {
-        console.log('[Scan] kamera poz/parlaklık ayarını desteklemiyor — atlandı');
-        return;
-      }
-      await track.applyConstraints({ advanced } as unknown as MediaTrackConstraints);
-      console.log('[Scan] kamera KAYNAKTA parlatıldı:', JSON.stringify(advanced));
-    } catch (e) {
-      console.warn('[Scan] kamera parlaklık ayarı uygulanamadı (atlandı):', e);
     }
   }
 
@@ -432,100 +438,24 @@ export class ScanComponent implements OnDestroy {
   }
 
   async capture(): Promise<void> {
-    // PARÇA 1+2: aday kareler — ImageCapture (işlenmiş/iyi poz) ÖNCE, video karesi
-    // (çerçevesi önizlemeyle birebir → tespit güvenilir) YEDEK. Analiz, elin bulunduğu
-    // ilk adayı kullanır (ImageCapture'ın kadraj farkı yüzünden el kaçarsa video karesine düşer).
-    const cands = await this.grabCandidates();
-    if (!cands.length) {
+    const v = this.video().nativeElement;
+    // Gerçek bir kare gelene kadar bekle (siyah/boş kare yakalamayı önler)
+    await this.waitForFrame(v);
+    if (!v.videoWidth) {
       this.error.set(this.i18n.t('cam_not_ready'));
       return;
     }
+    // Her yakalamada TAZE tuval — MediaPipe'a temiz kaynak verir (tekrar analizde bozulmayı önler)
+    const work = document.createElement('canvas');
+    work.width = v.videoWidth;
+    work.height = v.videoHeight;
+    work.getContext('2d')?.drawImage(v, 0, 0, work.width, work.height);
     this.stopCamera();
     if (this.mode() === 'closeup') {
-      await this.runCloseup(cands[0]);
+      await this.runCloseup(work);
     } else {
-      await this.runAnalysis(cands);
+      await this.runAnalysis(work);
     }
-  }
-
-  /**
-   * Analiz için aday kareler döndürür (öncelik sırasıyla):
-   *  1) ImageCapture.takePhoto() — cihazın gerçek fotoğraf hattı (iyi poz/renk).
-   *  2) Video karesi — kaynakta parlatılmış canlı akıştan, en parlak kare. Çerçevesi
-   *     önizlemeyle BİREBİR olduğu için el tespiti güvenilir; ImageCapture'da el kaçarsa yedek.
-   */
-  private async grabCandidates(): Promise<HTMLCanvasElement[]> {
-    const v = this.video().nativeElement;
-    await this.waitForFrame(v);
-    if (!v.videoWidth) return [];
-    const cands: HTMLCanvasElement[] = [];
-
-    const shot = await this.tryImageCapture();
-    if (shot) { console.log('[Scan] ImageCapture ile çekildi (işlenmiş kare)'); cands.push(shot); }
-
-    const frames = await this.grabFrames(v, 4);
-    if (frames.length) {
-      let best = frames[0], bestL = this.frameBrightness(best);
-      for (const f of frames.slice(1)) {
-        const b = this.frameBrightness(f);
-        if (b > bestL) { bestL = b; best = f; }
-      }
-      console.log(`[Scan] video karesi yedek: ${frames.length} kareden en parlağı (L~${Math.round(bestL)})`);
-      cands.push(best);
-    }
-    return cands;
-  }
-
-  /** Cihazın gerçek fotoğraf pipeline'ından (ImageCapture) işlenmiş kare — yoksa null. */
-  private async tryImageCapture(): Promise<HTMLCanvasElement | null> {
-    try {
-      const track = this.stream?.getVideoTracks?.()[0];
-      const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto(): Promise<Blob> } }).ImageCapture;
-      if (!track || !IC) return null;
-      const blob = await new IC(track).takePhoto();
-      const bmp = await createImageBitmap(blob);
-      // Çok büyük sensör fotoğrafını makul boyuta küçült (analiz hızı için) — kalite yeterli kalır.
-      const maxW = 1440;
-      const scale = Math.min(1, maxW / bmp.width);
-      const c = document.createElement('canvas');
-      c.width = Math.round(bmp.width * scale);
-      c.height = Math.round(bmp.height * scale);
-      c.getContext('2d')?.drawImage(bmp, 0, 0, c.width, c.height);
-      bmp.close?.();
-      return c;
-    } catch (e) {
-      console.warn('[Scan] ImageCapture yok/başarısız, video karesine düşülüyor:', e);
-      return null;
-    }
-  }
-
-  /** Video akışından ~100 ms aralıklarla n taze kare (tuval) yakalar (video ilerlesin diye). */
-  private async grabFrames(v: HTMLVideoElement, n: number): Promise<HTMLCanvasElement[]> {
-    const out: HTMLCanvasElement[] = [];
-    for (let i = 0; i < n; i++) {
-      if (!v.videoWidth) break;
-      const c = document.createElement('canvas');
-      c.width = v.videoWidth; c.height = v.videoHeight;
-      c.getContext('2d')?.drawImage(v, 0, 0, c.width, c.height);
-      out.push(c);
-      if (i < n - 1) await new Promise((r) => setTimeout(r, 100));
-    }
-    return out;
-  }
-
-  /** Bir karenin ortalama parlaklığını (0-255) küçültülmüş kopyadan ölçer. */
-  private frameBrightness(c: HTMLCanvasElement): number {
-    try {
-      const S = 32;
-      const t = document.createElement('canvas'); t.width = S; t.height = S;
-      const cx = t.getContext('2d', { willReadFrequently: true });
-      if (!cx) return 0;
-      cx.drawImage(c, 0, 0, S, S);
-      const d = cx.getImageData(0, 0, S, S).data;
-      let sum = 0, n = 0;
-      for (let i = 0; i < d.length; i += 4) { sum += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
-      return n ? sum / n : 0;
-    } catch { return 0; }
   }
 
   /** Yakın çekim karesinden tırnak şeklini çıkarır: ML modeli varsa onu, yoksa flood-fill. */
@@ -613,8 +543,7 @@ export class ScanComponent implements OnDestroy {
     input.value = '';
   }
 
-  private async runAnalysis(input: HTMLCanvasElement | HTMLCanvasElement[]): Promise<void> {
-    const cands = Array.isArray(input) ? input : [input];
+  private async runAnalysis(work: HTMLCanvasElement): Promise<void> {
     this.error.set(null);
     this.closeup.set(null); // yeni tam tarama → önceki yakın çekim sonucunu temizle
     this.stage.set('analyzing');
@@ -622,21 +551,13 @@ export class ScanComponent implements OnDestroy {
       await this.hands.init();
     } catch (e) {
       console.error('[Scan] MediaPipe modeli yüklenemedi — manuel seçime geçiliyor:', e);
-      this.manualResults(cands[0]);   // takılıp kalma: sonuç ekranına geç, manuel seç
+      this.manualResults(work);   // takılıp kalma: sonuç ekranına geç, manuel seç
       return;
     }
-    // Adayları sırayla dene; ELİN BULUNDUĞU ilk kareyi kullan (ImageCapture kadrajı
-    // kaçırırsa video karesine düşer). Böylece "tespit: 0 el" sorunu çözülür.
-    let result = this.hands.analyze(cands[0]);
-    let work = cands[0];
-    for (let i = 1; i < cands.length && !result.handDetected; i++) {
-      console.warn(`[Scan] ${i}. adayda el yok — sonraki kare deneniyor...`);
-      result = this.hands.analyze(cands[i]);
-      work = cands[i];
-    }
+    const result = this.hands.analyze(work);
     if (!result.handDetected) {
-      console.warn('[Scan] Hiçbir karede el bulunamadı — manuel seçime geçiliyor.');
-      this.manualResults(cands[cands.length - 1]);
+      console.warn('[Scan] El bulunamadı — manuel seçime geçiliyor.');
+      this.manualResults(work);
       return;
     }
     this.manualMode.set(false);
@@ -647,6 +568,8 @@ export class ScanComponent implements OnDestroy {
     disp.getContext('2d')?.drawImage(work, 0, 0);
     this.drawLandmarks(disp, result);
     this.analysis.set(result);
+    // Sanal deneme için el fotoğrafını + landmark'ları sakla (Stüdyo okur)
+    this.saveHandImage(work, result.landmarks);
     // Otomatik tırnak şekli: silüet analizi çıktıysa onu, yoksa parmak yapısı tahminini kullan
     const shape = result.nailShape ?? this.suggestShape(result.fingerLength);
     this.shape.set(shape);

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, computed, inject, signal, OnInit, OnDestroy, ElementRef, viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
@@ -12,6 +14,8 @@ import { Design } from '../../core/data.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { AnalysisInput } from '../../core/recommendation';
 import { TryonStore } from '../../core/tryon-store';
+import { HandImageStore, HandImage } from '../../core/hand-image-store';
+import { HandAnalysisService } from '../../core/hand-analysis.service';
 
 @Component({
   selector: 'app-studio',
@@ -26,6 +30,41 @@ import { TryonStore } from '../../core/tryon-store';
         @if (statusLabel()) { <span class="prov">{{ statusLabel() }}</span> }
       </div>
 
+      <!-- Sanal deneme: el fotoğrafı kaynağı + önizleme (tasarım katmanı sonraki adımlarda) -->
+      <div class="tryon card">
+        @if (camOn()) {
+          <div class="cam-wrap">
+            <video #handVideo class="cam" playsinline muted></video>
+            <div class="hand-actions">
+              <button class="btn-primary" (click)="captureHand()">✨ {{ i18n.t('cam_capture') }}</button>
+              <button class="btn-ghost" (click)="stopHandCamera()">✕ {{ i18n.t('cam_cancel') }}</button>
+            </div>
+          </div>
+        } @else if (handImg(); as h) {
+          <div class="hand-preview">
+            <img [src]="h.imageUrl" alt="hand" />
+            <span class="src-badge">
+              {{ h.landmarks ? '📍 tırnaklar tespit edildi' : '⚠️ tırnak tespiti yok' }}
+            </span>
+          </div>
+          <div class="hand-actions">
+            <button class="btn-ghost" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
+            <button class="btn-ghost" (click)="startHandCamera()">📸 {{ i18n.t('cam_start') }}</button>
+          </div>
+        } @else {
+          <div class="hand-empty">
+            <span class="he">🖐️</span>
+            <p class="hint">{{ i18n.t('cam_hint') }}</p>
+            <div class="hand-actions">
+              <button class="btn-primary" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
+              <button class="btn-ghost" (click)="startHandCamera()">📸 {{ i18n.t('cam_start') }}</button>
+            </div>
+          </div>
+        }
+        @if (handError(); as he) { <p class="hand-err">⚠️ {{ he }}</p> }
+      </div>
+      <input #handFile type="file" accept="image/*" hidden (change)="onHandFile($event)" />
+
       <!-- Prompt / otomatik üretim -->
       <div class="composer card">
         @if (tailored()) {
@@ -33,6 +72,10 @@ import { TryonStore } from '../../core/tryon-store';
           <div class="tailored-badge">{{ i18n.t('studio_tailored') }}</div>
           @if (loading()) {
             <p class="tailored-gen">✨ {{ i18n.t('studio_generating') }}</p>
+          } @else {
+            <button class="btn-primary wide" (click)="generate()" [disabled]="loading()">
+              🔄 {{ i18n.t('studio_regenerate') }}
+            </button>
           }
         } @else {
           <textarea
@@ -93,10 +136,6 @@ import { TryonStore } from '../../core/tryon-store';
             </div>
             <p class="rdesc">{{ d.description }}</p>
 
-            @if (d.source === 'demo') {
-              <p class="demo">ℹ️ {{ i18n.t('studio_demo_note') }}</p>
-            }
-
             <div class="attrs">
               <div class="attr"><span class="k">{{ i18n.t('studio_finish') }}</span><span class="v">{{ d.finish }}</span></div>
               <div class="attr"><span class="k">{{ i18n.t('studio_shape') }}</span><span class="v">{{ d.shape }}</span></div>
@@ -121,6 +160,7 @@ import { TryonStore } from '../../core/tryon-store';
 
             <div class="actions">
               <button class="btn-primary" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
+              <button class="btn-ghost" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
             </div>
             <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · her üretim 1 hak</p>
           </div>
@@ -178,9 +218,23 @@ import { TryonStore } from '../../core/tryon-store';
       color: var(--gold-soft); background: rgba(212,175,55,0.14); border: 1px solid rgba(212,175,55,0.4);
       padding: 6px 12px; border-radius: 999px; }
     .tailored-gen { margin: 6px 0 2px; font-size: 14px; font-weight: 600; color: var(--gold-soft); text-align: center; }
+    .tryon { padding: 12px; margin-bottom: 12px; }
+    .hand-preview { position: relative; border-radius: 14px; overflow: hidden; background: var(--surface-2); }
+    .hand-preview img { width: 100%; max-height: 62vh; object-fit: contain; display: block; background: #000; }
+    .src-badge { position: absolute; top: 10px; inset-inline-start: 10px; font-size: 11px; font-weight: 700;
+      color: var(--gold-soft); background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      border: 1px solid rgba(212,175,55,0.4); padding: 4px 10px; border-radius: 999px; }
+    .src-badge.demo { color: var(--muted); border-color: var(--line); }
+    .hand-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 10px; text-align: center; }
+    .hand-empty .he { font-size: 54px; opacity: 0.9; }
+    .cam-wrap { border-radius: 14px; overflow: hidden; }
+    .cam { width: 100%; max-height: 62vh; object-fit: cover; background: #000; display: block; border-radius: 14px; }
+    .hand-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .hand-actions > * { flex: 1; min-width: 110px; }
+    .hand-err { margin: 10px 0 0; font-size: 12.5px; color: #f0b8b8; text-align: center; }
   `],
 })
-export class StudioComponent implements OnInit {
+export class StudioComponent implements OnInit, OnDestroy {
   readonly i18n = inject(I18nService);
   private readonly ai = inject(AiService);
   private readonly backend = inject(BackendService);
@@ -188,9 +242,19 @@ export class StudioComponent implements OnInit {
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
   private readonly analysisStore = inject(AnalysisStore);
-  /** Taramadan gelen gerçek tırnak şekli (AR'a doğru şekli göndermek için). */
-  private tailoredShape: string | null = null;
   private readonly tryon = inject(TryonStore);
+  private readonly handStore = inject(HandImageStore);
+  private readonly hands = inject(HandAnalysisService);
+
+  // — Sanal deneme: el fotoğrafı kaynağı —
+  private readonly handVideo = viewChild<ElementRef<HTMLVideoElement>>('handVideo');
+  private readonly handFile = viewChild.required<ElementRef<HTMLInputElement>>('handFile');
+  /** Paylaşılan el fotoğrafı (Tara'dan veya Stüdyo'dan). */
+  readonly handImg = computed(() => this.handStore.current());
+  readonly camOn = signal<boolean>(false);
+  readonly handError = signal<string | null>(null);
+  private handStream: MediaStream | null = null;
+
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
   readonly tailored = signal<boolean>(false);   // taramadan gelen "elinize özel" rozeti
@@ -207,8 +271,10 @@ export class StudioComponent implements OnInit {
 
   readonly statusLabel = computed(() => {
     const s = this.status();
-    if (!s) return '';
-    return s.status === 'ready' ? `● ${s.provider} · ${s.model}` : '● demo';
+    // Üretim hissi: yalnızca gerçek sağlayıcı hazırsa sağlayıcı adı gösterilir.
+    // Backend yoksa hiçbir "demo" rozeti/ibaresi gösterilmez.
+    if (!s || s.status !== 'ready') return '';
+    return `● ${s.provider} · ${s.model}`;
   });
 
   readonly imageSrc = computed<string | null>(() => {
@@ -233,7 +299,6 @@ export class StudioComponent implements OnInit {
       const a = this.analysisStore.current();
       if (a && (a.nailShape || a.undertone) && !this.prompt().trim()) {
         this.tailored.set(true);
-        if (a.nailShape) this.tailoredShape = a.nailShape;   // AR'da doğru tırnak şekli için sakla
         this.prompt.set(this.buildTailoredPrompt(a));
         this.analysisStore.clear();          // bir kez kullan (yenile'de tekrar tetiklenmesin)
         void this.generate();                // otomatik üret
@@ -375,9 +440,8 @@ export class StudioComponent implements OnInit {
       ? [(d.colors || []).join(' '), d.style, d.finish, (d.patterns || []).join(' '), (d.effects || []).join(' ')]
           .filter(Boolean).join(' ').trim()
       : '';
-    const shape = this.tailoredShape || (d && d.shape) || 'oval';
-    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern, shape });
-    void this.router.navigate(['/ar'], { queryParams: { color, pattern, shape } });
+    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern });
+    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
   }
 
   /** Görsel hakkı bitince Mağaza'ya yönlendirir. */
@@ -412,6 +476,112 @@ export class StudioComponent implements OnInit {
   toggleFav(): void {
     const g = this.genDesign();
     if (g) this.fav.toggle(g);
+  }
+
+  // ————————————————— Sanal deneme: el fotoğrafı kaynağı —————————————————
+
+  /** Dosya seçiciyi aç (el fotoğrafı yükle). */
+  pickHandFile(): void {
+    this.stopHandCamera();
+    this.handFile().nativeElement.click();
+  }
+
+  /** Yüklenen el fotoğrafını ölçekle, landmark çıkar, depola. */
+  onHandFile(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0];
+    input.value = '';
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const work = document.createElement('canvas');
+      const maxW = 1280;
+      const scale = Math.min(1, maxW / img.naturalWidth);
+      work.width = Math.round(img.naturalWidth * scale);
+      work.height = Math.round(img.naturalHeight * scale);
+      work.getContext('2d')?.drawImage(img, 0, 0, work.width, work.height);
+      void this.processHandCanvas(work, 'upload');
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => this.handError.set(this.i18n.t('err_camera'));
+    img.src = URL.createObjectURL(f);
+  }
+
+  /** Stüdyo içi kamerayı aç (el fotoğrafı çek). */
+  async startHandCamera(): Promise<void> {
+    this.handError.set(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      console.error('[Studio] getUserMedia yok — kamera desteklenmiyor.');
+      this.handError.set(this.i18n.t('err_camera'));
+      return;
+    }
+    try {
+      this.handStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 960 } }, audio: false,
+      });
+      this.camOn.set(true);
+      // video elemanı @if ile yeni render olduğundan bir tick bekle
+      setTimeout(() => {
+        const v = this.handVideo()?.nativeElement;
+        if (v) { v.srcObject = this.handStream; void v.play(); }
+      }, 0);
+    } catch (e) {
+      console.error('[Studio] Kamera erişim hatası:', e);
+      this.handError.set(this.i18n.t('err_camera'));
+      this.camOn.set(false);
+    }
+  }
+
+  stopHandCamera(): void {
+    this.handStream?.getTracks().forEach((t) => t.stop());
+    this.handStream = null;
+    const v = this.handVideo()?.nativeElement;
+    if (v) v.srcObject = null;
+    this.camOn.set(false);
+  }
+
+  /** Kameradan kareyi yakala, landmark çıkar, depola. */
+  async captureHand(): Promise<void> {
+    const v = this.handVideo()?.nativeElement;
+    if (!v || !v.videoWidth) { this.handError.set(this.i18n.t('cam_not_ready')); return; }
+    const work = document.createElement('canvas');
+    work.width = v.videoWidth; work.height = v.videoHeight;
+    work.getContext('2d')?.drawImage(v, 0, 0, work.width, work.height);
+    this.stopHandCamera();
+    await this.processHandCanvas(work, 'upload');
+  }
+
+  /** Ortak: kareden landmark çıkar (varsa analizi paylaş) ve el fotoğrafını depola. */
+  private async processHandCanvas(work: HTMLCanvasElement, source: 'upload' | 'demo'): Promise<void> {
+    this.handError.set(null);
+    let landmarks = null as HandImage['landmarks'];
+    try {
+      await this.hands.init();
+      const res = this.hands.analyze(work);
+      if (res.handDetected) {
+        landmarks = res.landmarks;
+        this.analysisStore.set({
+          toneKey: res.toneKey, undertone: res.undertone,
+          fingerLength: res.fingerLength, nailShape: res.nailShape, lab: res.lab,
+        });
+      } else {
+        console.warn('[Studio] El bulunamadı — tırnak tespiti manuel olacak.');
+      }
+    } catch (e) {
+      console.warn('[Studio] MediaPipe landmark çıkarılamadı, manuel tespite düşülecek:', e);
+    }
+    try {
+      this.handStore.set({
+        imageUrl: work.toDataURL('image/jpeg', 0.92),
+        width: work.width, height: work.height, landmarks, source,
+      });
+    } catch {
+      this.handError.set('Fotoğraf işlenemedi, farklı bir görsel deneyin.');
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopHandCamera();
   }
 
   pct(n: number): number {

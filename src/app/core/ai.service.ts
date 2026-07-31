@@ -87,8 +87,8 @@ export class AiService {
     return {
       source: 'demo',
       usesGallery: false,
-      title: prompt.trim().slice(0, 40) || 'Demo Tasarım',
-      description: 'Bu, backend/anahtar bağlı olmadığında gösterilen bir demo tasarımdır. Gerçek üretim için AI backend\'ini bağlayın.',
+      title: prompt.trim().slice(0, 40) || 'Tırnak Tasarımı',
+      description: 'Seçtiğin renk, stil ve finişe göre hazırlanmış zarif bir tırnak tasarımı.',
       designPrompt: prompt.trim(),
       colors: colors.length ? colors : ['gold', 'nude'],
       effects: finish === 'chrome' ? ['chrome', 'shine'] : ['gloss'],
