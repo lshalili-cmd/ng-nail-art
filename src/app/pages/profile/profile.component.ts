@@ -8,6 +8,7 @@ import { PlanService } from '../../core/plan.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { AuthService, validPassword } from '../../core/auth.service';
 import { DesignCardComponent } from '../../shared/design-card.component';
+import { ContactFooterComponent } from '../../shared/contact-footer.component';
 import { COUNTRIES } from '../../core/countries';
 
 interface MyTicket { id: number; message: string; reply: string; status: string; repliedAt: number; }
@@ -15,7 +16,7 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [DesignCardComponent, RouterLink],
+  imports: [DesignCardComponent, RouterLink, ContactFooterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page">
@@ -47,7 +48,7 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
               </svg>
             </div>
             <div class="w-kicker">NAIL ART AI</div>
-            <div class="w-name">miracle</div>
+            <div class="w-name">NGNAILART</div>
             <div class="w-tag">◇&nbsp;&nbsp;{{ i18n.t('splash_slogan') }}&nbsp;&nbsp;◇</div>
             <div class="w-cta">
               <button class="btn-primary" (click)="openAuth('login')">{{ i18n.t('login') }}</button>
@@ -59,6 +60,7 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
                 <button class="w-lang" [class.on]="i18n.locale() === l.code" (click)="i18n.setLocale(l.code)" [attr.aria-label]="l.label">{{ l.flag }}</button>
               }
             </div>
+            <app-contact-footer />
           </div>
         }
       </header>
@@ -75,7 +77,7 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
               }
             </div>
           </div>
-          <img class="au-logo" src="/icon-192.png" alt="Miracle Nail Art" />
+          <img class="au-logo" src="/icon-192.png" alt="NGNAILART" />
           <h3 class="au-t">{{ i18n.t(stepTitle()) }}</h3>
 
           @switch (authStep()) {
@@ -303,7 +305,7 @@ interface MyTicket { id: number; message: string; reply: string; status: string;
       background: radial-gradient(circle, rgba(20,15,8,0.6), transparent 72%); }
     .w-emblem svg { width: 66%; height: 78%; }
     .w-kicker { letter-spacing: 0.5em; font-size: 12px; color: #b89a52; text-indent: 0.5em; margin: 22px 0 6px; }
-    .w-name { font-family: Georgia, "Times New Roman", serif; font-size: clamp(48px, 17vw, 74px); line-height: 1;
+    .w-name { font-family: Georgia, "Times New Roman", serif; font-size: clamp(36px, 13vw, 62px); line-height: 1;
       background: linear-gradient(180deg, #fbe6a8, #d4af37 55%, #a97e22);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .w-tag { font-family: Georgia, serif; font-style: italic; font-size: 16px; color: #d9b45a; margin-top: 12px; letter-spacing: 0.04em; }

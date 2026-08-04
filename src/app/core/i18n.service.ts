@@ -12,7 +12,7 @@ export const LOCALES: { code: Locale; flag: string; label: string }[] = [
 type Dict = Record<string, string>;
 
 const EN: Dict = {
-  app_name: 'Miracle Nail Art AI',
+  app_name: 'NGNAILART',
   splash_slogan: 'designs made just for you', splash_hint: 'TAP ▸',
   studio_tailored: '✨ Tailored to your hand scan', studio_tailored_prompt: 'An elegant, salon-quality nail design tailored to my {shape} nail shape and {tone} undertone',
   nav_home: 'Home', nav_scan: 'Scan', nav_explore: 'Explore', nav_shop: 'Shop', nav_profile: 'Profile',
@@ -42,7 +42,7 @@ const EN: Dict = {
 };
 
 const TR: Dict = {
-  app_name: 'Miracle Nail Art AI',
+  app_name: 'NGNAILART',
   splash_slogan: 'size özel tasarımlar', splash_hint: 'DOKUN ▸',
   studio_tailored: '✨ Elinize özel — tarama sonucuna göre', studio_tailored_prompt: '{shape} tırnak şeklime ve {tone} ten tonuma uygun, salon kalitesinde zarif bir tırnak tasarımı',
   nav_home: 'Ana Sayfa', nav_scan: 'Tara', nav_explore: 'Keşfet', nav_shop: 'Mağaza', nav_profile: 'Profil',
@@ -72,7 +72,7 @@ const TR: Dict = {
 };
 
 const RU: Dict = {
-  app_name: 'Miracle Nail Art AI',
+  app_name: 'NGNAILART',
   splash_slogan: 'дизайны специально для вас', splash_hint: 'НАЖМИТЕ ▸',
   studio_tailored: '✨ Подобрано по результатам сканирования', studio_tailored_prompt: 'Элегантный маникюр салонного качества для моей формы ногтей «{shape}» и {tone} подтона',
   nav_home: 'Главная', nav_scan: 'Скан', nav_explore: 'Обзор', nav_shop: 'Магазин', nav_profile: 'Профиль',
@@ -96,7 +96,7 @@ const RU: Dict = {
 };
 
 const AR: Dict = {
-  app_name: 'ميراكل نيل آرت',
+  app_name: 'NGNAILART',
   splash_slogan: 'تصاميم خاصة بك', splash_hint: 'المس ▸',
   studio_tailored: '✨ مصمم خصيصًا لك حسب فحص يدك', studio_tailored_prompt: 'تصميم أظافر أنيق بجودة الصالون يناسب شكل أظافري {shape} ودرجة لوني {tone}',
   nav_home: 'الرئيسية', nav_scan: 'مسح', nav_explore: 'استكشاف', nav_shop: 'المتجر', nav_profile: 'الملف',
@@ -220,8 +220,8 @@ Object.assign(AR, {
 // ── Üyelik / Mağaza ──
 Object.assign(EN, { membership: 'Membership', membership_sub: 'Upgrade for unlimited AI designs, real image generation and more', current_plan: 'Your plan', upgrade: 'Upgrade', select: 'Select', credit_packs: 'Image Packs', credits: 'images', payment_soon: 'Payment integration coming soon — selection is saved locally for now.', plan_locked: 'Not available', renew: 'Renew', days_left: 'days left', upgrade_rules: 'You can\'t re-buy your active plan before it expires — only upgrade. Once it expires you can pick any plan (downgrade included). Same rule for extra packs: you can\'t re-buy the same pack before it expires — only upgrade to a bigger one.', quota_remaining: 'Images left', quota_empty: 'You\'re out of image credits. Upgrade your plan or buy an extra pack.', quota_upgrade: 'Upgrade plan', quota_buy_pack: 'Buy extra pack', pack_added: 'added', pay_title: 'Payment', pay_provider: 'Payment method', pay_go: 'Continue to payment', pay_test: 'Pay (test)', pay_processing: 'Processing…', pay_cancel: 'Cancel', pay_secure: 'Secure payment — you\'ll be redirected to the provider.', pay_demo_note: 'Demo mode — no real charge. Add provider keys to go live.', pay_success: 'Payment successful', pay_close: 'Done' });
 Object.assign(TR, { membership: 'Üyelik', membership_sub: 'Sınırsız AI tasarım, gerçek görsel üretimi ve daha fazlası için yükseltin', current_plan: 'Planınız', upgrade: 'Yükselt', select: 'Seç', credit_packs: 'Görsel Paketleri', credits: 'görsel', payment_soon: 'Ödeme entegrasyonu yakında — şimdilik seçim cihazda saklanıyor.', plan_locked: 'Uygun değil', renew: 'Yenile', days_left: 'gün kaldı', upgrade_rules: 'Aktif paketinizi süresi bitmeden tekrar alamazsınız — yalnızca yükseltebilirsiniz. Süresi dolunca istediğiniz planı seçebilirsiniz (düşürme dahil). Ek paketler için de aynı kural: aynı paketi süresi bitmeden tekrar alamazsınız, yalnızca daha büyük pakete geçebilirsiniz.', quota_remaining: 'Kalan görsel', quota_empty: 'Görsel hakkınız bitti. Paketi yükseltin ya da ek paket alın.', quota_upgrade: 'Paketi Yükselt', quota_buy_pack: 'Ek Paket Al', pack_added: 'eklendi', pay_title: 'Ödeme', pay_provider: 'Ödeme yöntemi', pay_go: 'Ödemeye devam et', pay_test: 'Öde (test)', pay_processing: 'İşleniyor…', pay_cancel: 'Vazgeç', pay_secure: 'Güvenli ödeme — sağlayıcının sayfasına yönlendirileceksiniz.', pay_demo_note: 'Demo modu — gerçek tahsilat yok. Yayına almak için sağlayıcı anahtarı ekleyin.', pay_success: 'Ödeme başarılı', pay_close: 'Tamam' });
-Object.assign(RU, { membership: 'Подписка', membership_sub: 'Безлимитные AI-дизайны и генерация изображений', current_plan: 'Ваш план', upgrade: 'Улучшить', select: 'Выбрать', credit_packs: 'Пакеты изображений', credits: 'изображений', payment_soon: 'Оплата скоро — выбор пока сохраняется локально.', plan_locked: 'Недоступно', renew: 'Продлить', days_left: 'дн. осталось', upgrade_rules: 'Нельзя повторно купить активный план до окончания — только улучшение. После окончания можно выбрать любой план (в т.ч. ниже). То же для доп. пакетов: нельзя купить тот же пакет до окончания — только переход на больший.', quota_remaining: 'Осталось изображений', quota_empty: 'Изображения закончились. Улучшите план или купите доп. пакет.', quota_upgrade: 'Улучшить план', quota_buy_pack: 'Купить пакет', pack_added: 'добавлено' });
-Object.assign(AR, { membership: 'العضوية', membership_sub: 'ترقية لتصاميم ذكاء غير محدودة وإنشاء صور حقيقية', current_plan: 'خطتك', upgrade: 'ترقية', select: 'اختيار', credit_packs: 'حزم الصور', credits: 'صورة', payment_soon: 'الدفع قريباً — يُحفظ الاختيار محلياً الآن.', plan_locked: 'غير متاح', renew: 'تجديد', days_left: 'يوم متبقٍ', upgrade_rules: 'لا يمكنك إعادة شراء خطتك النشطة قبل انتهائها — الترقية فقط. بعد انتهائها يمكنك اختيار أي خطة (بما في ذلك الأدنى). ونفس القاعدة للحزم الإضافية: لا يمكنك شراء نفس الحزمة قبل انتهائها — الترقية لحزمة أكبر فقط.', quota_remaining: 'الصور المتبقية', quota_empty: 'انتهت أرصدة الصور. رقِّ خطتك أو اشترِ حزمة إضافية.', quota_upgrade: 'ترقية الخطة', quota_buy_pack: 'شراء حزمة', pack_added: 'أُضيفت' });
+Object.assign(RU, { membership: 'Подписка', membership_sub: 'Безлимитные AI-дизайны и генерация изображений', current_plan: 'Ваш план', upgrade: 'Улучшить', select: 'Выбрать', credit_packs: 'Пакеты изображений', credits: 'изображений', payment_soon: 'Оплата скоро — выбор пока сохраняется локально.', plan_locked: 'Недоступно', renew: 'Продлить', days_left: 'дн. осталось', upgrade_rules: 'Нельзя повторно купить активный план до окончания — только улучшение. После окончания можно выбрать любой план (в т.ч. ниже). То же для доп. пакетов: нельзя купить тот же пакет до окончания — только переход на больший.', quota_remaining: 'Осталось изображений', quota_empty: 'Изображения закончились. Улучшите план или купите доп. пакет.', quota_upgrade: 'Улучшить план', quota_buy_pack: 'Купить пакет', pack_added: 'добавлено', pay_title: 'Оплата', pay_provider: 'Способ оплаты', pay_go: 'Перейти к оплате', pay_test: 'Оплатить (тест)', pay_processing: 'Обработка…', pay_cancel: 'Отмена', pay_secure: 'Безопасная оплата — вы будете перенаправлены к поставщику.', pay_demo_note: 'Демо-режим — без реального списания. Добавьте ключи поставщика для запуска.', pay_success: 'Оплата прошла успешно', pay_close: 'Готово' });
+Object.assign(AR, { membership: 'العضوية', membership_sub: 'ترقية لتصاميم ذكاء غير محدودة وإنشاء صور حقيقية', current_plan: 'خطتك', upgrade: 'ترقية', select: 'اختيار', credit_packs: 'حزم الصور', credits: 'صورة', payment_soon: 'الدفع قريباً — يُحفظ الاختيار محلياً الآن.', plan_locked: 'غير متاح', renew: 'تجديد', days_left: 'يوم متبقٍ', upgrade_rules: 'لا يمكنك إعادة شراء خطتك النشطة قبل انتهائها — الترقية فقط. بعد انتهائها يمكنك اختيار أي خطة (بما في ذلك الأدنى). ونفس القاعدة للحزم الإضافية: لا يمكنك شراء نفس الحزمة قبل انتهائها — الترقية لحزمة أكبر فقط.', quota_remaining: 'الصور المتبقية', quota_empty: 'انتهت أرصدة الصور. رقِّ خطتك أو اشترِ حزمة إضافية.', quota_upgrade: 'ترقية الخطة', quota_buy_pack: 'شراء حزمة', pack_added: 'أُضيفت', pay_title: 'الدفع', pay_provider: 'طريقة الدفع', pay_go: 'المتابعة للدفع', pay_test: 'ادفع (تجريبي)', pay_processing: 'جارٍ المعالجة…', pay_cancel: 'إلغاء', pay_secure: 'دفع آمن — سيتم تحويلك إلى مزوّد الخدمة.', pay_demo_note: 'وضع تجريبي — لا يوجد خصم حقيقي. أضف مفاتيح المزوّد للتفعيل.', pay_success: 'تم الدفع بنجاح', pay_close: 'تم' });
 
 // ── Mağaza plan/paket içerikleri + Studio öneri çipleri (dile bağlı) ──
 Object.assign(EN, {

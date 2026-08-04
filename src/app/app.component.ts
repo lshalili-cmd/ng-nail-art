@@ -4,24 +4,29 @@ import { filter } from 'rxjs';
 import { BottomNavComponent } from './shared/bottom-nav.component';
 import { OnboardingComponent } from './shared/onboarding.component';
 import { SplashComponent } from './shared/splash.component';
+import { ContactFooterComponent } from './shared/contact-footer.component';
 import { AuthService } from './core/auth.service';
 import { SyncService } from './core/sync.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, BottomNavComponent, OnboardingComponent, SplashComponent],
+  imports: [RouterOutlet, BottomNavComponent, OnboardingComponent, SplashComponent, ContactFooterComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <router-outlet />
     <!-- Yönetici paneli (/admin) tam ekrandır. Üye OLMAYANA da kabuk gösterilmez:
          yalnızca üyelik/giriş ekranı (slogan) görünür — alt menü/onboarding gizli. -->
     @if (!adminRoute() && auth.loggedIn()) {
+      <div class="app-footer"><app-contact-footer /></div>
       <app-bottom-nav />
       <app-onboarding />
       <app-splash />
     }
   `,
+  styles: [`
+    .app-footer { padding-bottom: calc(var(--nav-h) + 18px); border-top: 1px solid var(--line); margin-top: 8px; }
+  `],
 })
 export class AppComponent {
   readonly auth = inject(AuthService);

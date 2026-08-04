@@ -40,26 +40,28 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
               <button class="btn-ghost" (click)="stopHandCamera()">✕ {{ i18n.t('cam_cancel') }}</button>
             </div>
           </div>
-        } @else if (handImg(); as h) {
-          <div class="hand-preview">
-            <img [src]="h.imageUrl" alt="hand" />
-            <span class="src-badge">
-              {{ h.landmarks ? '📍 tırnaklar tespit edildi' : '⚠️ tırnak tespiti yok' }}
-            </span>
-          </div>
-          <div class="hand-actions">
-            <button class="btn-ghost" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
-            <button class="btn-ghost" (click)="startHandCamera()">📸 {{ i18n.t('cam_start') }}</button>
-          </div>
         } @else {
-          <div class="hand-empty">
-            <span class="he">🖐️</span>
-            <p class="hint">{{ i18n.t('cam_hint') }}</p>
+          @if (handImg(); as h) {
+            <div class="hand-preview">
+              <img [src]="h.imageUrl" alt="hand" />
+              <span class="src-badge">
+                {{ h.landmarks ? '📍 tırnaklar tespit edildi' : '⚠️ tırnak tespiti yok' }}
+              </span>
+            </div>
             <div class="hand-actions">
-              <button class="btn-primary" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
+              <button class="btn-ghost" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
               <button class="btn-ghost" (click)="startHandCamera()">📸 {{ i18n.t('cam_start') }}</button>
             </div>
-          </div>
+          } @else {
+            <div class="hand-empty">
+              <span class="he">🖐️</span>
+              <p class="hint">{{ i18n.t('cam_hint') }}</p>
+              <div class="hand-actions">
+                <button class="btn-primary" (click)="pickHandFile()">🖼️ {{ i18n.t('upload') }}</button>
+                <button class="btn-ghost" (click)="startHandCamera()">📸 {{ i18n.t('cam_start') }}</button>
+              </div>
+            </div>
+          }
         }
         @if (handError(); as he) { <p class="hand-err">⚠️ {{ he }}</p> }
       </div>

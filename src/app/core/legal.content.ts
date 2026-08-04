@@ -6,7 +6,7 @@ export interface LegalText { title: string; html: string; }
 
 const PRIVACY_TR = `
 <h4>1. Veri Sorumlusu</h4>
-<p>Ünvan: [Şirket Ünvanı] · Adres: [Şirket Adresi] · E-posta: l.shalili@logper.com</p>
+<p>Ünvan: NGNAILART · Adres: [Şirket Adresi] · E-posta: info@ngnailart.com</p>
 <h4>2. Topladığımız Kişisel Veriler</h4>
 <ul>
 <li><b>Hesap:</b> ad, soyad, e-posta, telefon, ülke ve şifreniz (geri döndürülemez şekilde hash'lenir; düz metin tutulmaz).</li>
@@ -27,18 +27,18 @@ const PRIVACY_TR = `
 <h4>7. Saklama Süresi</h4>
 <p>Hesabınız aktif olduğu sürece ve yasal süreler boyunca. Hesabınızı silince veriler kalıcı silinir; 40 gün yeniden kayıt engeli uygulanabilir.</p>
 <h4>8. Haklarınız</h4>
-<p>Erişim, düzeltme, silme, itiraz, taşınabilirlik ve rızayı geri çekme. Uygulamadaki Hesabı Sil ve Yardım/Destek ile ya da l.shalili@logper.com üzerinden kullanabilirsiniz.</p>
+<p>Erişim, düzeltme, silme, itiraz, taşınabilirlik ve rızayı geri çekme. Uygulamadaki Hesabı Sil ve Yardım/Destek ile ya da info@ngnailart.com üzerinden kullanabilirsiniz.</p>
 <h4>9. Güvenlik</h4>
 <p>HTTPS, şifre hash'leme ve erişim denetimleri gibi önlemler alınır.</p>
 <h4>10. Çocukların Gizliliği</h4>
 <p>Uygulama 18 yaş altı için tasarlanmamıştır.</p>
 <h4>11. İletişim</h4>
-<p>Sorularınız için: l.shalili@logper.com</p>
+<p>Sorularınız için: info@ngnailart.com</p>
 `;
 
 const PRIVACY_EN = `
 <h4>1. Data Controller</h4>
-<p>Company: [Company Name] · Address: [Company Address] · Email: l.shalili@logper.com</p>
+<p>Company: NGNAILART · Address: [Company Address] · Email: info@ngnailart.com</p>
 <h4>2. Personal Data We Collect</h4>
 <ul>
 <li><b>Account:</b> name, email, phone, country and password (stored irreversibly hashed, never plain text).</li>
@@ -59,19 +59,19 @@ const PRIVACY_EN = `
 <h4>7. Retention</h4>
 <p>While your account is active and for legal retention periods. On deletion your data is permanently removed; a 40-day re-registration block may apply.</p>
 <h4>8. Your Rights</h4>
-<p>Access, correction, deletion, objection, portability and consent withdrawal — via Delete Account and Help/Support in the App, or l.shalili@logper.com.</p>
+<p>Access, correction, deletion, objection, portability and consent withdrawal — via Delete Account and Help/Support in the App, or info@ngnailart.com.</p>
 <h4>9. Security</h4>
 <p>Measures such as HTTPS, password hashing and access controls.</p>
 <h4>10. Children's Privacy</h4>
 <p>The App is not intended for anyone under 18.</p>
 <h4>11. Contact</h4>
-<p>Questions: l.shalili@logper.com</p>
+<p>Questions: info@ngnailart.com</p>
 `;
 
 const KVKK_TR = `
 <p><i>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca.</i></p>
 <h4>1. Veri Sorumlusu</h4>
-<p>Kişisel verileriniz, veri sorumlusu [Şirket Ünvanı] tarafından işlenmektedir.</p>
+<p>Kişisel verileriniz, veri sorumlusu NGNAILART tarafından işlenmektedir.</p>
 <h4>2. İşlenen Veriler</h4>
 <p>Kimlik/iletişim (ad, soyad, telefon, e-posta, ülke), hesap/işlem verileri, işlem güvenliği verileri ve ödeme (üçüncü tarafça). El/tırnak görüntüsü yalnızca cihazınızda işlenir, sunucuya aktarılmaz.</p>
 <h4>3. Amaçlar</h4>
@@ -83,17 +83,17 @@ const KVKK_TR = `
 <h4>6. Haklarınız (md. 11)</h4>
 <p>İşlenip işlenmediğini öğrenme, bilgi talep etme, amacı öğrenme, aktarılan tarafları bilme, düzeltme, silme/yok etme, otomatik analize itiraz ve zararın giderilmesini isteme.</p>
 <h4>7. Başvuru</h4>
-<p>Uygulamadaki Hesabı Sil ve Yardım/Destek ile ya da l.shalili@logper.com üzerinden. Başvurular en geç 30 günde sonuçlandırılır.</p>
+<p>Uygulamadaki Hesabı Sil ve Yardım/Destek ile ya da info@ngnailart.com üzerinden. Başvurular en geç 30 günde sonuçlandırılır.</p>
 `;
 
 const KVKK_EN = `
 <p><i>This notice concerns Turkish data-protection law (KVKK, Law No. 6698). If you are outside Türkiye, your rights are described in the Privacy Policy (GDPR and equivalents).</i></p>
 <h4>Data Controller</h4>
-<p>Your personal data is processed by [Company Name] as data controller.</p>
+<p>Your personal data is processed by NGNAILART as data controller.</p>
 <h4>Your Rights (KVKK Art. 11)</h4>
 <p>To learn whether your data is processed, request information, learn the purpose, know the recipients, request correction or erasure, object to automated analysis and seek compensation for damages.</p>
 <h4>Requests</h4>
-<p>Via Delete Account and Help/Support in the App, or l.shalili@logper.com. Requests are answered within 30 days.</p>
+<p>Via Delete Account and Help/Support in the App, or info@ngnailart.com. Requests are answered within 30 days.</p>
 `;
 
 const TERMS_TR = `
@@ -108,13 +108,13 @@ const TERMS_TR = `
 <h4>5. Yapay Zeka İçeriği</h4>
 <p>Üretilen görseller kişisel kullanımınız içindir; çıktılar her zaman kusursuz olmayabilir.</p>
 <h4>6. Fikri Mülkiyet</h4>
-<p>Uygulama, marka, tasarım ve yazılım [Şirket Ünvanı]'na aittir; izinsiz kullanılamaz.</p>
+<p>Uygulama, marka, tasarım ve yazılım NGNAILART'a aittir; izinsiz kullanılamaz.</p>
 <h4>7. Sorumluluğun Sınırı</h4>
 <p>Hizmet "olduğu gibi" sunulur; yasanın izin verdiği ölçüde dolaylı zararlardan sorumlu değiliz.</p>
 <h4>8. Askıya Alma ve Fesih</h4>
 <p>Şartları ihlal halinde hesap askıya alınabilir; dilediğinizde hesabınızı silebilirsiniz.</p>
 <h4>9. Değişiklikler ve İletişim</h4>
-<p>Şartlar güncellenebilir; kullanmaya devam etmek güncel şartların kabulüdür. İletişim: l.shalili@logper.com</p>
+<p>Şartlar güncellenebilir; kullanmaya devam etmek güncel şartların kabulüdür. İletişim: info@ngnailart.com</p>
 `;
 
 const TERMS_EN = `
@@ -129,13 +129,13 @@ const TERMS_EN = `
 <h4>5. AI Content</h4>
 <p>Generated images are for personal use; outputs may not always be flawless.</p>
 <h4>6. Intellectual Property</h4>
-<p>The App, brand, design and software belong to [Company Name] and may not be used without permission.</p>
+<p>The App, brand, design and software belong to NGNAILART and may not be used without permission.</p>
 <h4>7. Limitation of Liability</h4>
 <p>The service is provided "as is"; to the extent permitted by law we are not liable for indirect damages.</p>
 <h4>8. Suspension and Termination</h4>
 <p>We may suspend accounts that breach these terms; you may delete your account anytime.</p>
 <h4>9. Changes and Contact</h4>
-<p>Terms may be updated; continued use means acceptance. Contact: l.shalili@logper.com</p>
+<p>Terms may be updated; continued use means acceptance. Contact: info@ngnailart.com</p>
 `;
 
 const DATA: Record<LegalDoc, { tr: LegalText; en: LegalText }> = {

@@ -18,7 +18,7 @@ export function downloadImage(url: string, filename = 'nailart.png'): void {
  * Web Share API ile görseli paylaşır. Desteklenmiyorsa false döner
  * (çağıran taraf indirmeye düşebilir).
  */
-export async function shareImage(url: string, filename = 'nailart.png', title = 'Miracle Nail Art'): Promise<boolean> {
+export async function shareImage(url: string, filename = 'nailart.png', title = 'NGNAILART'): Promise<boolean> {
   try {
     const blob = await (await fetch(url)).blob();
     const file = new File([blob], filename, { type: blob.type || 'image/png' });
