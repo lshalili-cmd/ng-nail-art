@@ -58,12 +58,12 @@ export class LegalComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly docs: LegalDoc[] = ['privacy', 'kvkk', 'terms'];
+  readonly docs: LegalDoc[] = ['privacy', 'kvkk', 'terms', 'sales'];
   readonly doc = signal<LegalDoc>('privacy');
 
   constructor() {
     const q = this.route.snapshot.queryParamMap.get('doc');
-    if (q === 'privacy' || q === 'kvkk' || q === 'terms') this.doc.set(q);
+    if (q === 'privacy' || q === 'kvkk' || q === 'terms' || q === 'sales') this.doc.set(q);
   }
 
   current() { return legalText(this.doc(), this.i18n.locale()); }

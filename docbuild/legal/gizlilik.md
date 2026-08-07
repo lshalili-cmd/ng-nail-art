@@ -4,13 +4,14 @@
 
 Bu Gizlilik Politikası, Miracle Nail Art AI ("Uygulama") tarafından kişisel verilerinizin nasıl toplandığını, işlendiğini ve korunduğunu açıklar. Uygulamayı kullanarak bu politikayı okuduğunuzu ve kabul ettiğinizi beyan edersiniz.
 
-> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir. Köşeli parantez içindeki alanlar ([...]) şirket bilgilerinizle doldurulmalıdır.
+> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir.
 
 ## 1. Veri Sorumlusu
 
-- **Ünvan:** [Şirket Ünvanı / Ad Soyad]
-- **Adres:** [Şirket Adresi]
-- **E-posta:** l.shalili@logper.com
+- **Veri Sorumlusu:** Reşad Askeroğlu
+- **Ticari Marka:** NGNAILART
+- **Adres:** 212 Ağaoğlu My Office, Mahmutbey Mah., Taşocağı Yolu Cad. No: 3/310, Bağcılar / İstanbul, Türkiye
+- **E-posta:** info@ngnailart.com
 
 ## 2. Topladığımız Kişisel Veriler
 
@@ -55,7 +56,7 @@ Kişisel verilerinizi, hesabınız aktif olduğu sürece ve ilgili yasal saklama
 
 ## 8. Haklarınız
 
-Geçerli mevzuat (KVKK / GDPR) kapsamında; verilerinize erişme, düzeltme, silme, işlemeye itiraz etme, taşınabilirlik ve rızanızı geri çekme haklarına sahipsiniz. Uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özellikleriyle ya da l.shalili@logper.com adresine yazarak bu haklarınızı kullanabilirsiniz.
+Geçerli mevzuat (KVKK / GDPR) kapsamında; verilerinize erişme, düzeltme, silme, işlemeye itiraz etme, taşınabilirlik ve rızanızı geri çekme haklarına sahipsiniz. Uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özellikleriyle ya da info@ngnailart.com adresine yazarak bu haklarınızı kullanabilirsiniz.
 
 ## 9. Veri Güvenliği
 
@@ -67,4 +68,4 @@ Uygulama 18 yaşından küçükler için tasarlanmamıştır. 18 yaşından kü�
 
 ## 11. Değişiklikler ve İletişim
 
-Bu politikayı zaman zaman güncelleyebiliriz; önemli değişiklikleri uygulama içinde bildiririz. Sorularınız için: **l.shalili@logper.com**
+Bu politikayı zaman zaman güncelleyebiliriz; önemli değişiklikleri uygulama içinde bildiririz. Sorularınız için: **info@ngnailart.com**

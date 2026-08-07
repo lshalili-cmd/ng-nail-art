@@ -31,7 +31,7 @@ Uygulama, ürettiğiniz tasarımları yapay zeka ile oluşturur. Üretilen görs
 
 ## 6. Fikri Mülkiyet
 
-Uygulamanın kendisi, markası, tasarımı ve yazılımı [Şirket Ünvanı]'na aittir ve izinsiz kullanılamaz. Uygulama içinde ürettiğiniz tasarımları kişisel olarak kullanabilirsiniz.
+Uygulamanın kendisi, markası, tasarımı ve yazılımı, NGNAILART markası altında faaliyet gösteren Reşad Askeroğlu adlı şahıs işletmesine aittir ve izinsiz kullanılamaz. Uygulama içinde ürettiğiniz tasarımları kişisel olarak kullanabilirsiniz.
 
 ## 7. Sorumluluğun Sınırlandırılması
 
@@ -47,4 +47,4 @@ Bu şartları güncelleyebiliriz; önemli değişiklikleri uygulama içinde bild
 
 ## 10. Uygulanacak Hukuk ve İletişim
 
-Bu şartlar [Ülke/İl] hukukuna tabidir. Sorularınız için: **l.shalili@logper.com**
+Bu şartlar Türkiye Cumhuriyeti hukukuna tabidir. Sorularınız için: **info@ngnailart.com**

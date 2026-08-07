@@ -3,11 +3,11 @@
 **6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca**
 **Son güncelleme:** 10 Temmuz 2026
 
-> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir. Köşeli parantez içindeki alanlar ([...]) şirket bilgilerinizle doldurulmalıdır.
+> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir.
 
 ## 1. Veri Sorumlusu
 
-Kişisel verileriniz, veri sorumlusu sıfatıyla **[Şirket Ünvanı]** ([Adres]) tarafından aşağıda açıklanan kapsamda işlenmektedir.
+Kişisel verileriniz, veri sorumlusu sıfatıyla **Reşad Askeroğlu** (Ticari Marka: NGNAILART; Adres: 212 Ağaoğlu My Office, Mahmutbey Mah., Taşocağı Yolu Cad. No: 3/310, Bağcılar / İstanbul, Türkiye) tarafından aşağıda açıklanan kapsamda işlenmektedir.
 
 ## 2. İşlenen Kişisel Veriler
 
@@ -42,4 +42,4 @@ Kanun'un 11. maddesi uyarınca; kişisel verilerinizin işlenip işlenmediğini 
 
 ## 8. Başvuru
 
-Haklarınızı kullanmak için uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özelliklerini kullanabilir ya da **l.shalili@logper.com** adresine başvurabilirsiniz. Başvurularınız en geç 30 gün içinde sonuçlandırılır.
+Haklarınızı kullanmak için uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özelliklerini kullanabilir ya da **info@ngnailart.com** adresine başvurabilirsiniz. Başvurularınız en geç 30 gün içinde sonuçlandırılır.

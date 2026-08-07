@@ -4,13 +4,14 @@
 
 This Privacy Policy explains how Miracle Nail Art AI (the "App") collects, processes and protects your personal data. By using the App, you acknowledge that you have read and accepted this policy.
 
-> **Note:** This is a draft and should be reviewed by legal counsel before it takes effect. Bracketed fields ([...]) must be completed with your company details.
+> **Note:** This is a draft and should be reviewed by legal counsel before it takes effect.
 
 ## 1. Data Controller
 
-- **Company:** [Company Name]
-- **Address:** [Company Address]
-- **Email:** l.shalili@logper.com
+- **Data Controller:** Reşad Askeroğlu
+- **Trade Name:** NGNAILART
+- **Address:** 212 Ağaoğlu My Office, Mahmutbey Mah., Taşocağı Yolu Cad. No: 3/310, Bağcılar / Istanbul, Turkey
+- **Email:** info@ngnailart.com
 
 ## 2. Personal Data We Collect
 
@@ -53,7 +54,7 @@ We keep your personal data while your account is active and for applicable legal
 
 ## 8. Your Rights
 
-Under applicable law (KVKK / GDPR) you have the right to access, correct, delete, object to processing, data portability and to withdraw consent. You can exercise these rights via the **Delete Account** and **Help/Support** features in the App, or by writing to l.shalili@logper.com.
+Under applicable law (KVKK / GDPR) you have the right to access, correct, delete, object to processing, data portability and to withdraw consent. You can exercise these rights via the **Delete Account** and **Help/Support** features in the App, or by writing to info@ngnailart.com.
 
 ## 9. Data Security
 
@@ -65,4 +66,4 @@ The App is not intended for anyone under 18. If we learn that a user under 18 ha
 
 ## 11. Changes and Contact
 
-We may update this policy from time to time and will notify significant changes in the App. Questions: **l.shalili@logper.com**
+We may update this policy from time to time and will notify significant changes in the App. Questions: **info@ngnailart.com**

@@ -31,7 +31,7 @@ The App generates your designs using AI. Generated images are for your personal 
 
 ## 6. Intellectual Property
 
-The App itself, its brand, design and software belong to [Company Name] and may not be used without permission. You may personally use the designs you generate in the App.
+The App itself, its brand, design and software belong to Reşad Askeroğlu, a sole proprietorship trading as NGNAILART, and may not be used without permission. You may personally use the designs you generate in the App.
 
 ## 7. Limitation of Liability
 
@@ -47,4 +47,4 @@ We may update these terms and will notify significant changes in the App. Contin
 
 ## 10. Governing Law and Contact
 
-These terms are governed by the laws of [Country/Province]. Questions: **l.shalili@logper.com**
+These terms are governed by the laws of the Republic of Türkiye. Questions: **info@ngnailart.com**

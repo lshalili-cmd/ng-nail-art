@@ -31,7 +31,7 @@ Uygulama, ürettiğiniz tasarımları yapay zeka ile oluşturur. Üretilen görs
 
 ## 6. Fikri Mülkiyet
 
-Uygulamanın kendisi, markası, tasarımı ve yazılımı [Şirket Ünvanı]'na aittir ve izinsiz kullanılamaz. Uygulama içinde ürettiğiniz tasarımları kişisel olarak kullanabilirsiniz.
+Uygulamanın kendisi, markası, tasarımı ve yazılımı, NGNAILART markası altında faaliyet gösteren Reşad Askeroğlu adlı şahıs işletmesine aittir ve izinsiz kullanılamaz. Uygulama içinde ürettiğiniz tasarımları kişisel olarak kullanabilirsiniz.
 
 ## 7. Sorumluluğun Sınırlandırılması
 
@@ -47,7 +47,7 @@ Bu şartları güncelleyebiliriz; önemli değişiklikleri uygulama içinde bild
 
 ## 10. Uygulanacak Hukuk ve İletişim
 
-Bu şartlar [Ülke/İl] hukukuna tabidir. Sorularınız için: **l.shalili@logper.com**
+Bu şartlar Türkiye Cumhuriyeti hukukuna tabidir. Sorularınız için: **info@ngnailart.com**
 
 
 ---
@@ -87,7 +87,7 @@ The App generates your designs using AI. Generated images are for your personal 
 
 ## 6. Intellectual Property
 
-The App itself, its brand, design and software belong to [Company Name] and may not be used without permission. You may personally use the designs you generate in the App.
+The App itself, its brand, design and software belong to Reşad Askeroğlu, a sole proprietorship trading as NGNAILART, and may not be used without permission. You may personally use the designs you generate in the App.
 
 ## 7. Limitation of Liability
 
@@ -103,4 +103,4 @@ We may update these terms and will notify significant changes in the App. Contin
 
 ## 10. Governing Law and Contact
 
-These terms are governed by the laws of [Country/Province]. Questions: **l.shalili@logper.com**
+These terms are governed by the laws of the Republic of Türkiye. Questions: **info@ngnailart.com**

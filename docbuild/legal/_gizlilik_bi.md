@@ -4,13 +4,14 @@
 
 Bu Gizlilik Politikası, Miracle Nail Art AI ("Uygulama") tarafından kişisel verilerinizin nasıl toplandığını, işlendiğini ve korunduğunu açıklar. Uygulamayı kullanarak bu politikayı okuduğunuzu ve kabul ettiğinizi beyan edersiniz.
 
-> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir. Köşeli parantez içindeki alanlar ([...]) şirket bilgilerinizle doldurulmalıdır.
+> **Not:** Bu belge bir taslaktır ve yürürlüğe girmeden önce bir hukuk danışmanı tarafından gözden geçirilmelidir.
 
 ## 1. Veri Sorumlusu
 
-- **Ünvan:** [Şirket Ünvanı / Ad Soyad]
-- **Adres:** [Şirket Adresi]
-- **E-posta:** l.shalili@logper.com
+- **Veri Sorumlusu:** Reşad Askeroğlu
+- **Ticari Marka:** NGNAILART
+- **Adres:** 212 Ağaoğlu My Office, Mahmutbey Mah., Taşocağı Yolu Cad. No: 3/310, Bağcılar / İstanbul, Türkiye
+- **E-posta:** info@ngnailart.com
 
 ## 2. Topladığımız Kişisel Veriler
 
@@ -55,7 +56,7 @@ Kişisel verilerinizi, hesabınız aktif olduğu sürece ve ilgili yasal saklama
 
 ## 8. Haklarınız
 
-Geçerli mevzuat (KVKK / GDPR) kapsamında; verilerinize erişme, düzeltme, silme, işlemeye itiraz etme, taşınabilirlik ve rızanızı geri çekme haklarına sahipsiniz. Uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özellikleriyle ya da l.shalili@logper.com adresine yazarak bu haklarınızı kullanabilirsiniz.
+Geçerli mevzuat (KVKK / GDPR) kapsamında; verilerinize erişme, düzeltme, silme, işlemeye itiraz etme, taşınabilirlik ve rızanızı geri çekme haklarına sahipsiniz. Uygulama içindeki **Hesabı Sil** ve **Yardım/Destek** özellikleriyle ya da info@ngnailart.com adresine yazarak bu haklarınızı kullanabilirsiniz.
 
 ## 9. Veri Güvenliği
 
@@ -67,7 +68,7 @@ Uygulama 18 yaşından küçükler için tasarlanmamıştır. 18 yaşından kü�
 
 ## 11. Değişiklikler ve İletişim
 
-Bu politikayı zaman zaman güncelleyebiliriz; önemli değişiklikleri uygulama içinde bildiririz. Sorularınız için: **l.shalili@logper.com**
+Bu politikayı zaman zaman güncelleyebiliriz; önemli değişiklikleri uygulama içinde bildiririz. Sorularınız için: **info@ngnailart.com**
 
 
 ---
@@ -80,13 +81,14 @@ Bu politikayı zaman zaman güncelleyebiliriz; önemli değişiklikleri uygulama
 
 This Privacy Policy explains how Miracle Nail Art AI (the "App") collects, processes and protects your personal data. By using the App, you acknowledge that you have read and accepted this policy.
 
-> **Note:** This is a draft and should be reviewed by legal counsel before it takes effect. Bracketed fields ([...]) must be completed with your company details.
+> **Note:** This is a draft and should be reviewed by legal counsel before it takes effect.
 
 ## 1. Data Controller
 
-- **Company:** [Company Name]
-- **Address:** [Company Address]
-- **Email:** l.shalili@logper.com
+- **Data Controller:** Reşad Askeroğlu
+- **Trade Name:** NGNAILART
+- **Address:** 212 Ağaoğlu My Office, Mahmutbey Mah., Taşocağı Yolu Cad. No: 3/310, Bağcılar / Istanbul, Turkey
+- **Email:** info@ngnailart.com
 
 ## 2. Personal Data We Collect
 
@@ -129,7 +131,7 @@ We keep your personal data while your account is active and for applicable legal
 
 ## 8. Your Rights
 
-Under applicable law (KVKK / GDPR) you have the right to access, correct, delete, object to processing, data portability and to withdraw consent. You can exercise these rights via the **Delete Account** and **Help/Support** features in the App, or by writing to l.shalili@logper.com.
+Under applicable law (KVKK / GDPR) you have the right to access, correct, delete, object to processing, data portability and to withdraw consent. You can exercise these rights via the **Delete Account** and **Help/Support** features in the App, or by writing to info@ngnailart.com.
 
 ## 9. Data Security
 
@@ -141,4 +143,4 @@ The App is not intended for anyone under 18. If we learn that a user under 18 ha
 
 ## 11. Changes and Contact
 
-We may update this policy from time to time and will notify significant changes in the App. Questions: **l.shalili@logper.com**
+We may update this policy from time to time and will notify significant changes in the App. Questions: **info@ngnailart.com**
