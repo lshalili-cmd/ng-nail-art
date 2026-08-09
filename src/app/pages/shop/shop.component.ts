@@ -111,6 +111,10 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
           </button>
           <button class="btn-ghost co-cancel" (click)="closePay()">{{ i18n.t('pay_cancel') }}</button>
           <p class="co-secure">🔒 {{ payMode() === 'live' ? i18n.t('pay_secure') : i18n.t('pay_demo_note') }}</p>
+          <p class="co-legal">
+            <a href="/legal?doc=sales" target="_blank" rel="noopener">{{ i18n.t('leg_sales') }}</a> ·
+            <a href="/legal?doc=privacy" target="_blank" rel="noopener">{{ i18n.t('leg_privacy') }}</a>
+          </p>
         }
       </div>
     }
@@ -169,6 +173,9 @@ const PROV_LABEL: Record<string, string> = { iyzico: 'iyzico', stripe: 'Stripe',
     .co-cancel { width: 100%; margin-top: 8px; }
     .co-err { margin: 12px 0 0; font-size: 12px; color: #f0b8b8; text-align: center; }
     .co-secure { margin: 12px 0 0; font-size: 11px; color: var(--muted-2); text-align: center; }
+    .co-legal { margin: 6px 0 0; font-size: 11px; color: var(--muted-2); text-align: center; }
+    .co-legal a { color: var(--gold-soft); text-decoration: none; }
+    .co-legal a:hover { text-decoration: underline; }
     .co-done { text-align: center; padding: 8px 0; }
     .co-ic { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 14px; font-size: 32px; color: #1a1206;
       display: flex; align-items: center; justify-content: center; background: var(--gold-grad); }
@@ -246,7 +253,6 @@ export class ShopComponent implements OnInit {
   ];
 
   readonly packs: Pack[] = [
-    { id: 'test_1tl', nameKey: 'pk_test', credits: 5 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
     { id: 'pack_10', nameKey: 'pk_mini', credits: 10 },
     { id: 'pack_25', nameKey: 'pk_standart', credits: 25 },
     { id: 'pack_50', nameKey: 'pk_mega', credits: 50 },

@@ -232,7 +232,7 @@ Object.assign(EN, {
   f_y360: '360 images/year total', f_all_unlim: 'Everything unlimited', f_589: '~$5.89/mo',
   f_p100: '100 AI images/month', f_salon: 'For salons & pros', f_py1200: '1,200 images/year total', f_1875: '~$18.75/mo',
   f_bigsalon: 'For large salons & agencies',
-  pk_mini: 'Mini', pk_standart: 'Standard', pk_mega: 'Mega', pk_test: 'Test (1₺)',
+  pk_mini: 'Mini', pk_standart: 'Standard', pk_mega: 'Mega',
   sug1: 'Gold chrome almond French', sug2: 'Pastel pink minimal', sug3: 'Galaxy deep blue',
   sug4: 'Pearl white for brides', sug5: 'Red matte coffin',
 });
@@ -244,7 +244,7 @@ Object.assign(TR, {
   f_y360: 'Yıllık toplam 360 görsel', f_all_unlim: 'Her şey sınırsız', f_589: '~$5.89/ay',
   f_p100: 'Aylık 100 görsel üretim', f_salon: 'Salon & profesyoneller için', f_py1200: 'Yıllık toplam 1.200 görsel', f_1875: '~$18.75/ay',
   f_bigsalon: 'Büyük salon & ajanslar için',
-  pk_mini: 'Mini', pk_standart: 'Standart', pk_mega: 'Mega', pk_test: 'Test (1₺)',
+  pk_mini: 'Mini', pk_standart: 'Standart', pk_mega: 'Mega',
   sug1: 'Altın kromlu badem French', sug2: 'Pastel pembe minimal', sug3: 'Galaksi temalı koyu mavi',
   sug4: 'Gelin için inci beyazı', sug5: 'Kırmızı mat coffin',
 });
@@ -256,7 +256,7 @@ Object.assign(RU, {
   f_y360: '360 изображений в год', f_all_unlim: 'Всё без лимита', f_589: '~$5.89/мес',
   f_p100: '100 AI-изображений/мес', f_salon: 'Для салонов и профи', f_py1200: '1 200 изображений в год', f_1875: '~$18.75/мес',
   f_bigsalon: 'Для больших салонов и агентств',
-  pk_mini: 'Mini', pk_standart: 'Стандарт', pk_mega: 'Mega', pk_test: 'Test (1₺)',
+  pk_mini: 'Mini', pk_standart: 'Стандарт', pk_mega: 'Mega',
   sug1: 'Золотой хром миндаль френч', sug2: 'Пастельный розовый минимал', sug3: 'Галактика тёмно-синий',
   sug4: 'Жемчужно-белый для невест', sug5: 'Красный матовый coffin',
 });
@@ -268,7 +268,7 @@ Object.assign(AR, {
   f_y360: '٣٦٠ صورة سنوياً', f_all_unlim: 'كل شيء غير محدود', f_589: '~$5.89/شهر',
   f_p100: '١٠٠ صورة ذكاء/شهر', f_salon: 'للصالونات والمحترفين', f_py1200: '١٢٠٠ صورة سنوياً', f_1875: '~$18.75/شهر',
   f_bigsalon: 'للصالونات والوكالات الكبيرة',
-  pk_mini: 'Mini', pk_standart: 'ستاندرد', pk_mega: 'Mega', pk_test: 'Test (1₺)',
+  pk_mini: 'Mini', pk_standart: 'ستاندرد', pk_mega: 'Mega',
   sug1: 'كروم ذهبي لوز فرنش', sug2: 'وردي باستيل بسيط', sug3: 'مجرة أزرق غامق',
   sug4: 'أبيض لؤلؤي للعرائس', sug5: 'أحمر مطفي coffin',
 });
@@ -405,7 +405,7 @@ Object.assign(EN, {
   sup_mine: 'Your messages', sup_answer: 'Reply', sup_waiting: 'Awaiting reply', sup_new: 'New message',
   agree_text: 'I have read and accept the Privacy Policy, KVKK Notice and Terms of Use.',
   agree_required: 'Please accept the terms to continue.',
-  leg_privacy: 'Privacy Policy', leg_kvkk: 'KVKK Notice', leg_terms: 'Terms of Use', legal: 'Privacy & Legal',
+  leg_privacy: 'Privacy Policy', leg_kvkk: 'KVKK Notice', leg_terms: 'Terms of Use', leg_sales: 'Distance Sales Agreement', legal: 'Privacy & Legal',
   currency: 'Currency', auth_remember: 'Remember me',
 });
 Object.assign(TR, {
@@ -424,7 +424,7 @@ Object.assign(TR, {
   sup_mine: 'Mesajların', sup_answer: 'Yanıt', sup_waiting: 'Yanıt bekleniyor', sup_new: 'Yeni mesaj',
   agree_text: 'Gizlilik Politikası, KVKK Aydınlatma Metni ve Kullanım Şartları\'nı okudum, kabul ediyorum.',
   agree_required: 'Devam etmek için şartları kabul etmelisiniz.',
-  leg_privacy: 'Gizlilik Politikası', leg_kvkk: 'KVKK Aydınlatma', leg_terms: 'Kullanım Şartları', legal: 'Gizlilik ve Yasal',
+  leg_privacy: 'Gizlilik Politikası', leg_kvkk: 'KVKK Aydınlatma', leg_terms: 'Kullanım Şartları', leg_sales: 'Mesafeli Satış Sözleşmesi', legal: 'Gizlilik ve Yasal',
   currency: 'Para birimi', auth_remember: 'Beni hatırla',
 });
 Object.assign(RU, {
@@ -443,7 +443,7 @@ Object.assign(RU, {
   sup_mine: 'Ваши сообщения', sup_answer: 'Ответ', sup_waiting: 'Ожидает ответа', sup_new: 'Новое сообщение',
   agree_text: 'Я прочитал(а) и принимаю Политику конфиденциальности, Уведомление KVKK и Условия использования.',
   agree_required: 'Чтобы продолжить, примите условия.',
-  leg_privacy: 'Политика конфиденциальности', leg_kvkk: 'Уведомление KVKK', leg_terms: 'Условия использования', legal: 'Конфиденциальность и право',
+  leg_privacy: 'Политика конфиденциальности', leg_kvkk: 'Уведомление KVKK', leg_terms: 'Условия использования', leg_sales: 'Договор дистанционной продажи', legal: 'Конфиденциальность и право',
   currency: 'Валюта', auth_remember: 'Запомнить меня',
 });
 Object.assign(AR, {
@@ -462,7 +462,7 @@ Object.assign(AR, {
   sup_mine: 'رسائلك', sup_answer: 'الرد', sup_waiting: 'بانتظار الرد', sup_new: 'رسالة جديدة',
   agree_text: 'لقد قرأت وأوافق على سياسة الخصوصية وإشعار KVKK وشروط الاستخدام.',
   agree_required: 'يرجى قبول الشروط للمتابعة.',
-  leg_privacy: 'سياسة الخصوصية', leg_kvkk: 'إشعار KVKK', leg_terms: 'شروط الاستخدام', legal: 'الخصوصية والقانون',
+  leg_privacy: 'سياسة الخصوصية', leg_kvkk: 'إشعار KVKK', leg_terms: 'شروط الاستخدام', leg_sales: 'اتفاقية البيع عن بُعد', legal: 'الخصوصية والقانون',
   currency: 'العملة', auth_remember: 'تذكرني',
 });
 

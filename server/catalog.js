@@ -15,7 +15,6 @@ const PRICES = {
   pack_10:    { USD: 6,      EUR: 5.99,   GBP: 4.99,   TRY: 249 },
   pack_25:    { USD: 13,     EUR: 12.99,  GBP: 10.99,  TRY: 549 },
   pack_50:    { USD: 25,     EUR: 24.99,  GBP: 19.99,  TRY: 999 },
-  test_1tl:   { USD: 1,      EUR: 1,      GBP: 1,      TRY: 1 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
 };
 
 /** itemId → satın alım neyi verir: plan (süreli) veya kredi paketi. */
@@ -27,7 +26,6 @@ const GRANTS = {
   pack_10:    { kind: 'pack', credits: 10 },
   pack_25:    { kind: 'pack', credits: 25 },
   pack_50:    { kind: 'pack', credits: 50 },
-  test_1tl:   { kind: 'pack', credits: 5 },   // GEÇİCİ test paketi — CANLIYA ÇIKMADAN KALDIR
 };
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'TRY'];
