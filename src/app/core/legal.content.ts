@@ -2,7 +2,7 @@
 // Bağlayıcı sürüm için teslim edilen DOCX dosyaları avukat onayından geçirilmelidir.
 // Şirket adı/adres/e-posta tek kaynaktan gelir: bkz. company.config.ts
 
-import { COMPANY_NAME, COMPANY_OWNER, COMPANY_EMAIL, COMPANY_ADDRESS_TR, COMPANY_ADDRESS_EN } from './company.config';
+import { COMPANY_NAME, COMPANY_OWNER, COMPANY_REGISTERED_NAME, COMPANY_EMAIL, COMPANY_ADDRESS_TR, COMPANY_ADDRESS_EN } from './company.config';
 
 export type LegalDoc = 'privacy' | 'kvkk' | 'terms' | 'sales';
 export interface LegalText { title: string; html: string; }
@@ -10,6 +10,7 @@ export interface LegalText { title: string; html: string; }
 const PRIVACY_TR = `
 <h4>1. Veri Sorumlusu</h4>
 <p><b>Veri Sorumlusu:</b> ${COMPANY_OWNER}<br>
+<b>Kayıtlı Ticaret Unvanı:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Ticari Marka:</b> ${COMPANY_NAME}<br>
 <b>Adres:</b> ${COMPANY_ADDRESS_TR}<br>
 <b>E-posta:</b> ${COMPANY_EMAIL}</p>
@@ -45,6 +46,7 @@ const PRIVACY_TR = `
 const PRIVACY_EN = `
 <h4>1. Data Controller</h4>
 <p><b>Data Controller:</b> ${COMPANY_OWNER}<br>
+<b>Registered Business Name:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Trade Name:</b> ${COMPANY_NAME}<br>
 <b>Address:</b> ${COMPANY_ADDRESS_EN}<br>
 <b>Email:</b> ${COMPANY_EMAIL}</p>
@@ -81,6 +83,7 @@ const KVKK_TR = `
 <p><i>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca.</i></p>
 <h4>1. Veri Sorumlusu</h4>
 <p><b>Veri Sorumlusu:</b> ${COMPANY_OWNER}<br>
+<b>Kayıtlı Ticaret Unvanı:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Ticari Marka:</b> ${COMPANY_NAME}<br>
 <b>Adres:</b> ${COMPANY_ADDRESS_TR}<br>
 <b>E-posta:</b> ${COMPANY_EMAIL}</p>
@@ -103,6 +106,7 @@ const KVKK_EN = `
 <p><i>This notice concerns Turkish data-protection law (KVKK, Law No. 6698). If you are outside Türkiye, your rights are described in the Privacy Policy (GDPR and equivalents).</i></p>
 <h4>Data Controller</h4>
 <p><b>Data Controller:</b> ${COMPANY_OWNER}<br>
+<b>Registered Business Name:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Trade Name:</b> ${COMPANY_NAME}<br>
 <b>Address:</b> ${COMPANY_ADDRESS_EN}<br>
 <b>Email:</b> ${COMPANY_EMAIL}</p>
@@ -125,7 +129,7 @@ const TERMS_TR = `
 <h4>5. Yapay Zeka İçeriği</h4>
 <p>Üretilen görseller kişisel kullanımınız içindir; çıktılar her zaman kusursuz olmayabilir.</p>
 <h4>6. Fikri Mülkiyet</h4>
-<p>Uygulama, marka, tasarım ve yazılım hakları, ${COMPANY_NAME} markası altında faaliyet gösteren ${COMPANY_OWNER} adlı şahıs işletmesine aittir; izinsiz kullanılamaz.</p>
+<p>Uygulama, marka, tasarım ve yazılım hakları, ${COMPANY_NAME} markası altında faaliyet gösteren ${COMPANY_OWNER} adlı şahıs işletmesine (kayıtlı ticaret unvanı: ${COMPANY_REGISTERED_NAME}) aittir; izinsiz kullanılamaz.</p>
 <h4>7. Sorumluluğun Sınırı</h4>
 <p>Hizmet "olduğu gibi" sunulur; yasanın izin verdiği ölçüde dolaylı zararlardan sorumlu değiliz.</p>
 <h4>8. Askıya Alma ve Fesih</h4>
@@ -146,7 +150,7 @@ const TERMS_EN = `
 <h4>5. AI Content</h4>
 <p>Generated images are for personal use; outputs may not always be flawless.</p>
 <h4>6. Intellectual Property</h4>
-<p>The App, brand, design and software belong to ${COMPANY_OWNER}, a sole proprietorship trading as ${COMPANY_NAME}, and may not be used without permission.</p>
+<p>The App, brand, design and software belong to ${COMPANY_OWNER}, a sole proprietorship (registered business name: ${COMPANY_REGISTERED_NAME}) trading as ${COMPANY_NAME}, and may not be used without permission.</p>
 <h4>7. Limitation of Liability</h4>
 <p>The service is provided "as is"; to the extent permitted by law we are not liable for indirect damages.</p>
 <h4>8. Suspension and Termination</h4>
@@ -158,6 +162,7 @@ const TERMS_EN = `
 const SALES_TR = `
 <h4>1. Taraflar</h4>
 <p><b>Satıcı:</b> ${COMPANY_OWNER}<br>
+<b>Kayıtlı Ticaret Unvanı:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Ticari Marka:</b> ${COMPANY_NAME}<br>
 <b>Adres:</b> ${COMPANY_ADDRESS_TR}<br>
 <b>E-posta:</b> ${COMPANY_EMAIL}</p>
@@ -181,6 +186,7 @@ const SALES_TR = `
 const SALES_EN = `
 <h4>1. Parties</h4>
 <p><b>Seller:</b> ${COMPANY_OWNER}<br>
+<b>Registered Business Name:</b> ${COMPANY_REGISTERED_NAME}<br>
 <b>Trade Name:</b> ${COMPANY_NAME}<br>
 <b>Address:</b> ${COMPANY_ADDRESS_EN}<br>
 <b>Email:</b> ${COMPANY_EMAIL}</p>
