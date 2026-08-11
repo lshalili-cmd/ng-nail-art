@@ -7,13 +7,12 @@ import { I18nService } from '../../core/i18n.service';
 import { AiService } from '../../core/ai.service';
 import { BackendService } from '../../core/api.service';
 import { AiStatus, DesignSpec, GeneratedImage } from '../../core/ai.models';
-import { renderNailThumb, colorToHex } from '../../core/nail-art';
+import { renderNailThumb } from '../../core/nail-art';
 import { FavoritesService } from '../../core/favorites.service';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { Design } from '../../core/data.service';
 import { AnalysisStore } from '../../core/analysis-store';
 import { AnalysisInput } from '../../core/recommendation';
-import { TryonStore } from '../../core/tryon-store';
 import { HandImageStore, HandImage } from '../../core/hand-image-store';
 import { HandAnalysisService } from '../../core/hand-analysis.service';
 
@@ -161,8 +160,7 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
             }
 
             <div class="actions">
-              <button class="btn-primary" (click)="tryAr()">📱 {{ i18n.t('studio_try_ar') }}</button>
-              <button class="btn-ghost" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
+              <button class="btn-primary" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
             </div>
             <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · her üretim 1 hak</p>
           </div>
@@ -244,7 +242,6 @@ export class StudioComponent implements OnInit, OnDestroy {
   readonly fav = inject(FavoritesService);
   readonly quota = inject(ImageQuotaService);
   private readonly analysisStore = inject(AnalysisStore);
-  private readonly tryon = inject(TryonStore);
   private readonly handStore = inject(HandImageStore);
   private readonly hands = inject(HandAnalysisService);
 
@@ -403,6 +400,7 @@ export class StudioComponent implements OnInit, OnDestroy {
         shape: d.shape,
         colors: d.colors,
         finish: d.finish,
+        image: this.handImg()?.imageUrl,
       });
       this.image.set(img);
     } catch (e) {
@@ -431,19 +429,6 @@ export class StudioComponent implements OnInit, OnDestroy {
     }
     if (d.finish === 'chrome') return 'chrome';
     return 'glossy';
-  }
-
-  tryAr(): void {
-    const d = this.design();
-    const color = d ? colorToHex(d.colors[0] ?? 'gold') : '#d4af37';
-    const pattern = d ? this.patternFromSpec(d) : 'glossy';
-    // AR el fotoğrafı DEĞİL, tasarımın DÜZ DOKU halini tırnağa bindirir.
-    const desc = d
-      ? [(d.colors || []).join(' '), d.style, d.finish, (d.patterns || []).join(' '), (d.effects || []).join(' ')]
-          .filter(Boolean).join(' ').trim()
-      : '';
-    this.tryon.set({ imageUrl: this.imageSrc(), desc, color, pattern });
-    void this.router.navigate(['/ar'], { queryParams: { color, pattern } });
   }
 
   /** Görsel hakkı bitince Mağaza'ya yönlendirir. */

@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HeaderComponent } from '../../shared/header.component';
 import { I18nService } from '../../core/i18n.service';
 import { DataService, Design } from '../../core/data.service';
 import { FavoritesService } from '../../core/favorites.service';
-import { colorToHex } from '../../core/nail-art';
 import { downloadImage, shareImage } from '../../core/share';
-import { TryonStore } from '../../core/tryon-store';
 
 @Component({
   selector: 'app-design-detail',
@@ -75,11 +73,9 @@ import { TryonStore } from '../../core/tryon-store';
 })
 export class DesignDetailComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly data = inject(DataService);
   readonly fav = inject(FavoritesService);
   readonly i18n = inject(I18nService);
-  private readonly tryon = inject(TryonStore);
 
   private readonly id = Number(this.route.snapshot.paramMap.get('id'));
 
@@ -99,15 +95,6 @@ export class DesignDetailComponent {
   toggleFav(): void {
     const d = this.design();
     if (d) this.fav.toggle(d);
-  }
-
-  /** GERÇEK galeri görselini AR'a taşıyarak dene (prosedürel şablon değil). */
-  tryAr(d: Design): void {
-    const color = colorToHex(d.colors[0] ?? 'gold');
-    const pattern = d.pattern ?? 'glossy';
-    const shape = d.shapes?.[0] || 'oval';   // tasarımın tırnak şekli → AR doğru çizsin
-    this.tryon.set({ imageUrl: this.heroSrc(d), color, pattern, shape });
-    void this.router.navigate(['/ar'], { queryParams: { color, pattern, shape } });
   }
 
   download(d: Design): void {

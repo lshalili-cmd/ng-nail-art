@@ -499,7 +499,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   go(key: string): void {
     switch (key) {
       case 'subscription': void this.router.navigate(['/shop']); break;
-      case 'tryon_hist': void this.router.navigate(['/ar']); break;
       case 'my_fav': this.favOpen.set(true); break;
       case 'settings': this.openSettings(); break;
       case 'help': this.openSupport(); break;
@@ -747,7 +746,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   readonly favDesigns = this.fav.items;
   readonly menu = [
     { icon: '❤️', key: 'my_fav' },
-    { icon: '📱', key: 'tryon_hist' },
     { icon: '💎', key: 'subscription' },
     { icon: '⚙️', key: 'settings' },
     { icon: '❓', key: 'help' },

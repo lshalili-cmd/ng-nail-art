@@ -39,12 +39,6 @@ export const routes: Routes = [
     title: 'AI Stüdyo — NGNAILART',
   },
   {
-    path: 'ar',
-    canActivate: [authGuard],
-    loadComponent: () => import('./pages/ar/ar.component').then((m) => m.ArComponent),
-    title: 'AR Deneme — NGNAILART',
-  },
-  {
     path: 'design/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/design-detail/design-detail.component').then((m) => m.DesignDetailComponent),
