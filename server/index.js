@@ -640,10 +640,12 @@ app.post('/api/payments/confirm', async (req, res) => {
 
 // iyzico Checkout Form dönüşü: iyzico ödemeden sonra token'ı buraya POST eder ("Cannot POST /shop"
 // hatasının çözümü). Ödemeyi doğrula → plan/krediyi ver → tarayıcıyı ön yüz /shop'a 302 ile döndür.
-app.post('/api/payments/callback/iyzico', express.urlencoded({ extended: false }), async (req, res) => {
+// Hem POST (form auto-submit — normal akış) hem GET (bazı iyzico ortamlarında düz yönlendirme)
+// kabul edilir; aksi halde "Route not found" ile kullanıcı uygulamaya hiç dönemiyordu.
+async function iyzicoCallbackHandler(req, res) {
   const ref = String(req.query.ref || '');
   const feRaw = String(req.query.fe || '');
-  const token = String((req.body && (req.body.token || req.body.paymentId)) || '');
+  const token = String((req.body && (req.body.token || req.body.paymentId)) || req.query.token || req.query.paymentId || '');
   let paid = false;
   try {
     if (db.ready() && ref) {
@@ -667,7 +669,9 @@ app.post('/api/payments/callback/iyzico', express.urlencoded({ extended: false }
   let fe = process.env.APP_URL || '';
   if (!fe) fe = /^https?:\/\/localhost(:\d+)?$/i.test(feRaw) ? feRaw : `${req.protocol}://${req.get('host')}`;
   res.redirect(302, `${fe.replace(/\/+$/, '')}/shop?paid=${paid ? 1 : 0}&provider=iyzico&ref=${encodeURIComponent(ref)}`);
-});
+}
+app.post('/api/payments/callback/iyzico', express.urlencoded({ extended: false }), iyzicoCallbackHandler);
+app.get('/api/payments/callback/iyzico', iyzicoCallbackHandler);
 
 // PayTR sunucu→sunucu bildirimi (gerçek ödeme doğrulaması — hash imzası). PayTR yanıt olarak
 // düz "OK" bekler; almazsa bildirimi tekrar dener. iyzico/Stripe pull-doğrulaması confirm'de yapılır.
