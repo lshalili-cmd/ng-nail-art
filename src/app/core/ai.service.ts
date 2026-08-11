@@ -51,6 +51,8 @@ export class AiService {
     colors?: string[];
     finish?: string;
     tier?: 'wow' | 'standard';
+    /** Yüklenen el fotoğrafı (data URL) — verilirse AI bunu düzenler (image-to-image), yoksa izole tırnak üretir. */
+    image?: string;
   }): Promise<GeneratedImage> {
     try {
       const res = await firstValueFrom(

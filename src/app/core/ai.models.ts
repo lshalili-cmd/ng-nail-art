@@ -1,4 +1,4 @@
-// Miracle Nail Art AI — AI API tipleri
+// NGNAILART — AI API tipleri
 // Sözleşme, mevcut monolit backend'in (_serve.js) /api/ai/* uçlarıyla birebir uyumludur.
 
 export interface ApiEnvelope<T> {
@@ -51,6 +51,7 @@ export interface GeneratedImage {
   finish: string;
   size: number;
   provider: string;
+  edited?: boolean;
 }
 
 /** /api/ai/status çıktısı. */
