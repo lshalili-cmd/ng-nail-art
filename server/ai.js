@@ -154,6 +154,10 @@ function falEditGenerate(prompt, imageDataUrl) {
     image_url: imageDataUrl,
     output_format: 'png',
     safety_tolerance: '2',
+    // Kalite: fal.ai kendi prompt'u iyileştirsin + detaylara (desen/motif) daha sıkı uysun
+    // (varsayılan guidance_scale 3.5 — ince desenler soluk çıkıyordu, biraz yükseltildi).
+    enhance_prompt: true,
+    guidance_scale: 4.5,
   });
 }
 

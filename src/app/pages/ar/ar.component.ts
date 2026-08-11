@@ -8,6 +8,7 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
 import { TryonStore } from '../../core/tryon-store';
 import { ImageQuotaService } from '../../core/image-quota.service';
 import { FavoritesService } from '../../core/favorites.service';
+import { AiService } from '../../core/ai.service';
 import { Design } from '../../core/data.service';
 
 
@@ -35,18 +36,28 @@ import { Design } from '../../core/data.service';
           <div class="hint"><span class="ic spin">⏳</span><p>{{ i18n.t('ar_starting') }}</p></div>
         }
         @if (photo(); as p) {
-          <img class="shot" [src]="p" alt="AR" />
+          <img class="shot" [src]="realisticImg() ?? p" alt="AR" />
           <button class="fav-btn" (click)="toggleFav()" [attr.aria-pressed]="fav.has(favId())"
                   [title]="i18n.t('favorites')">
             {{ fav.has(favId()) ? '❤️' : '🤍' }}
           </button>
+          @if (realisticLoading()) {
+            <div class="hint"><span class="ic spin">⏳</span><p>{{ i18n.t('ar_generating') }}</p></div>
+          }
         }
       </div>
 
+      @if (genError(); as ge) { <div class="banner err">⚠️ {{ ge }}</div> }
+
       <!-- Kontroller -->
       <div class="actions">
-        @if (photo()) {
-          <button class="btn-ghost" (click)="photo.set(null)">🔄 {{ i18n.t('rescan') }}</button>
+        @if (photo() && !realisticImg()) {
+          <button class="btn-primary" (click)="generateRealistic()" [disabled]="realisticLoading()">
+            ✨ {{ realisticLoading() ? i18n.t('ar_generating') : i18n.t('ar_make_realistic') }}
+          </button>
+          <button class="btn-ghost" (click)="photo.set(null)" [disabled]="realisticLoading()">🔄 {{ i18n.t('rescan') }}</button>
+        } @else if (photo()) {
+          <button class="btn-ghost" (click)="photo.set(null); realisticImg.set(null)">🔄 {{ i18n.t('rescan') }}</button>
         } @else if (!running()) {
           <button class="btn-primary" (click)="start()" [disabled]="starting()">📸 {{ i18n.t('ar_title') }}</button>
         } @else {
@@ -91,6 +102,7 @@ export class ArComponent implements OnDestroy {
   private readonly tryon = inject(TryonStore);
   readonly quota = inject(ImageQuotaService);
   readonly fav = inject(FavoritesService);
+  private readonly ai = inject(AiService);
 
   /** Üretilen tasarım görseli — tırnağa canlı bindirmek için. */
   private designImg: HTMLImageElement | null = null;
@@ -106,6 +118,13 @@ export class ArComponent implements OnDestroy {
   readonly favId = signal<number>(0);   // çekilen AR görseli için benzersiz favori kimliği
   readonly color = signal<string>('#d4af37');
   readonly pattern = signal<string>('glossy');
+
+  /** Flux ile üretilen gerçekçi (fotoğraf-kalitesinde) sonuç ve durumu. */
+  readonly realisticImg = signal<string | null>(null);
+  readonly realisticLoading = signal<boolean>(false);
+  readonly genError = signal<string | null>(null);
+  /** capture() sırasında overlay'siz alınan ham kare — Flux'a gönderilecek girdi. */
+  private rawFrame: string | null = null;
 
   constructor() {
     // "Dene" ile bir tasarımdan gelindiyse rengini/desenini/şeklini uygula
@@ -331,7 +350,61 @@ export class ArComponent implements OnDestroy {
       console.warn('[AR] fotoğraf çekilemedi (çapraz-köken görsel):', e);
       this.error.set(this.i18n.t('err_camera'));
     }
+    // HAM kare (overlay'siz) — Flux ile gerçekçi görsel üretimi için ayrıca sakla.
+    try {
+      const raw = document.createElement('canvas');
+      raw.width = out.width;
+      raw.height = out.height;
+      const rctx = raw.getContext('2d');
+      if (rctx) {
+        rctx.drawImage(v, 0, 0, raw.width, raw.height);
+        this.rawFrame = raw.toDataURL('image/jpeg', 0.9);
+      }
+    } catch {
+      this.rawFrame = null;
+    }
+    this.realisticImg.set(null);
+    this.genError.set(null);
     this.stop();
+  }
+
+  /** Desen adını Flux için zengin, tarif edici bir ifadeye çevirir (renkle birlikte kullanılır). */
+  private patternDescription(pattern: string): string {
+    const map: Record<string, string> = {
+      matte: 'a smooth matte finish, no shine, solid color',
+      chrome: 'a mirror-like chrome finish, high-shine metallic reflection',
+      glitter: 'a glitter finish with fine sparkling shimmer particles evenly scattered',
+      galaxy: 'a galaxy-themed nail art: deep color base with sparkling star-like glitter accents and a subtle nebula swirl pattern',
+      french: 'a classic French manicure: neutral pink base with clean white tips',
+      glossy: 'a glossy, high-shine finish, solid color',
+    };
+    return map[pattern] || map['glossy'];
+  }
+
+  /** Çekilen ham kareyi Flux Kontext'e gönderip gerçekçi (fotoğraf-kalitesinde) sonucu üretir. */
+  async generateRealistic(): Promise<void> {
+    if (!this.rawFrame) return;
+    if (!this.quota.consume()) {
+      this.genError.set(this.i18n.t('ar_need_credit'));
+      return;
+    }
+    this.genError.set(null);
+    this.realisticLoading.set(true);
+    try {
+      const finish = ['glossy', 'matte', 'chrome'].includes(this.pattern()) ? this.pattern() : 'glossy';
+      const design = this.patternDescription(this.pattern());
+      const prompt = `Elegant salon-quality manicure, nail polish color ${this.color()} as the base, with ${design}. Evenly applied, photorealistic, high detail.`;
+      const img = await this.ai.generateImage({
+        prompt, style: 'luxury', shape: 'almond', colors: [this.color()], finish, image: this.rawFrame,
+      });
+      const u = img.imageUrl;
+      this.realisticImg.set(u.startsWith('data:') || /^https?:\/\//.test(u) || u.startsWith('/') ? u : '/' + u);
+    } catch (e) {
+      console.error('[AR] gerçekçi görsel üretimi başarısız:', e);
+      this.genError.set(this.i18n.t('ai_gen_failed'));
+    } finally {
+      this.realisticLoading.set(false);
+    }
   }
 
   /** Çekilen AR el görselini favorilere ekler/çıkarır (Profil > Favorilerim'de görünür). */
