@@ -256,56 +256,61 @@ export class StudioComponent implements OnInit, OnDestroy {
   /** "Yeniden Üret" her seferinde farklı renk/bitiş denesin diye saklanır. */
   private lastAnalysis: AnalysisInput | null = null;
 
-  /** Otomatik ("elinize özel") üretimde her seferinde farklı çıksın diye rastgele renk/bitiş havuzu. */
-  private readonly TAILORED_STYLES: Record<string, { color: string; finish: string }[]> = {
-    tr: [
-      { color: 'altın kromlu', finish: 'parlak bitişli' },
-      { color: 'pastel pembe', finish: 'mat bitişli' },
-      { color: 'mercan-somon tonlarında', finish: 'French detaylı' },
-      { color: 'derin bordo', finish: 'parlak bitişli' },
-      { color: 'nude bej tonlarında', finish: 'ince simli' },
-      { color: 'gece mavisi', finish: 'mermer desenli' },
-      { color: 'şampanya altın', finish: 'ombre geçişli' },
-      { color: 'zümrüt yeşili', finish: 'mat bitişli' },
-      { color: 'gümüş krom', finish: 'ayna parlaklığında' },
-      { color: 'lavanta moru', finish: 'pastel mat' },
-    ],
-    en: [
-      { color: 'gold chrome', finish: 'glossy finish' },
-      { color: 'pastel pink', finish: 'matte finish' },
-      { color: 'coral-salmon tones', finish: 'French tip detail' },
-      { color: 'deep burgundy', finish: 'glossy finish' },
-      { color: 'nude beige tones', finish: 'fine glitter' },
-      { color: 'midnight blue', finish: 'marble pattern' },
-      { color: 'champagne gold', finish: 'ombre gradient' },
-      { color: 'emerald green', finish: 'matte finish' },
-      { color: 'silver chrome', finish: 'mirror finish' },
-      { color: 'lavender purple', finish: 'soft matte' },
-    ],
-    ru: [
-      { color: 'золотисто-хромовый', finish: 'глянцевое покрытие' },
-      { color: 'пастельно-розовый', finish: 'матовое покрытие' },
-      { color: 'коралловые тона', finish: 'французский маникюр' },
-      { color: 'глубокий бордовый', finish: 'глянцевое покрытие' },
-      { color: 'нюдовые бежевые тона', finish: 'с мелким блеском' },
-      { color: 'полуночно-синий', finish: 'мраморный узор' },
-      { color: 'шампань-золото', finish: 'омбре-переход' },
-      { color: 'изумрудно-зелёный', finish: 'матовое покрытие' },
-      { color: 'серебристо-хромовый', finish: 'зеркальный блеск' },
-      { color: 'сиреневый', finish: 'пастельный матовый' },
-    ],
-    ar: [
-      { color: 'ذهبي كروم', finish: 'لامع' },
-      { color: 'وردي باستيل', finish: 'مطفي' },
-      { color: 'درجات المرجاني', finish: 'بتفاصيل فرنش' },
-      { color: 'عنابي غامق', finish: 'لامع' },
-      { color: 'درجات بيج نود', finish: 'بلمعان خفيف' },
-      { color: 'أزرق كحلي', finish: 'بنقشة رخامية' },
-      { color: 'ذهبي شمبانيا', finish: 'تدرج أومبريه' },
-      { color: 'أخضر زمردي', finish: 'مطفي' },
-      { color: 'فضي كروم', finish: 'لمعان مرآة' },
-      { color: 'بنفسجي لافندر', finish: 'مطفي هادئ' },
-    ],
+  /** Otomatik ("elinize özel") üretimde her seferinde farklı çıksın diye renk/bitiş BAĞIMSIZ
+   *  rastgele seçilir (16 renk × 10 bitiş ≈ 160 kombinasyon). */
+  private readonly TAILORED_STYLES: Record<string, { colors: string[]; finishes: string[] }> = {
+    tr: {
+      colors: [
+        'altın kromlu', 'pastel pembe', 'mercan-somon tonlarında', 'derin bordo',
+        'nude bej tonlarında', 'gece mavisi', 'şampanya altın', 'zümrüt yeşili',
+        'gümüş krom', 'lavanta moru', 'mercan pembesi', 'mat siyah',
+        'fildişi beyaz', 'bakır tonlarında', 'açık leylak', 'koyu çikolata kahvesi',
+      ],
+      finishes: [
+        'parlak bitişli', 'mat bitişli', 'French detaylı', 'ince simli',
+        'mermer desenli', 'ombre geçişli', 'ayna parlaklığında', 'pastel mat',
+        'galaksi desenli', 'krom aynalı',
+      ],
+    },
+    en: {
+      colors: [
+        'gold chrome', 'pastel pink', 'coral-salmon tones', 'deep burgundy',
+        'nude beige tones', 'midnight blue', 'champagne gold', 'emerald green',
+        'silver chrome', 'lavender purple', 'coral pink', 'matte black',
+        'ivory white', 'copper tones', 'soft lilac', 'dark chocolate brown',
+      ],
+      finishes: [
+        'glossy finish', 'matte finish', 'French tip detail', 'fine glitter',
+        'marble pattern', 'ombre gradient', 'mirror finish', 'soft matte',
+        'galaxy pattern', 'chrome mirror',
+      ],
+    },
+    ru: {
+      colors: [
+        'золотисто-хромовый', 'пастельно-розовый', 'коралловые тона', 'глубокий бордовый',
+        'нюдовые бежевые тона', 'полуночно-синий', 'шампань-золото', 'изумрудно-зелёный',
+        'серебристо-хромовый', 'сиреневый', 'коралловый розовый', 'матовый чёрный',
+        'слоновая кость', 'медные тона', 'нежно-лиловый', 'тёмный шоколадно-коричневый',
+      ],
+      finishes: [
+        'глянцевое покрытие', 'матовое покрытие', 'французский маникюр', 'с мелким блеском',
+        'мраморный узор', 'омбре-переход', 'зеркальный блеск', 'пастельный матовый',
+        'узор галактика', 'хромовое зеркало',
+      ],
+    },
+    ar: {
+      colors: [
+        'ذهبي كروم', 'وردي باستيل', 'درجات المرجاني', 'عنابي غامق',
+        'درجات بيج نود', 'أزرق كحلي', 'ذهبي شمبانيا', 'أخضر زمردي',
+        'فضي كروم', 'بنفسجي لافندر', 'وردي مرجاني', 'أسود مطفي',
+        'أبيض عاجي', 'درجات نحاسية', 'ليلكي فاتح', 'بني شوكولاتة غامق',
+      ],
+      finishes: [
+        'لامع', 'مطفي', 'بتفاصيل فرنش', 'بلمعان خفيف',
+        'بنقشة رخامية', 'تدرج أومبريه', 'لمعان مرآة', 'مطفي هادئ',
+        'بنقشة المجرة', 'كروم مرآة',
+      ],
+    },
   };
 
   readonly favId = signal<number>(0);
@@ -366,12 +371,13 @@ export class StudioComponent implements OnInit, OnDestroy {
     const shape = a.nailShape ? this.i18n.t('shp_' + a.nailShape) : '';
     const tone = a.undertone ? this.i18n.t('ut_' + a.undertone) : '';
     const pool = this.TAILORED_STYLES[this.i18n.locale()] ?? this.TAILORED_STYLES['en'];
-    const style = pool[Math.floor(Math.random() * pool.length)];
+    const color = pool.colors[Math.floor(Math.random() * pool.colors.length)];
+    const finish = pool.finishes[Math.floor(Math.random() * pool.finishes.length)];
     return this.i18n.t('studio_tailored_prompt')
       .replace('{shape}', shape)
       .replace('{tone}', tone)
-      .replace('{color}', style.color)
-      .replace('{finish}', style.finish)
+      .replace('{color}', color)
+      .replace('{finish}', finish)
       .replace(/\s{2,}/g, ' ')
       .trim();
   }
