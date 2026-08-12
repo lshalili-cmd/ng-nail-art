@@ -147,8 +147,10 @@ export class AuthService {
   }
 
   private errMsg(e: unknown): string {
-    const err = e as { error?: { error?: string } };
-    return err?.error?.error || 'Sunucuya ulaşılamadı (backend kapalı olabilir)';
+    const err = e as { error?: { error?: string }; status?: number; statusText?: string; name?: string; message?: string };
+    if (err?.error?.error) return err.error.error;
+    // GEÇİCİ TEŞHİS: native'de "sunucuya ulaşılamadı" hatasının gerçek nedenini görmek için.
+    return `Sunucuya ulaşılamadı [tanı: status=${err?.status ?? '?'} name=${err?.name ?? '?'} msg=${err?.message ?? '?'}]`;
   }
   private setToken(t: string | null, remember = true): void {
     this.token.set(t);
