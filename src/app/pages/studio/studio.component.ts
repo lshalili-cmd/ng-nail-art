@@ -129,7 +129,7 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
               {{ fav.has(favId()) ? '❤️' : '🤍' }}
             </button>
           </div>
-          @if (imageFallback() && !imgLoading()) {
+          @if ((imageFallback() || d.source === 'demo') && !imgLoading()) {
             <p class="fallback-note">🎨 {{ i18n.t('studio_fallback_note') }}</p>
           }
 
