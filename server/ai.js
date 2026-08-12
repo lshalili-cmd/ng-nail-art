@@ -47,7 +47,9 @@ function initProviders() {
     console.log('🎨 fal.ai / FLUX 1.1 Pro hazır');
   }
   AI_PROVIDER = gemini ? 'gemini' : (openai ? 'openai' : 'none');
-  AI_MODEL = gemini ? 'gemini-2.0-flash' : (openai ? (process.env.AI_MODEL || 'gpt-4.1-mini') : '');
+  // Google modelleri periyodik olarak kullanımdan kaldırılıyor (ör. gemini-2.0-flash 01.06.2026'da
+  // kapatıldı) — .env'den GEMINI_MODEL ile geçersiz kılınabilir, kod değişikliği gerekmesin.
+  AI_MODEL = gemini ? (process.env.GEMINI_MODEL || 'gemini-3.6-flash') : (openai ? (process.env.AI_MODEL || 'gpt-4.1-mini') : '');
   if (AI_PROVIDER === 'none') {
     console.warn('⚠️  AI anahtarı yok — /api/ai/* çağrıları 503 döner, frontend demo/prosedürel görsele düşer.');
   } else {
