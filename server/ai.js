@@ -194,9 +194,12 @@ bunları SEN, deneyimli bir nail artist gibi mantıklı ve zevkli şekilde kendi
 - Motifler (yıldız, çiçek, çizgi vb.) tırnağın gerçek boyutuna göre ORANTILI olsun; ne aşırı büyük
   ne mikroskobik — elle yapılmış gerçek bir manikürde görülebilecek büyüklükte.
   Kullanıcı aksini belirtmedikçe küçük/ince tekrar eden motifler (ör. "yıldız" → küçük nokta-yıldızlar) tercih et.
-- Yerleşim anatomik olarak mantıklı olsun (ör. hilal/ay-şekli aksanlar genelde küba/kutikül tarafında
-  veya tek bir aksan tırnakta; desen tüm tırnağı kaplarken orantıyı bozmasın).
-  Kullanıcı aksini belirtmedikçe SEN en şık/yaygın kompozisyonu seç ve designPrompt'ta AÇIKÇA belirt.
+- VARSAYILAN: kullanıcı "tek tırnakta/aksan tırnak" gibi AÇIKÇA belirtmediği sürece, istenen motif
+  (yıldız, hilal, çiçek vb.) BEŞ TIRNAĞIN HEPSİNDE tekrarlanmalı — kullanıcı "yıldızlar ve hilal
+  olsun" dediğinde bunu TÜM el için istiyor, tek bir tırnak için değil. Tek-aksan-tırnak kompozisyonu
+  SADECE kullanıcı özellikle bunu istediğinde kullan.
+  Yerleşim anatomik olarak mantıklı olsun (ör. hilal/ay-şekli aksanlar her tırnakta kutikül tarafında
+  tekrarlanabilir); desen tüm tırnağı kaplarken orantıyı bozmasın. Seçimini designPrompt'ta AÇIKÇA belirt.
 - Sonuç FOTOGERÇEKÇİ olmalı: gerçek bir el/tırnak üzerinde, doğal ışık, gerçekçi parlaklık/doku;
   simetrik olmayan, deforme, "yapay/çizim gibi" görünen sonuçlardan kaçın.
 - designPrompt İNGİLİZCE ve son derece SPESİFİK olmalı: motif boyutu/oranı, tam yerleşimi, kaç
