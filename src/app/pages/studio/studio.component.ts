@@ -129,6 +129,9 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
               {{ fav.has(favId()) ? '❤️' : '🤍' }}
             </button>
           </div>
+          @if (imageFallback() && !imgLoading()) {
+            <p class="fallback-note">🎨 {{ i18n.t('studio_fallback_note') }}</p>
+          }
 
           <div class="rbody">
             <div class="rtop">
@@ -200,6 +203,9 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
     .conf { font-size: 11px; font-weight: 700; color: var(--gold-soft);
       background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); padding: 2px 8px; border-radius: 999px; }
     .rdesc { margin: 8px 0 12px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .fallback-note { margin: 8px 14px 0; padding: 8px 10px; font-size: 11.5px; text-align: center;
+      color: var(--gold-soft); background: rgba(212,175,55,0.1); border: 1px dashed rgba(212,175,55,0.4);
+      border-radius: 10px; }
     .demo { font-size: 12px; color: var(--gold-soft); background: rgba(212,175,55,0.1);
       border: 1px dashed rgba(212,175,55,0.4); padding: 8px 10px; border-radius: 10px; margin: 0 0 12px; }
     .attrs { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -312,6 +318,9 @@ export class StudioComponent implements OnInit, OnDestroy {
       ],
     },
   };
+
+  /** true: gerçek AI görseli üretilemedi, gösterilen çizim-önizleme yedektir (kullanıcı fark etsin). */
+  readonly imageFallback = signal<boolean>(false);
 
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
@@ -458,11 +467,13 @@ export class StudioComponent implements OnInit, OnDestroy {
     if (!d) return;
     this.imgLoading.set(true);
     this.error.set(null);
+    this.imageFallback.set(false);
     try {
       // Görsel üretimi mevcutsa (Flux 1.1 Pro / paid) GERÇEK görsel üret;
       // tasarım-spec demo/heuristik olsa bile. Yoksa prosedürel önizlemeye düş.
       const s = this.status();
       if (!s?.imageGenAvailable) {
+        this.imageFallback.set(true);
         this.image.set(this.proceduralImage(d));
         return;
       }
@@ -478,6 +489,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     } catch (e) {
       // Gerçek üretim başarısızsa prosedürel önizlemeye düş (ama hatayı gizleme — konsola yaz)
       console.error('[AI] görsel üretimi başarısız, demo önizlemeye düşülüyor:', e);
+      this.imageFallback.set(true);
       this.image.set(this.proceduralImage(d));
     } finally {
       this.imgLoading.set(false);

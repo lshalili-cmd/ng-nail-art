@@ -128,6 +128,7 @@ Object.assign(EN, {
   studio_colors: 'Colors', studio_effects: 'Effects', studio_finish: 'Finish', studio_shape: 'Shape',
   studio_try_ar: 'Try in AR', studio_save: 'Save', studio_regenerate: 'Regenerate', studio_gen_image: 'Generate image',
   studio_demo_note: 'Demo mode — connect the AI backend for real generation.', studio_error: 'Generation failed',
+  studio_fallback_note: "This is a sample preview — the real AI photo couldn't be generated this time. Try again.",
 });
 Object.assign(TR, {
   studio_title: 'AI Tasarım Stüdyosu', home_ai_design: 'AI ile Tasarla', scan_ai_suggest: 'AI ile Tasarım Öner',
@@ -137,6 +138,7 @@ Object.assign(TR, {
   studio_colors: 'Renkler', studio_effects: 'Efektler', studio_finish: 'Finiş', studio_shape: 'Şekil',
   studio_try_ar: "AR'da Dene", studio_save: 'Kaydet', studio_regenerate: 'Yeniden Üret', studio_gen_image: 'Görsel Üret',
   studio_demo_note: "Demo modu — gerçek üretim için AI backend'ini bağlayın.", studio_error: 'Üretim başarısız oldu',
+  studio_fallback_note: 'Bu örnek bir önizleme — bu seferlik gerçek AI fotoğrafı üretilemedi. Tekrar dene.',
 });
 Object.assign(RU, {
   studio_title: 'AI Студия дизайна', home_ai_design: 'Создать с ИИ', scan_ai_suggest: 'Предложить с ИИ',
@@ -146,6 +148,7 @@ Object.assign(RU, {
   studio_colors: 'Цвета', studio_effects: 'Эффекты', studio_finish: 'Финиш', studio_shape: 'Форма',
   studio_try_ar: 'Примерить в AR', studio_save: 'Сохранить', studio_regenerate: 'Заново', studio_gen_image: 'Создать фото',
   studio_demo_note: 'Демо-режим — подключите AI backend для реальной генерации.', studio_error: 'Ошибка генерации',
+  studio_fallback_note: 'Это примерный предпросмотр — настоящее AI-фото не удалось создать в этот раз. Попробуйте снова.',
 });
 Object.assign(AR, {
   studio_title: 'استوديو التصميم بالذكاء', home_ai_design: 'صممي بالذكاء', scan_ai_suggest: 'اقتراح بالذكاء',
@@ -155,6 +158,7 @@ Object.assign(AR, {
   studio_colors: 'الألوان', studio_effects: 'التأثيرات', studio_finish: 'اللمسة', studio_shape: 'الشكل',
   studio_try_ar: 'جربي بالAR', studio_save: 'حفظ', studio_regenerate: 'إعادة', studio_gen_image: 'إنشاء صورة',
   studio_demo_note: 'وضع تجريبي — اربطي خادم الذكاء للإنشاء الحقيقي.', studio_error: 'فشل الإنشاء',
+  studio_fallback_note: 'هذه معاينة تجريبية — تعذّر إنشاء صورة الذكاء الاصطناعي الحقيقية هذه المرة. حاول مرة أخرى.',
 });
 
 // ── Gerçek kamera + MediaPipe analizi anahtarları (Sprint 3) ──
