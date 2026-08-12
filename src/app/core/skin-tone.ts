@@ -1,4 +1,4 @@
-// Miracle Nail Art AI — Cilt tonu & alt ton analizi (saf fonksiyonlar)
+// NGNAILART — Cilt tonu & alt ton analizi (saf fonksiyonlar)
 // RGB → CIELAB dönüşümü, ITA (Individual Typology Angle) ile 8 seviyeli sınıflandırma.
 // Basitleştirilmiş ama klinik temele (ITA) dayalı; eski motorun mantığını taşır.
 

@@ -14,14 +14,14 @@ function ready() { return brevoReady() || smtpReady(); }
 
 /** Gönderen e-posta: Brevo'da DOĞRULANMIŞ olmalı (genelde Brevo giriş e-postan). */
 function senderEmail() {
-  return process.env.BREVO_SENDER || process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@miraclenailart.app';
+  return process.env.BREVO_SENDER || process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@ngnailart.com';
 }
 
 /** Brevo transactional e-posta API'si (HTTPS POST — Render uyumlu). */
 function brevoSend(email, subject, html) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
-      sender: { name: 'Miracle Nail Art', email: senderEmail() },
+      sender: { name: 'NGNAILART', email: senderEmail() },
       to: [{ email }],
       subject,
       htmlContent: html,
@@ -73,7 +73,7 @@ async function send(email, subject, html) {
 
 /** Şifre sıfırlama KODU (6 haneli) — e-postayla gönderilir. */
 async function sendResetCode(email, code) {
-  const r = await send(email, 'Miracle Nail Art — Şifre sıfırlama kodu',
+  const r = await send(email, 'NGNAILART — Şifre sıfırlama kodu',
     `<p>Şifre sıfırlama kodunuz:</p>
      <p style="font-size:26px;font-weight:bold;letter-spacing:4px;color:#b8912e">${code}</p>
      <p>Kod 1 saat geçerlidir. Bu kodu ve yeni şifrenizi uygulamada girin.</p>
@@ -84,7 +84,7 @@ async function sendResetCode(email, code) {
 
 /** Doğrulama kodunu e-postayla gönderir (kayıt + tekrar gönder). */
 async function sendOtpEmail(email, code) {
-  const r = await send(email, 'Miracle Nail Art — Doğrulama kodu',
+  const r = await send(email, 'NGNAILART — Doğrulama kodu',
     `<p>Doğrulama kodunuz:</p>
      <p style="font-size:26px;font-weight:bold;letter-spacing:4px;color:#b8912e">${code}</p>
      <p>Kod 10 dakika geçerlidir. Bu isteği siz yapmadıysanız yok sayın.</p>`);
@@ -94,7 +94,7 @@ async function sendOtpEmail(email, code) {
 
 /** Hesap silme onay bağlantısı. */
 async function sendDeleteLink(email, link) {
-  const r = await send(email, 'Miracle Nail Art — Hesap silme onayı',
+  const r = await send(email, 'NGNAILART — Hesap silme onayı',
     `<p>Hesabınızı kalıcı olarak silmek için <a href="${link}">buraya tıklayın</a>. Bağlantı 1 saat geçerlidir.</p>
      <p><b>Bu işlem geri alınamaz.</b> Bu isteği siz yapmadıysanız hemen yok sayın.</p>`);
   if (r.mode === 'demo') console.log(`✉️  [DEMO EMAIL] ${email} → hesap silme: ${link}`);

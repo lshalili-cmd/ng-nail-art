@@ -1,7 +1,7 @@
 {
   "name": "ng-nail-art",
   "version": "0.1.0",
-  "description": "Miracle Nail Art AI — Angular (temiz yeniden yapılanma)",
+  "description": "NGNAILART AI — Angular (temiz yeniden yapılanma)",
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open --port 4200",
@@ -16,7 +16,6 @@
   },
   "private": true,
   "dependencies": {
-    "@mediapipe/tasks-vision": "^0.10.14",
     "@angular/animations": "^18.2.0",
     "@angular/common": "^18.2.0",
     "@angular/compiler": "^18.2.0",
@@ -26,6 +25,9 @@
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@angular/service-worker": "^18.2.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@mediapipe/tasks-vision": "^0.10.14",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"
@@ -34,6 +36,8 @@
     "@angular-devkit/build-angular": "^18.2.0",
     "@angular/cli": "^18.2.0",
     "@angular/compiler-cli": "^18.2.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^9.11.0",
     "@playwright/test": "^1.47.0",
     "angular-eslint": "^18.4.0",

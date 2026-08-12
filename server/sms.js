@@ -28,7 +28,7 @@ function toE164(p) {
 /** OTP kodunu telefona gönderir. Dönüş: { mode:'live'|'demo', provider, code? } (code yalnızca demo'da). */
 async function sendOtp(phone, code) {
   const p = provider();
-  const msg = `Miracle Nail Art dogrulama kodunuz: ${code}`;
+  const msg = `NGNAILART dogrulama kodunuz: ${code}`;
   try {
     if (p === 'twilio') {
       const Twilio = tryRequire('twilio');

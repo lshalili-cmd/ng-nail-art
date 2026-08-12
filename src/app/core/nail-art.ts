@@ -1,4 +1,4 @@
-// Miracle Nail Art AI — İstemci tarafı tırnak görseli çizici (harici görsel gerektirmez).
+// NGNAILART — İstemci tarafı tırnak görseli çizici (harici görsel gerektirmez).
 // Tasarımın renk + desen etiketlerinden 5 tırnaklı zengin bir önizleme üretir (data URL).
 // Desenler: french, ombre, marble, galaxy, chrome, line, glossy, matte.
 

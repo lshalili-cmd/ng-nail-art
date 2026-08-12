@@ -2,6 +2,7 @@ node_modules
 .env
 .env.*
 images/ai-generated
+test-output
 *.log
 
 # Prisma (SQLite veritabanı dosyaları)

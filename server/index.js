@@ -557,8 +557,11 @@ app.post('/api/payments/checkout', async (req, res) => {
   }
   const grant = catalog.grantOf(b.itemId);
   const kind = grant && grant.kind === 'pack' ? 'pack' : 'plan';
-  const baseUrl = (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
-  const apiBase = `${req.protocol}://${req.get('host')}`;   // backend'in kendi adresi (iyzico callback POST'u buraya gelir)
+  // NOT: IIS, Node'a dahili olarak duz HTTP ile baglandigi icin req.protocol PROD'da hep "http"
+  // doner (kullanici HTTPS uzerinden gelse bile) — bu yuzden APP_URL varsa ONA guveniyoruz,
+  // yoksa req.protocol/host'a duseriz (yerel gelistirmede APP_URL genelde bos olur).
+  const baseUrl = process.env.APP_URL || (req.headers.origin) || `${req.protocol}://${req.get('host')}`;
+  const apiBase = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;   // backend'in kendi adresi (iyzico callback POST'u buraya gelir)
   const userId = auth.userIdFrom(req);
   let buyer = null;
   if (userId !== 'guest' && db.ready()) {

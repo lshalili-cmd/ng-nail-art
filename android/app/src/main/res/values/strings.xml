@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NGNAILART</string>
+    <string name="title_activity_main">NGNAILART</string>
+    <string name="package_name">com.ngnailart.app</string>
+    <string name="custom_url_scheme">com.ngnailart.app</string>
+</resources>

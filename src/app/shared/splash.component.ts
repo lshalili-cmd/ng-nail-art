@@ -45,7 +45,7 @@ import { I18nService } from '../core/i18n.service';
 
         <div class="brand">
           <div class="kicker">NAIL ART AI</div>
-          <div class="name">miracle</div>
+          <div class="name">NGNAILART</div>
           <div class="tag">◇&nbsp;&nbsp;{{ i18n.t('splash_slogan') }}&nbsp;&nbsp;◇</div>
         </div>
 

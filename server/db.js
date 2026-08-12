@@ -94,4 +94,7 @@ function designOut(d) {
   };
 }
 
-module.exports = { prisma, ready: () => !!prisma, parseArr, stringifyArr, designOut };
+// prisma client kurulumu DATABASE_URL'i doğrulamadan başarılı olabilir (Prisma bunu ilk
+// gerçek sorguda kontrol eder) — o yüzden burada da env değişkenini kontrol ediyoruz, yoksa
+// ready() yanlışlıkla true dönüp DB uçları çökmek yerine düzgün 503 DB_NOT_READY vermeli.
+module.exports = { prisma, ready: () => !!prisma && !!process.env.DATABASE_URL, parseArr, stringifyArr, designOut };

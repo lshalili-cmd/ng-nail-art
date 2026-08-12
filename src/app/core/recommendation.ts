@@ -1,4 +1,4 @@
-// Miracle Nail Art AI — Öneri motoru (eski projedeki 133 puanlık skorlamanın Angular portu)
+// NGNAILART — Öneri motoru (eski projedeki 133 puanlık skorlamanın Angular portu)
 // Girdi: el analizi (cilt tonu, alt ton, parmak yapısı, şekil, LAB) + tasarım kataloğu.
 // Çıktı: eşleşme yüzdesi ve gerekçelerle sıralı tasarımlar.
 

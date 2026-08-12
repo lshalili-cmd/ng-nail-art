@@ -13,7 +13,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
  * Statik varlıklar (designs/*.jpg, images/*.png) public/ altında olduğundan native pakete
  * gömülür ve GÖRELİ kalır (çevrimdışı çalışır) — onlara dokunulmaz.
  */
-const LIVE_ORIGIN = 'https://miracle-nailart.onrender.com';
+const LIVE_ORIGIN = 'https://ngnailart.com';
 
 /** Uygulama native kabuk (Capacitor) içinde mi çalışıyor? */
 export function isNative(): boolean {
