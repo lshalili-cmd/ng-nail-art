@@ -58,10 +58,12 @@ export class AiService {
   }): Promise<GeneratedImage> {
     try {
       const res = await firstValueFrom(
-        // Sunucu fal.ai kuyruğunu 90sn'ye kadar bekliyor (server/ai.js) — istemci daha erken
-        // vazgeçip sessizce sahte önizlemeye düşmesin diye o süreyi biraz aşan bir pay bırakıyoruz.
+        // Sunucu fal.ai kuyruğunu 90sn'ye kadar bekliyor (server/ai.js), ardından görseli indirip
+        // diske kaydediyor — bu ek adımlar + mobil ağ gecikmesi toplamı 90sn'yi belirgin şekilde
+        // aşabiliyor. İstemci erken vazgeçip (görsel sunucuda başarıyla üretilmiş olsa bile) sessizce
+        // sahte önizlemeye düşmesin VE kullanıcının kotası boşuna harcanmasın diye geniş pay bırakıyoruz.
         this.http.post<ApiEnvelope<GeneratedImage>>(`${API}/api/ai/generate-image`, input)
-          .pipe(timeout(100000)),
+          .pipe(timeout(150000)),
       );
       if (!res.success || !res.data) {
         throw this.err(res.code, res.error);
