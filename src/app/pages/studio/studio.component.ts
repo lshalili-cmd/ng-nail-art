@@ -74,7 +74,7 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
           @if (loading()) {
             <p class="tailored-gen">✨ {{ i18n.t('studio_generating') }}</p>
           } @else {
-            <button class="btn-primary wide" (click)="generate()" [disabled]="loading()">
+            <button class="btn-primary wide" (click)="regenerateTailored()" [disabled]="loading()">
               🔄 {{ i18n.t('studio_regenerate') }}
             </button>
           }
@@ -253,6 +253,60 @@ export class StudioComponent implements OnInit, OnDestroy {
   readonly camOn = signal<boolean>(false);
   readonly handError = signal<string | null>(null);
   private handStream: MediaStream | null = null;
+  /** "Yeniden Üret" her seferinde farklı renk/bitiş denesin diye saklanır. */
+  private lastAnalysis: AnalysisInput | null = null;
+
+  /** Otomatik ("elinize özel") üretimde her seferinde farklı çıksın diye rastgele renk/bitiş havuzu. */
+  private readonly TAILORED_STYLES: Record<string, { color: string; finish: string }[]> = {
+    tr: [
+      { color: 'altın kromlu', finish: 'parlak bitişli' },
+      { color: 'pastel pembe', finish: 'mat bitişli' },
+      { color: 'mercan-somon tonlarında', finish: 'French detaylı' },
+      { color: 'derin bordo', finish: 'parlak bitişli' },
+      { color: 'nude bej tonlarında', finish: 'ince simli' },
+      { color: 'gece mavisi', finish: 'mermer desenli' },
+      { color: 'şampanya altın', finish: 'ombre geçişli' },
+      { color: 'zümrüt yeşili', finish: 'mat bitişli' },
+      { color: 'gümüş krom', finish: 'ayna parlaklığında' },
+      { color: 'lavanta moru', finish: 'pastel mat' },
+    ],
+    en: [
+      { color: 'gold chrome', finish: 'glossy finish' },
+      { color: 'pastel pink', finish: 'matte finish' },
+      { color: 'coral-salmon tones', finish: 'French tip detail' },
+      { color: 'deep burgundy', finish: 'glossy finish' },
+      { color: 'nude beige tones', finish: 'fine glitter' },
+      { color: 'midnight blue', finish: 'marble pattern' },
+      { color: 'champagne gold', finish: 'ombre gradient' },
+      { color: 'emerald green', finish: 'matte finish' },
+      { color: 'silver chrome', finish: 'mirror finish' },
+      { color: 'lavender purple', finish: 'soft matte' },
+    ],
+    ru: [
+      { color: 'золотисто-хромовый', finish: 'глянцевое покрытие' },
+      { color: 'пастельно-розовый', finish: 'матовое покрытие' },
+      { color: 'коралловые тона', finish: 'французский маникюр' },
+      { color: 'глубокий бордовый', finish: 'глянцевое покрытие' },
+      { color: 'нюдовые бежевые тона', finish: 'с мелким блеском' },
+      { color: 'полуночно-синий', finish: 'мраморный узор' },
+      { color: 'шампань-золото', finish: 'омбре-переход' },
+      { color: 'изумрудно-зелёный', finish: 'матовое покрытие' },
+      { color: 'серебристо-хромовый', finish: 'зеркальный блеск' },
+      { color: 'сиреневый', finish: 'пастельный матовый' },
+    ],
+    ar: [
+      { color: 'ذهبي كروم', finish: 'لامع' },
+      { color: 'وردي باستيل', finish: 'مطفي' },
+      { color: 'درجات المرجاني', finish: 'بتفاصيل فرنش' },
+      { color: 'عنابي غامق', finish: 'لامع' },
+      { color: 'درجات بيج نود', finish: 'بلمعان خفيف' },
+      { color: 'أزرق كحلي', finish: 'بنقشة رخامية' },
+      { color: 'ذهبي شمبانيا', finish: 'تدرج أومبريه' },
+      { color: 'أخضر زمردي', finish: 'مطفي' },
+      { color: 'فضي كروم', finish: 'لمعان مرآة' },
+      { color: 'بنفسجي لافندر', finish: 'مطفي هادئ' },
+    ],
+  };
 
   readonly favId = signal<number>(0);
   readonly quotaBlocked = signal<boolean>(false);
@@ -298,6 +352,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       const a = this.analysisStore.current();
       if (a && (a.nailShape || a.undertone) && !this.prompt().trim()) {
         this.tailored.set(true);
+        this.lastAnalysis = a;                // "yeniden üret" farklı renk/bitiş deneyebilsin diye sakla
         this.prompt.set(this.buildTailoredPrompt(a));
         this.analysisStore.clear();          // bir kez kullan (yenile'de tekrar tetiklenmesin)
         void this.generate();                // otomatik üret
@@ -305,15 +360,26 @@ export class StudioComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** El analizinden (tırnak şekli + ten tonu) kişiye özel istem metni üretir. */
+  /** El analizinden (tırnak şekli + ten tonu) kişiye özel istem metni üretir.
+   *  Renk/bitiş HER ÇAĞRIDA rastgele seçilir — "yeniden üret" hep aynı düz tona düşmesin diye. */
   private buildTailoredPrompt(a: AnalysisInput): string {
     const shape = a.nailShape ? this.i18n.t('shp_' + a.nailShape) : '';
     const tone = a.undertone ? this.i18n.t('ut_' + a.undertone) : '';
+    const pool = this.TAILORED_STYLES[this.i18n.locale()] ?? this.TAILORED_STYLES['en'];
+    const style = pool[Math.floor(Math.random() * pool.length)];
     return this.i18n.t('studio_tailored_prompt')
       .replace('{shape}', shape)
       .replace('{tone}', tone)
+      .replace('{color}', style.color)
+      .replace('{finish}', style.finish)
       .replace(/\s{2,}/g, ' ')
       .trim();
+  }
+
+  /** "Yeniden Üret" — aynı el/şekil/ton ile ama YENİ rastgele renk+bitiş dener. */
+  regenerateTailored(): void {
+    if (this.lastAnalysis) this.prompt.set(this.buildTailoredPrompt(this.lastAnalysis));
+    void this.generate();
   }
 
   async generate(): Promise<void> {
