@@ -200,6 +200,10 @@ bunları SEN, deneyimli bir nail artist gibi mantıklı ve zevkli şekilde kendi
   SADECE kullanıcı özellikle bunu istediğinde kullan.
   Yerleşim anatomik olarak mantıklı olsun (ör. hilal/ay-şekli aksanlar her tırnakta kutikül tarafında
   tekrarlanabilir); desen tüm tırnağı kaplarken orantıyı bozmasın. Seçimini designPrompt'ta AÇIKÇA belirt.
+- MOTİFLER TIRNAK PLAKASININ TAMAMINA (kutikülden uca) DENGELİ DAĞITILMALI — sadece uç (serbest kenar)
+  veya sadece alt kısımda kümelenip üst/orta kısmı boş bırakma. Kullanıcı aksini belirtmedikçe motifi
+  DİKEY OLARAK ORTALA / tüm tırnak yüzeyine yay; designPrompt'ta bunu açıkça belirt (ör. "evenly
+  distributed across the entire nail surface from cuticle to tip, not clustered at the bottom/tip").
 - Sonuç FOTOGERÇEKÇİ olmalı: gerçek bir el/tırnak üzerinde, doğal ışık, gerçekçi parlaklık/doku;
   simetrik olmayan, deforme, "yapay/çizim gibi" görünen sonuçlardan kaçın.
 - designPrompt İNGİLİZCE ve son derece SPESİFİK olmalı: motif boyutu/oranı, tam yerleşimi, kaç
