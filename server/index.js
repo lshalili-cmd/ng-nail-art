@@ -72,9 +72,19 @@ app.use(express.json({ limit: '4mb' }));
 
 // ── Rate limiting (kaba kuvvet / kötüye kullanım koruması) ─────────────────
 // Paket yoksa (yerel, kurulmamış) no-op'a düşer; üretimde express-rate-limit kurulur.
+// keyGenerator ELLE veriliyor: express-rate-limit v7'nin varsayılan keyGenerator'ı req.ip'yi
+// katı bir IP doğrulamasından geçiriyor ve IIS/ARR gibi ters-vekiller arkasında (X-Forwarded-For
+// beklenenden farklı bicimde/eksik geldiginde) ERR_ERL_INVALID_IP_ADDRESS firlatip istegi
+// yarida kesebiliyor (canli sitede goruldu: gorsel uretimi bozuk/kucuk dosya ile sonuclaniyordu).
+// Kendi keyGenerator'imiz bu dogrulamayi atlar, IPv6-mapped-IPv4 onekini normalize eder.
+function safeIpKey(req) {
+  let ip = req.ip || (req.socket && req.socket.remoteAddress) || '';
+  ip = String(ip).replace(/^::ffff:/, '');
+  return ip || 'unknown';
+}
 function makeLimiter(opts) {
   if (!rateLimit) return (_req, _res, next) => next();
-  return rateLimit({ standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Çok fazla istek, lütfen biraz sonra tekrar deneyin.', code: 'RATE_LIMITED' }, ...opts });
+  return rateLimit({ standardHeaders: true, legacyHeaders: false, keyGenerator: safeIpKey, message: { success: false, error: 'Çok fazla istek, lütfen biraz sonra tekrar deneyin.', code: 'RATE_LIMITED' }, ...opts });
 }
 const authLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 40 });   // giriş/kayıt/otp/şifre
 const aiLimiter = makeLimiter({ windowMs: 10 * 60 * 1000, max: 40 });     // AI üretim uçları
