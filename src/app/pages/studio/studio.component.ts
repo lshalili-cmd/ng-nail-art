@@ -273,9 +273,9 @@ export class StudioComponent implements OnInit, OnDestroy {
         'fildişi beyaz', 'bakır tonlarında', 'açık leylak', 'koyu çikolata kahvesi',
       ],
       finishes: [
-        'parlak bitişli', 'mat bitişli', 'French detaylı', 'ince simli',
-        'mermer desenli', 'ombre geçişli', 'ayna parlaklığında', 'pastel mat',
-        'galaksi desenli', 'krom aynalı',
+        'ince yıldız desenli', 'zarif çiçek desenli', 'minimal kalp desenli',
+        'altın çizgi desenli', 'geometrik desenli', 'yaprak desenli',
+        'dalga desenli', 'kelebek desenli', 'nokta desenli', 'hilal desenli',
       ],
     },
     en: {
@@ -286,9 +286,9 @@ export class StudioComponent implements OnInit, OnDestroy {
         'ivory white', 'copper tones', 'soft lilac', 'dark chocolate brown',
       ],
       finishes: [
-        'glossy finish', 'matte finish', 'French tip detail', 'fine glitter',
-        'marble pattern', 'ombre gradient', 'mirror finish', 'soft matte',
-        'galaxy pattern', 'chrome mirror',
+        'fine star pattern', 'elegant floral pattern', 'minimal heart pattern',
+        'thin gold line pattern', 'geometric pattern', 'leaf pattern',
+        'wave pattern', 'butterfly pattern', 'dot pattern', 'crescent moon pattern',
       ],
     },
     ru: {
@@ -299,9 +299,9 @@ export class StudioComponent implements OnInit, OnDestroy {
         'слоновая кость', 'медные тона', 'нежно-лиловый', 'тёмный шоколадно-коричневый',
       ],
       finishes: [
-        'глянцевое покрытие', 'матовое покрытие', 'французский маникюр', 'с мелким блеском',
-        'мраморный узор', 'омбре-переход', 'зеркальный блеск', 'пастельный матовый',
-        'узор галактика', 'хромовое зеркало',
+        'с узором из звёзд', 'с элегантным цветочным узором', 'с минималистичным узором сердечек',
+        'с узором из тонких золотых линий', 'с геометрическим узором', 'с узором из листьев',
+        'с волнистым узором', 'с узором бабочек', 'с точечным узором', 'с узором полумесяца',
       ],
     },
     ar: {
@@ -312,9 +312,9 @@ export class StudioComponent implements OnInit, OnDestroy {
         'أبيض عاجي', 'درجات نحاسية', 'ليلكي فاتح', 'بني شوكولاتة غامق',
       ],
       finishes: [
-        'لامع', 'مطفي', 'بتفاصيل فرنش', 'بلمعان خفيف',
-        'بنقشة رخامية', 'تدرج أومبريه', 'لمعان مرآة', 'مطفي هادئ',
-        'بنقشة المجرة', 'كروم مرآة',
+        'بنقشة نجوم رفيعة', 'بنقشة أزهار أنيقة', 'بنقشة قلوب بسيطة',
+        'بنقشة خطوط ذهبية رفيعة', 'بنقشة هندسية', 'بنقشة أوراق',
+        'بنقشة أمواج', 'بنقشة فراشات', 'بنقشة نقاط', 'بنقشة هلال',
       ],
     },
   };

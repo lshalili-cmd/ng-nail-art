@@ -171,6 +171,32 @@ function parseDataUrl(dataUrl) {
 }
 
 /**
+ * Uretilen gorseli Gemini vision ile "sayarak" dogrular: kac tirnakta gorunur bir desen/motif var.
+ * FLUX Kontext ayni prompt'la bile tutarsiz olabiliyor (bazen 5/5, bazen 3/5) — bu kontrol sayesinde
+ * eksik kalirsa generateImage bir kez daha deneyip daha iyi sonucu tutabiliyor.
+ * Gemini yapilandirilmamissa (yerelde anahtar yoksa) null doner, kontrol atlanir.
+ */
+async function countDecoratedNails(imgPath) {
+  if (!gemini) return null;
+  try {
+    const b64 = fs.readFileSync(imgPath).toString('base64');
+    const result = await gemini.models.generateContent({
+      model: AI_MODEL || 'gemini-3.6-flash',
+      contents: [
+        { inlineData: { mimeType: 'image/png', data: b64 } },
+        { text: 'Look at this hand photo. Count how many of the visible fingernails have a visible decorative nail-art motif/pattern/charm applied to them (do not count nails that are completely plain/bare with nothing on them). Reply with ONLY a single digit (0-5), nothing else.' },
+      ],
+      config: { temperature: 0 },
+    });
+    const digit = /\d/.exec((result.text || '').trim());
+    return digit ? parseInt(digit[0], 10) : null;
+  } catch (e) {
+    console.warn('[AI] Kapsama kontrolü başarısız (yoksayılıyor):', e && e.message ? e.message : e);
+    return null;
+  }
+}
+
+/**
  * Yüklenen el fotoğrafını DÜZENLEME (edit) modu için prompt — sadece görünen tırnak
  * yüzeylerine tasarımı uygular, elin/parmakların/arka planın aynen korunmasını ister.
  */
@@ -179,10 +205,12 @@ function buildEditPrompt({ prompt, style, shape, colorStr, finish }) {
     'Edit the uploaded image only. Preserve the original hand, fingers, skin, pose, lighting, shadows, background, camera angle and image composition exactly.',
     'Do not regenerate the hand. Do not create new fingers or nails. Apply the requested nail design only to the visible nail surfaces.',
     'Keep the nail shapes and positions aligned with the original image. The result must look like the same photograph with only the manicure changed.',
-    `Nail design: ${(prompt || '').trim()}, clearly visible and well-defined, sized proportionally to cover a noticeable portion of each nail (not tiny/faint dots).`,
-    'Center the motif on each nail plate, balanced from cuticle to tip and side to side — proportioned to that specific nail\'s size and shape, not clustered at one edge or overflowing onto the skin.',
-    'ABSOLUTELY CRITICAL: The nail plate itself must NOT be painted — no solid color fill, no colored base coat, no colored wash covering the nail. Every nail must look bare/natural with only a clear glossy top coat, exactly like the original photo, EXCEPT for the small motif shapes themselves.',
-    `Only the motif shapes may carry color, using tones from this palette for visual richness: ${colorStr || 'gold'} (e.g. a metallic fill with a thin darker outline on just the motif shapes, for a jewelry-like sparkle) — the motif shapes should be crisp, well-defined and clearly visible, but everything on the nail OUTSIDE the motif shapes must remain the natural bare nail color, unpainted.`,
+    'Look at the nails in the uploaded photo and identify their current bare/natural color. That EXACT bare nail color must remain unchanged on every nail in the output — this is the single most important rule, more important than anything below.',
+    `On top of that unchanged bare nail, add tiny decorative charms: ${(prompt || '').trim()}.`,
+    'MANDATORY: there are FIVE visible nails in this photo (thumb, index, middle, ring, pinky) — unless the design explicitly asks for a single accent nail. Place the motif on EACH of the five, none skipped or left plain.',
+    'CRITICAL PLACEMENT RULE: each motif must sit centered horizontally (equal margin left and right) but positioned in the UPPER-CENTER of the nail plate, closer to the cuticle than to the free edge/tip — roughly one third of the way down from the cuticle, not in the exact vertical middle and not near the tip. Size it so clear empty bare-nail margin remains on all sides.',
+    'The charms are small painted/enamel details, like tiny stickers — they do NOT spread out to cover the nail. Picture a real bare manicured hand with just a few millimeters-wide charm decorations glued near the center of each nail; the rest of every nail (well over half of its surface) stays the exact same bare color as the original photo. This applies REGARDLESS of what color the charms are — even if the charm color is a typical nail-polish color (e.g. blue, red, pink), the nail itself must never be painted that color.',
+    `Only the tiny charm shapes may carry color, using tones from this palette: ${colorStr || 'gold'} (e.g. a metallic fill with a thin darker outline, like a small enamel charm) — the charms should be crisp, well-defined and clearly visible, but everything on the nail OUTSIDE the charm shapes must remain the original bare nail color, unpainted.`,
     `Style: ${style || 'luxury'}, salon-quality.`,
     'Render at maximum image fidelity: ultra-high detail, sharp focus, high-resolution macro photography, realistic light reflections and texture, no blur, no noise, no compression artifacts.',
     'Do not alter skin. Do not alter fingers. Do not alter hand anatomy. Do not add or remove fingers.',
@@ -444,6 +472,33 @@ async function generateImage(input, imgDir) {
   if (size < MIN_VALID_BYTES) {
     try { fs.unlinkSync(imgPath); } catch { /* yoksay */ }
     throw makeError('Görsel üretimi başarısız oldu (bozuk/boş sonuç), lütfen tekrar deneyin', 'AI_ERROR', 502);
+  }
+
+  // Kapsama kontrolü: FLUX Kontext ayni prompt'la bile bazen 5 tirnaktan azina desen uyguluyor
+  // (canli ortamda gozlemlendi). Gemini varsa gorseli "sayarak" dogrularız; eksikse bir kez daha
+  // deneyip DAHA IYI (esit veya fazla) sonucu tutariz — geriye gitmeyiz.
+  if (editMode && falKey && gemini) {
+    let bestCount = await countDecoratedNails(imgPath);
+    if (bestCount !== null && bestCount < 5) {
+      console.warn(`[AI] Desen ${bestCount}/5 tırnakta görünüyor — bir kez daha deneniyor...`);
+      const retryPath = imgPath + '.retry.png';
+      try {
+        const retryUrl = await falEditGenerate(artPrompt, image);
+        await download(retryUrl, retryPath);
+        const retrySize = fs.statSync(retryPath).size;
+        const retryCount = retrySize >= MIN_VALID_BYTES ? await countDecoratedNails(retryPath) : null;
+        if (retryCount !== null && retryCount >= bestCount) {
+          fs.copyFileSync(retryPath, imgPath);
+          size = retrySize;
+          bestCount = retryCount;
+        }
+      } catch (e) {
+        console.warn('[AI] Kapsama tekrar denemesi başarısız (yoksayılıyor):', e && e.message ? e.message : e);
+      } finally {
+        try { fs.unlinkSync(retryPath); } catch { /* yoksay */ }
+      }
+      console.log(`[AI] Kapsama sonucu: ${bestCount}/5`);
+    }
   }
 
   return {
