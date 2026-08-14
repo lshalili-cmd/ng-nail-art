@@ -180,9 +180,11 @@ function buildEditPrompt({ prompt, style, shape, colorStr, finish }) {
     'Do not regenerate the hand. Do not create new fingers or nails. Apply the requested nail design only to the visible nail surfaces.',
     'Keep the nail shapes and positions aligned with the original image. The result must look like the same photograph with only the manicure changed.',
     `Nail design: ${(prompt || '').trim()}, clearly visible and well-defined, sized proportionally to cover a noticeable portion of each nail (not tiny/faint dots).`,
-    'IMPORTANT: Do NOT paint or fill the nails with any solid opaque polish color. Keep the nail plates looking natural/bare with only a clear glossy top coat.',
-    `Apply ONLY the pattern/motif described above${colorStr ? ` in ${colorStr}` : ''} on top of the natural nail, with crisp clean edges and good contrast — the rest of each nail must remain the natural bare nail color, clearly visible, not colored.`,
-    `Style: ${style || 'luxury'}, salon-quality, photorealistic.`,
+    'Center the motif on each nail plate, balanced from cuticle to tip and side to side — proportioned to that specific nail\'s size and shape, not clustered at one edge or overflowing onto the skin.',
+    'ABSOLUTELY CRITICAL: The nail plate itself must NOT be painted — no solid color fill, no colored base coat, no colored wash covering the nail. Every nail must look bare/natural with only a clear glossy top coat, exactly like the original photo, EXCEPT for the small motif shapes themselves.',
+    `Only the motif shapes may carry color, using tones from this palette for visual richness: ${colorStr || 'gold'} (e.g. a metallic fill with a thin darker outline on just the motif shapes, for a jewelry-like sparkle) — the motif shapes should be crisp, well-defined and clearly visible, but everything on the nail OUTSIDE the motif shapes must remain the natural bare nail color, unpainted.`,
+    `Style: ${style || 'luxury'}, salon-quality.`,
+    'Render at maximum image fidelity: ultra-high detail, sharp focus, high-resolution macro photography, realistic light reflections and texture, no blur, no noise, no compression artifacts.',
     'Do not alter skin. Do not alter fingers. Do not alter hand anatomy. Do not add or remove fingers.',
     'Do not change background. Do not change pose. Do not change camera angle. Do not create a new hand.',
     'Do not replace the entire image. Do not modify anything outside the nail areas.',
@@ -417,13 +419,32 @@ async function generateImage(input, imgDir) {
     filename = `flux_${stamp}_${rnd}.png`;
   }
 
+  // fal.ai ara sira (moderasyon/gecici ic hata) sessizce bozuk/neredeyse-bos bir PNG donebiliyor
+  // (canli ortamda gozlemlendi: ~10KB, tek-renk/degenere icerik) — API 200 basari dondugu icin
+  // bu fark edilmeden "basarili" olarak kullaniciya siyah/bozuk bir gorsel gitmis oluyordu.
+  // Gercek fotogercekci sonuclar bunun cok uzerinde (yuzlerce KB) oldugundan boyut esigiyle yakalanir.
+  const MIN_VALID_BYTES = 50 * 1024;
   const imgPath = path.join(imgDir, filename);
-  if (imageBytesBuffer) {
-    fs.writeFileSync(imgPath, imageBytesBuffer);
-  } else {
-    await download(remoteUrl, imgPath);
+
+  async function writeAndCheck() {
+    if (imageBytesBuffer) {
+      fs.writeFileSync(imgPath, imageBytesBuffer);
+    } else {
+      await download(remoteUrl, imgPath);
+    }
+    return fs.statSync(imgPath).size;
   }
-  const size = fs.statSync(imgPath).size;
+
+  let size = await writeAndCheck();
+  if (size < MIN_VALID_BYTES && falKey) {
+    console.warn(`[AI] Üretilen görsel çok küçük (${size}B, muhtemelen bozuk/degenere) — bir kez daha deneniyor...`);
+    remoteUrl = editMode ? await falEditGenerate(artPrompt, image) : await falGenerate(artPrompt);
+    size = await writeAndCheck();
+  }
+  if (size < MIN_VALID_BYTES) {
+    try { fs.unlinkSync(imgPath); } catch { /* yoksay */ }
+    throw makeError('Görsel üretimi başarısız oldu (bozuk/boş sonuç), lütfen tekrar deneyin', 'AI_ERROR', 502);
+  }
 
   return {
     imageUrl: `images/ai-generated/${filename}`,
