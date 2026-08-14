@@ -31,10 +31,11 @@ export class AiService {
   async chat(prompt: string, language: Locale4 = 'tr'): Promise<DesignSpec> {
     try {
       const res = await firstValueFrom(
-        // Mobil agda LLM yaniti bazen 8sn'yi asabiliyor; erken vazgecip sessizce
-        // demo/mockDesign'a dusmemek icin pay birakiyoruz.
+        // Mobil agda / VDS'ten LLM'e giden istekte yanit 20sn'yi asabiliyor (canli ortamda
+        // gozlemlendi: istek sunucuda basariliyken istemci erken vazgecip sessizce
+        // demo/mockDesign'a dusuyordu). Pay genisletildi.
         this.http.post<ApiEnvelope<DesignSpec>>(`${API}/api/ai/chat`, { prompt, language })
-          .pipe(timeout(20000)),
+          .pipe(timeout(60000)),
       );
       if (!res.success || !res.data) {
         throw this.err(res.code, res.error);
