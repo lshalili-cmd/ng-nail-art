@@ -63,7 +63,15 @@ export interface AiStatus {
   imageGenAvailable: boolean;
   imageProvider: string;
   fluxAvailable: boolean;
+  /** Perfect Corp Nail VTO (gerçek fotoğrafa hassas bindirme) yapılandırılmış mı. */
+  nailVtoAvailable?: boolean;
   status: 'ready' | 'not_configured' | string;
+}
+
+/** /api/ai/nail-vto çıktısı (Perfect Corp — izole tasarımı gerçek el fotoğrafına bindirir). */
+export interface NailVtoResult {
+  imageUrl: string;
+  provider: string;
 }
 
 export type Locale4 = 'tr' | 'en' | 'ru' | 'ar';

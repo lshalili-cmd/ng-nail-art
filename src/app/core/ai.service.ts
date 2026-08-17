@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
-import { ApiEnvelope, AiStatus, DesignSpec, GeneratedImage, Locale4 } from './ai.models';
+import { ApiEnvelope, AiStatus, DesignSpec, GeneratedImage, Locale4, NailVtoResult } from './ai.models';
 
 /** API kök adresi. Boş = göreli ('/api'); geliştirmede proxy.conf.json backend'e yönlendirir. */
 const API = '';
@@ -65,6 +65,28 @@ export class AiService {
         // sahte önizlemeye düşmesin VE kullanıcının kotası boşuna harcanmasın diye geniş pay bırakıyoruz.
         this.http.post<ApiEnvelope<GeneratedImage>>(`${API}/api/ai/generate-image`, input)
           .pipe(timeout(150000)),
+      );
+      if (!res.success || !res.data) {
+        throw this.err(res.code, res.error);
+      }
+      return res.data;
+    } catch (e) {
+      throw this.normalize(e);
+    }
+  }
+
+  /**
+   * İzole bir tasarım görselini (el fotoğrafı OLMADAN üretilmiş, Studio'da kaydedilmiş dosya)
+   * kullanıcının GERÇEK el fotoğrafına Perfect Corp Nail VTO ile hassas biçimde bindirir
+   * (/api/ai/nail-vto). generateImage'daki generative image-edit'ten farklı bir teknik.
+   */
+  async tryOnPhoto(input: { handImage: string; designFilename: string }): Promise<NailVtoResult> {
+    try {
+      const res = await firstValueFrom(
+        // Sunucu Perfect Corp'a 2 dosya yükler + görevi 60sn'ye kadar bekler — mobil ağ gecikmesi
+        // için generateImage'la aynı mantıkla geniş pay bırakılıyor.
+        this.http.post<ApiEnvelope<NailVtoResult>>(`${API}/api/ai/nail-vto`, input)
+          .pipe(timeout(75000)),
       );
       if (!res.success || !res.data) {
         throw this.err(res.code, res.error);

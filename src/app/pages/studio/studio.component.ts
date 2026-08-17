@@ -164,7 +164,21 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
 
             <div class="actions">
               <button class="btn-primary" (click)="generate()">🔄 {{ i18n.t('studio_regenerate') }}</button>
+              @if (image(); as img) {
+                @if (!img.edited && img.provider !== 'demo') {
+                  <button class="btn-ghost" (click)="tryOnRealPhoto()" [disabled]="nailVtoLoading()">
+                    {{ nailVtoLoading() ? ('⏳ ' + i18n.t('studio_nailvto_loading')) : i18n.t('studio_nailvto_btn') }}
+                  </button>
+                }
+              }
             </div>
+            @if (nailVtoError(); as nve) { <p class="hand-err">⚠️ {{ nve }}</p> }
+            @if (nailVtoResult(); as nvr) {
+              <div class="nailvto-result">
+                <p class="k">{{ i18n.t('studio_nailvto_result_title') }}</p>
+                <img [src]="nvr" alt="nail vto result" />
+              </div>
+            }
             <p class="hint">🖼️ {{ i18n.t('quota_remaining') }}: <b>{{ quota.remaining() }}</b> {{ i18n.t('credits') }} · her üretim 1 hak</p>
           </div>
         </div>
@@ -238,6 +252,8 @@ import { HandAnalysisService } from '../../core/hand-analysis.service';
     .hand-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .hand-actions > * { flex: 1; min-width: 110px; }
     .hand-err { margin: 10px 0 0; font-size: 12.5px; color: #f0b8b8; text-align: center; }
+    .nailvto-result { margin-top: 14px; }
+    .nailvto-result img { width: 100%; border-radius: 12px; display: block; }
   `],
 })
 export class StudioComponent implements OnInit, OnDestroy {
@@ -334,6 +350,11 @@ export class StudioComponent implements OnInit, OnDestroy {
   readonly error = signal<string | null>(null);
   readonly status = signal<AiStatus | null>(null);
 
+  /** Perfect Corp Nail VTO — izole tasarımı gerçek el fotoğrafına bindirme sonucu/durumu. */
+  readonly nailVtoLoading = signal<boolean>(false);
+  readonly nailVtoResult = signal<string | null>(null);
+  readonly nailVtoError = signal<string | null>(null);
+
   readonly suggestions = ['sug1', 'sug2', 'sug3', 'sug4', 'sug5'];
 
   readonly statusLabel = computed(() => {
@@ -409,6 +430,8 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
     this.image.set(null);
+    this.nailVtoResult.set(null);
+    this.nailVtoError.set(null);
     this.favId.set(Date.now()); // bu üretim için benzersiz favori kimliği
     try {
       const s = this.status();
@@ -493,6 +516,33 @@ export class StudioComponent implements OnInit, OnDestroy {
       this.image.set(this.proceduralImage(d));
     } finally {
       this.imgLoading.set(false);
+    }
+  }
+
+  /**
+   * Az önce üretilen İZOLE tasarımı (el fotoğrafı olmadan üretilmiş — bkz. `image()!.edited`),
+   * kullanıcının GERÇEK el fotoğrafına Perfect Corp Nail VTO ile bindirir. El fotoğrafı yoksa
+   * kullanıcıyı yukarıdaki "Sanal deneme" kartından fotoğraf eklemeye yönlendirir.
+   */
+  async tryOnRealPhoto(): Promise<void> {
+    const img = this.image();
+    if (!img) return;
+    const hand = this.handImg();
+    if (!hand) {
+      this.nailVtoError.set(this.i18n.t('studio_nailvto_need_photo'));
+      return;
+    }
+    this.nailVtoLoading.set(true);
+    this.nailVtoError.set(null);
+    this.nailVtoResult.set(null);
+    try {
+      const result = await this.ai.tryOnPhoto({ handImage: hand.imageUrl, designFilename: img.filename });
+      this.nailVtoResult.set(result.imageUrl);
+    } catch (e) {
+      console.error('[NailVTO] bindirme başarısız:', e);
+      this.nailVtoError.set(this.i18n.t('studio_nailvto_error'));
+    } finally {
+      this.nailVtoLoading.set(false);
     }
   }
 

@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const ai = require('./ai');
+const perfectcorp = require('./perfectcorp');
 const db = require('./db');
 const payments = require('./payments');
 const catalog = require('./catalog');
@@ -18,6 +19,7 @@ const rateLimit = (() => { try { return require('express-rate-limit'); } catch {
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 ai.initProviders();
+perfectcorp.initProvider();
 payments.initProviders();
 if (!auth.ready()) console.warn('ℹ️  Auth paketleri yok (npm i bcryptjs jsonwebtoken) — giriş uçları 503, guest modu çalışır.');
 if (!sms.ready()) console.warn('ℹ️  SMS sağlayıcısı yok — OTP DEMO modunda (kod yanıtta döner). Twilio/Netgsm anahtarı ekleyin.');
@@ -137,7 +139,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/ai/status', (_req, res) => {
-  res.json({ success: true, data: ai.status() });
+  res.json({ success: true, data: { ...ai.status(), nailVtoAvailable: perfectcorp.ready() } });
 });
 
 // GÜVENLİK: giriş zorunlu uçlar için — token yoksa 401 döner, null verir.
@@ -197,6 +199,35 @@ app.post('/api/ai/generate-image', aiLimiter, async (req, res) => {
       success: true, data, user: auth.pub(upd),
       quota: { used: nextUsed, extra: nextExtra, limit: info.limit, remaining: Math.max(0, info.limit - nextUsed) + nextExtra },
     });
+  } catch (e) {
+    handleAiError(res, e);
+  }
+});
+
+// Nail VTO (Perfect Corp) — Studio'da EL FOTOĞRAFI OLMADAN üretilmiş izole bir tasarımı
+// (designFilename: images/ai-generated/ altındaki dosya), kullanıcının GERÇEK el fotoğrafına
+// Perfect Corp'un sunucu tarafı tırnak segmentasyonuyla hassas biçimde bindirir. Flux/Gemini'nin
+// generative "el fotoğrafını yeniden yorumlama" yönteminden farklı, tamamlayıcı bir teknik.
+app.post('/api/ai/nail-vto', aiLimiter, async (req, res) => {
+  const uid = requireUserId(req, res); if (!uid) return;
+  const { handImage, designFilename } = req.body || {};
+  if (!handImage || typeof handImage !== 'string') {
+    return res.status(400).json({ success: false, error: 'El fotoğrafı gerekli', code: 'BAD_REQUEST' });
+  }
+  const safeName = path.basename(String(designFilename || ''));   // yol gezme koruması
+  const designPath = path.join(IMG_DIR, safeName);
+  if (!safeName || !fs.existsSync(designPath)) {
+    return res.status(400).json({ success: false, error: 'Geçersiz tasarım dosyası', code: 'BAD_DESIGN' });
+  }
+  try {
+    const designBuffer = fs.readFileSync(designPath);
+    console.log(`💅 Nail VTO (kullanıcı ${uid}): ${safeName}`);
+    const { buffer: resultBuffer, mimeType } = await perfectcorp.tryOnPhoto({ handImageDataUrl: handImage, designBuffer, designMimeType: 'image/png' });
+    const ext = mimeType.includes('png') ? 'png' : 'jpg';
+    const filename = `nailvto_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    fs.writeFileSync(path.join(IMG_DIR, filename), resultBuffer);
+    console.log(`✅ Nail VTO tamam: ${filename} (${Math.round(resultBuffer.length / 1024)}KB)`);
+    res.json({ success: true, data: { imageUrl: `images/ai-generated/${filename}`, provider: 'perfectcorp' } });
   } catch (e) {
     handleAiError(res, e);
   }
