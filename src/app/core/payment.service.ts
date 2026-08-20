@@ -20,7 +20,7 @@ export class PaymentService {
   private readonly http = inject(HttpClient);
   readonly status = signal<PayStatus>({
     providers: [
-      { id: 'iyzico', ready: false }, { id: 'stripe', ready: false }, { id: 'paytr', ready: false },
+      { id: 'paytr', ready: false },
     ],
     anyReady: false, mode: 'demo',
   });

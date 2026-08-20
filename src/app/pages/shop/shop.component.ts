@@ -196,7 +196,7 @@ export class ShopComponent implements OnInit {
   // Ödeme akışı durumu
   private readonly PENDING = 'ngnail-pending-pay';
   readonly cart = signal<CartItem | null>(null);
-  readonly payProvider = signal<string>('iyzico');
+  readonly payProvider = signal<string>('paytr');
   readonly paying = signal<boolean>(false);
   readonly payDone = signal<boolean>(false);
   readonly payError = signal<string | null>(null);
@@ -326,7 +326,7 @@ export class ShopComponent implements OnInit {
     this.payDone.set(false);
     this.payError.set(null);
     const firstReady = this.payment.status().providers.find((p) => p.ready);
-    this.payProvider.set(firstReady?.id ?? 'iyzico');
+    this.payProvider.set(firstReady?.id ?? 'paytr');
     this.cart.set(item);
   }
 

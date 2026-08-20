@@ -6,7 +6,9 @@ require('dotenv').config();
 const crypto = require('crypto');
 const https = require('https');
 
-const PROVIDERS = ['iyzico', 'paytr'];
+// iyzico başvurusu şu an beklemede — sadece PayTR sunuluyor. Anahtarlar/fonksiyonlar
+// kod içinde kalıyor; başvuru onaylanınca 'iyzico' buraya geri eklenir.
+const PROVIDERS = ['paytr'];
 
 function tryRequire(name) { try { return require(name); } catch { return null; } }
 function realKey(v) { return !!v && !/your-|-here$/i.test(v); }
